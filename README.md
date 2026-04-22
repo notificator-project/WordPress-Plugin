@@ -150,6 +150,8 @@ Vite builds admin assets into:
 - `assets/dist/admin-toast.js`
 - `assets/dist/admin-toast.css`
 
+Note: the top-level `dist/` release-packaging directory is generated during build/release steps and is intentionally excluded from source control.
+
 ## Extensibility
 
 ### Filters
