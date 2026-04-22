@@ -1,0 +1,15 @@
+.notificator-toast .notificator-toast__title {
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0 0 2px;
+}
+
+.notificator-toast .notificator-toast__notes {
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.notyf {
+  padding-top: calc(20px + var(--notificator-wpbar-h, 0px));
+}

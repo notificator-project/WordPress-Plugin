@@ -1,0 +1,70 @@
+
+	/**
+	 * Render locked templates section (when no API key)
+	 */
+	private function render_locked_templates_section()
+	{
+	?>
+		<div class="scenario-section notificator-section opacity-60 mt-6" id="notificator-templates" data-notificator-section="templates">
+			<div class="notificator-scenario-head notificator-scenario-head--locked">
+				<div class="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+					<div class="flex items-center gap-3 min-w-0">
+						<div class="notificator-section-icon">
+							<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+							</svg>
+						</div>
+						<div class="min-w-0">
+							<h3 class="text-base font-semibold text-white"><?php esc_html_e('Templates', 'notificator-companion'); ?></h3>
+							<p class="text-xs text-white text-opacity-70"><?php esc_html_e('Add an API key to unlock template scanning.', 'notificator-companion'); ?></p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="card-body">
+				<div class="notice notice-warning inline notice-inline-warning">
+					<p><?php esc_html_e('Templates are locked until you add an API key and save settings.', 'notificator-companion'); ?></p>
+				</div>
+			</div>
+		</div>
+	<?php
+	}
+
+	/**
+	 * Render locked builder section (when no API key)
+	 */
+	private function render_locked_builder_section()
+	{
+	?>
+		<div class="scenario-section notificator-section opacity-60 mt-6" id="notificator-builder" data-notificator-section="builder">
+			<div class="notificator-scenario-head notificator-scenario-head--locked">
+				<div class="flex items-start sm:items-center justify-between gap-3 flex-wrap">
+					<div class="flex items-center gap-3 min-w-0">
+						<div class="notificator-section-icon">
+							<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+							</svg>
+						</div>
+						<div class="min-w-0">
+							<h3 class="text-base font-semibold text-white"><?php esc_html_e('Notifications List', 'notificator-companion'); ?></h3>
+							<p class="text-xs text-white text-opacity-70"><?php esc_html_e('Add an API key to unlock notification creation.', 'notificator-companion'); ?></p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="card-body">
+				<div class="notice notice-warning inline notice-inline-warning">
+					<p><?php esc_html_e('The scenario builder is locked until you add an API key and save settings.', 'notificator-companion'); ?></p>
+				</div>
+			</div>
+		</div>
+	<?php
+	}
+
+	/**
+	 * Render active sections - wrapper that calls render_hooks_field
+	 */
+	private function render_active_sections()
+	{
+		$this->render_hooks_field();
+	}

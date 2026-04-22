@@ -1,0 +1,91 @@
+name: Build and Release Plugin Pre-release Zip
+
+on:
+  push:
+    tags:
+      - 'v*.*.*-*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prerelease-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prerelease:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Validate tag against plugin version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PLUGIN_VERSION="$(grep -m1 -E '^\s*\*\s*Version:\s*' notificator-companion.php | sed -E 's/.*Version:\s*([^[:space:]]+).*/\1/')"
+
+          echo "Tag version: ${TAG_VERSION}"
+          echo "Plugin version: ${PLUGIN_VERSION}"
+
+          if [[ "${PLUGIN_VERSION}" != "${TAG_VERSION}" ]]; then
+            echo "ERROR: notificator-companion.php Version (${PLUGIN_VERSION}) does not match tag (${TAG_VERSION})."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build release package
+        run: npm run build:release
+
+      - name: Prepare versioned zip name
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          SOURCE_ZIP="dist/notificator-companion.zip"
+          TARGET_ZIP="dist/notificator-companion-${TAG_VERSION}.zip"
+          STAGE_SUFFIX="${TAG_VERSION#*-}"
+          STAGE_LABEL="Pre-release"
+
+          if [[ "${STAGE_SUFFIX}" =~ ^alpha\.([0-9]+)$ ]]; then
+            STAGE_LABEL="Alpha ${BASH_REMATCH[1]}"
+          elif [[ "${STAGE_SUFFIX}" =~ ^beta\.([0-9]+)$ ]]; then
+            STAGE_LABEL="Beta ${BASH_REMATCH[1]}"
+          elif [[ "${STAGE_SUFFIX}" =~ ^rc\.([0-9]+)$ ]]; then
+            STAGE_LABEL="Release Candidate ${BASH_REMATCH[1]}"
+          fi
+
+          if [[ ! -f "${SOURCE_ZIP}" ]]; then
+            echo "ERROR: Expected package not found at ${SOURCE_ZIP}"
+            exit 1
+          fi
+
+          mv "${SOURCE_ZIP}" "${TARGET_ZIP}"
+
+          echo "zip_path=${TARGET_ZIP}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "stage_label=${STAGE_LABEL}" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub pre-release and upload zip
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Notificator Companion v${{ steps.package.outputs.version }} (${{ steps.package.outputs.stage_label }})
+          generate_release_notes: true
+          prerelease: true
+          files: |
+            ${{ steps.package.outputs.zip_path }}

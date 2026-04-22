@@ -1,0 +1,15 @@
+/* Tailwind v4 entry (theme + utilities only — no global preflight).
+   WordPress admin has its own base styles; importing Tailwind preflight globally
+   can unintentionally affect other wp-admin UI.
+
+   We provide a small, scoped reset in admin.scss under .notificator-companion-wrap.
+*/
+
+@import "tailwindcss/theme";
+@import "tailwindcss/utilities";
+
+/* Ensure Tailwind scans our WordPress admin markup and any JS templates. */
+@source "../../admin/**/*.php";
+@source "../../includes/**/*.php";
+@source "../js/**/*.js";
+@source "./**/*.js";
