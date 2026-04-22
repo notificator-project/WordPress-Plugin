@@ -40,11 +40,12 @@ if git -C "$ROOT_DIR" rev-parse "$TAG" >/dev/null 2>&1; then
 fi
 
 # Keep plugin header version and runtime constant synchronized.
-sed -i.bak -E "s/^\s*\*\s*Version:\s*.*/ * Version: $BETA_VERSION/" "$PLUGIN_FILE"
+# Use POSIX character classes for macOS/BSD sed compatibility.
+sed -i.bak -E "s/^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*.*/ * Version: $BETA_VERSION/" "$PLUGIN_FILE"
 sed -i.bak -E "s/define\( 'NOTIFICATOR_COMPANION_VERSION', '[^']+' \);/define( 'NOTIFICATOR_COMPANION_VERSION', '$BETA_VERSION' );/" "$PLUGIN_FILE"
 rm -f "$PLUGIN_FILE.bak"
 
-if ! grep -q "^ \* Version: $BETA_VERSION$" "$PLUGIN_FILE"; then
+if ! grep -Fq " * Version: $BETA_VERSION" "$PLUGIN_FILE"; then
   echo "ERROR: Failed to update plugin header Version in $PLUGIN_FILE"
   exit 1
 fi
