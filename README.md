@@ -1,5 +1,9 @@
 # Notificator Companion (WordPress Plugin)
 
+Notificator Companion helps WordPress administrators monitor selected hooks and send secure notifications to an external Notificator endpoint.
+
+It is designed for observability workflows: scan hooks, create scenario-based rules, and receive notifications when important events happen.
+
 ## Direct Download
 
 [Download v1.1.0-beta.2 ZIP](https://github.com/notificator-project/WordPress-Plugin/releases/download/v1.1.0-beta.2/notificator-companion-1.1.0-beta.2.zip)
@@ -18,10 +22,6 @@ When reporting a bug, it helps to include:
 - Steps to reproduce
 - Expected behavior vs actual behavior
 - Error logs or screenshots (if available)
-
-Notificator Companion helps WordPress administrators monitor selected hooks and send secure notifications to an external Notificator endpoint.
-
-It is designed for observability workflows: scan hooks, create scenario-based rules, and receive notifications when important events happen.
 
 ## Highlights
 
