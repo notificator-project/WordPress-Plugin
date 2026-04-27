@@ -6,7 +6,7 @@ It is designed for observability workflows: scan hooks, create scenario-based ru
 
 ## Direct Download
 
-[Download v1.1.0-beta.2 ZIP](https://github.com/notificator-project/WordPress-Plugin/releases/download/v1.1.0-beta.2/notificator-companion-1.1.0-beta.2.zip)
+[Download v1.1.0-beta.3 ZIP](https://github.com/notificator-project/WordPress-Plugin/releases/download/v1.1.0-beta.3/notificator-companion-1.1.0-beta.3.zip)
 
 ## Feedback and Bug Reports
 
