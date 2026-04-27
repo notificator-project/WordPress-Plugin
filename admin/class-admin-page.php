@@ -283,13 +283,26 @@ NOTIFICATOR_LOG_ACTIONS,
 			: array();
 		$registered_templates = apply_filters( 'notificator_companion_templates', $registered_templates );
 		$registered_templates = array_values( array_filter( $registered_templates, 'is_array' ) );
+		$woocommerce_order_status_options = $this->get_woocommerce_order_status_options();
 		wp_localize_script(
 			$has_dist ? 'notificator-companion-admin-bundle' : 'notificator-companion-admin-js',
 			'notificatorTemplateLibrary',
 			array(
 				'templates' => $registered_templates,
-				'woocommerceOrderStatuses' => $this->get_woocommerce_order_status_options(),
+				'woocommerceOrderStatuses' => $woocommerce_order_status_options,
 			)
+		);
+
+		// Backward/forward compatibility for variables used directly by the admin bundle.
+		wp_localize_script(
+			$has_dist ? 'notificator-companion-admin-bundle' : 'notificator-companion-admin-js',
+			'notificatorScenarioTemplatesExtra',
+			$registered_templates
+		);
+		wp_localize_script(
+			$has_dist ? 'notificator-companion-admin-bundle' : 'notificator-companion-admin-js',
+			'notificatorWooCommerceOrderStatuses',
+			$woocommerce_order_status_options
 		);
 	}
 
