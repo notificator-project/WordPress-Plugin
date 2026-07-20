@@ -13,6 +13,19 @@ type NotificatorToastSettings = {
 type NotificatorToastOptions = {
 	duration?: number;
 	url?: string;
+	/** Render trusted, already-escaped markup instead of escaping as plain text. */
+	html?: boolean;
+};
+
+type NotificatorScenarioBuilderApi = {
+	submitForm?: () => void;
+	openAddModal?: () => void;
+	selectHook?: (hookName: string, metadata: unknown) => void;
+	selectedPluginModal?: string;
+	hooks?: unknown;
+	availablePlugins?: Record<string, { hooks?: Record<string, unknown> }>;
+	pluginActiveStatus?: unknown;
+	hookActiveStatus?: unknown;
 };
 
 type NotificatorToastApi = {
@@ -27,21 +40,23 @@ type NotificatorCompanionData = {
 	ajaxUrl?: string;
 	actions?: Record<string, string>;
 	nonces?: Record<string, string>;
+	health?: Record<string, unknown>;
 };
 
 type NotificatorAdminToastData = {
+	enabled?: boolean;
+	pollInterval?: number | string;
 	toastSettings?: NotificatorToastSettings;
 	toastDeliveryMode?: 'account' | 'tab' | string;
 	ajaxUrl?: string;
 	action?: string;
 	nonce?: string;
+	pendingToasts?: Array<Record<string, unknown>>;
 };
 
 declare global {
 	const ajaxurl: string;
-	const notificatorWooCommerceOrderStatuses:
-		| Array<{ value: string; label: string } | string>
-		| undefined;
+	const notificatorWooCommerceOrderStatuses: Array<{ value: string; label: string } | string> | undefined;
 	const notificatorActivePlugins: string[] | undefined;
 	const notificatorScenarioTemplatesExtra: unknown[] | undefined;
 	const jQuery: unknown;
@@ -57,13 +72,7 @@ declare global {
 		notificatorOriginalAlert?: typeof window.alert;
 		notificatorToastPollStarted?: boolean;
 		notificatorNoticesObserver?: MutationObserver;
-		notificatorScenarioBuilder?: Record<string, unknown> & {
-			submitForm?: () => void;
-			hooks?: unknown;
-			availablePlugins?: unknown;
-			pluginActiveStatus?: unknown;
-			hookActiveStatus?: unknown;
-		};
+		notificatorScenarioBuilder?: NotificatorScenarioBuilderApi;
 		notificatorScenarioTemplates?: unknown[];
 		notificatorScenarioTemplatesExtra?: unknown[];
 		initScenarioBuilder?: (...args: unknown[]) => unknown;

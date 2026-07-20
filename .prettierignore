@@ -1,0 +1,9 @@
+assets/dist/
+dist/
+node_modules/
+vendor/
+.wordpress-org/
+languages/
+*.zip
+composer.lock
+package-lock.json

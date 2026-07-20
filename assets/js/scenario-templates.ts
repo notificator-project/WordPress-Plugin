@@ -1,15 +1,16 @@
 /**
- * Predefined Scenario Templates
- * 
- * Central registry for all predefined notification scenarios
- * 
+ * Built-in notification template catalogue.
+ *
+ * Template data is intentionally declarative. Keep hook names and argument
+ * order aligned with the owning integration's public action contract.
+ *
  * @package NotificatorCompanion
  * @since 1.1.0
  */
 
 type ScenarioTemplateCondition = {
 	field?: string;
-	operator?: string;
+	operator?: '=' | '!=' | '>' | '>=' | '<' | '<=' | 'contains' | 'not_contains';
 	value?: string | number;
 	value_type?: string;
 	value_label?: string;
@@ -38,12 +39,16 @@ type ScenarioTemplateHookMeta = {
 
 type ScenarioTemplate = {
 	icon?: string;
-	title?: string;
-	hook_name?: string;
-	description?: string;
-	scenario_name?: string;
-	required_plugin?: string;
-	severity?: string;
+	title: string;
+	hook_name: string;
+	description: string;
+	scenario_name: string;
+	required_plugin: string;
+	severity?: 'info' | 'warning' | 'critical';
+	category?: 'commerce' | 'content' | 'security' | 'forms' | 'operations' | 'learning';
+	featured?: boolean;
+	setup_hint?: string;
+	default_notes?: string;
 	hook_meta?: ScenarioTemplateHookMeta;
 	conditions?: ScenarioTemplateCondition[];
 };
@@ -56,9 +61,13 @@ const templates: ScenarioTemplate[] = [
 		icon: '🛒',
 		title: 'WooCommerce: New Order',
 		hook_name: 'woocommerce_new_order',
-		description: 'Triggered when a new order is created',
+		description: 'Get an alert as soon as a customer places a new order.',
 		scenario_name: 'New Order Created',
 		required_plugin: 'woocommerce',
+		category: 'commerce',
+		featured: true,
+		severity: 'info',
+		default_notes: 'New WooCommerce order #{{order_id}} received.',
 		hook_meta: {
 			label: 'New order',
 			type: 'action',
@@ -73,9 +82,7 @@ const templates: ScenarioTemplate[] = [
 				]
 			}
 		},
-		conditions: [
-			{ field: 'order.payment_method', operator: 'contains', value: '', value_type: 'text', value_label: 'Payment method contains', value_placeholder: 'cod / stripe / paypal', locked: true, lock_field: true, lock_operator: true }
-		]
+		conditions: []
 	},
 	{
 		icon: '💰',
@@ -90,13 +97,21 @@ const templates: ScenarioTemplate[] = [
 			arg_names: ['order_id', 'order'],
 			payload_arity: 2,
 			properties: {
-				order: [
-					{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' }
-				]
+				order: [{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' }]
 			}
 		},
 		conditions: [
-			{ field: 'order.total', operator: '>=', value: '100', value_type: 'number', value_label: 'Minimum order total', value_placeholder: '100', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'order.total',
+				operator: '>=',
+				value: '100',
+				value_type: 'number',
+				value_label: 'Minimum order total',
+				value_placeholder: '100',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -112,13 +127,21 @@ const templates: ScenarioTemplate[] = [
 			arg_names: ['order_id', 'order'],
 			payload_arity: 2,
 			properties: {
-				order: [
-					{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' }
-				]
+				order: [{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' }]
 			}
 		},
 		conditions: [
-			{ field: 'order.total', operator: '>=', value: '500', value_type: 'number', value_label: 'Minimum order total', value_placeholder: '500', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'order.total',
+				operator: '>=',
+				value: '500',
+				value_type: 'number',
+				value_label: 'Minimum order total',
+				value_placeholder: '500',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -135,7 +158,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'processing', value_type: 'select', value_label: 'New status', value_options_key: 'wc_order_statuses', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'processing',
+				value_type: 'select',
+				value_label: 'New status',
+				value_options_key: 'wc_order_statuses',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -152,7 +185,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'completed', value_type: 'select', value_label: 'New status', value_options_key: 'wc_order_statuses', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'completed',
+				value_type: 'select',
+				value_label: 'New status',
+				value_options_key: 'wc_order_statuses',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -169,7 +212,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'processing', value_type: 'select', value_label: 'New status', value_options_key: 'wc_order_statuses', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'processing',
+				value_type: 'select',
+				value_label: 'New status',
+				value_options_key: 'wc_order_statuses',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -179,6 +232,10 @@ const templates: ScenarioTemplate[] = [
 		description: 'Notify when an order transitions to failed',
 		scenario_name: 'Payment Failed',
 		required_plugin: 'woocommerce',
+		category: 'commerce',
+		featured: true,
+		severity: 'critical',
+		default_notes: 'Payment failed for WooCommerce order #{{order_id}}.',
 		hook_meta: {
 			label: 'Order status changed',
 			type: 'action',
@@ -186,7 +243,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'failed', value_type: 'select', value_label: 'New status', value_options_key: 'wc_order_statuses', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'failed',
+				value_type: 'select',
+				value_label: 'New status',
+				value_options_key: 'wc_order_statuses',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -203,7 +270,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'on-hold', value_type: 'select', value_label: 'New status', value_options_key: 'wc_order_statuses', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'on-hold',
+				value_type: 'select',
+				value_label: 'New status',
+				value_options_key: 'wc_order_statuses',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -220,7 +297,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'cancelled', value_type: 'select', value_label: 'New status', value_options_key: 'wc_order_statuses', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'cancelled',
+				value_type: 'select',
+				value_label: 'New status',
+				value_options_key: 'wc_order_statuses',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -237,7 +324,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'refunded', value_type: 'select', value_label: 'New status', value_options_key: 'wc_order_statuses', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'refunded',
+				value_type: 'select',
+				value_label: 'New status',
+				value_options_key: 'wc_order_statuses',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -254,7 +351,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'refund_id', operator: '>', value: '0', value_type: 'number', value_label: 'Refund ID greater than', value_placeholder: '0', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'refund_id',
+				operator: '>',
+				value: '0',
+				value_type: 'number',
+				value_label: 'Refund ID greater than',
+				value_placeholder: '0',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -271,25 +378,19 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'coupon_code', operator: '=', value: 'SAVE10', value_type: 'text', value_label: 'Coupon code', value_placeholder: 'SAVE10', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'coupon_code',
+				operator: '=',
+				value: 'SAVE10',
+				value_type: 'text',
+				value_label: 'Coupon code',
+				value_placeholder: 'SAVE10',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	{
-		icon: '🛒',
-		title: 'WooCommerce: Cart Abandoned',
-		hook_name: 'woocommerce_cart_updated',
-		description: 'Cart abandoned without checkout',
-		scenario_name: 'Cart Abandoned',
-		required_plugin: 'woocommerce',
-		hook_meta: {
-			label: 'Cart updated',
-			type: 'action',
-			arg_names: [],
-			payload_arity: 0
-		},
-		conditions: []
-	},
-
 	// ============================================
 	// WooCommerce - Checkout & Customer
 	// ============================================
@@ -297,7 +398,7 @@ const templates: ScenarioTemplate[] = [
 		icon: '👤',
 		title: 'WooCommerce: Customer Created',
 		hook_name: 'woocommerce_created_customer',
-		description: 'New WooCommerce customer created',
+		description: 'Know when a shopper creates a new customer account.',
 		scenario_name: 'Customer Created',
 		required_plugin: 'woocommerce',
 		hook_meta: {
@@ -306,9 +407,7 @@ const templates: ScenarioTemplate[] = [
 			arg_names: ['customer_id', 'new_customer_data'],
 			payload_arity: 2
 		},
-		conditions: [
-			{ field: 'new_customer_data.user_email', operator: 'contains', value: '', value_type: 'text', value_label: 'Email contains (optional)', value_placeholder: '@example.com', locked: true, lock_field: true, lock_operator: true }
-		]
+		conditions: []
 	},
 	{
 		icon: '🧾',
@@ -330,7 +429,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'order.total', operator: '>=', value: '100', value_type: 'number', value_label: 'Minimum order total', value_placeholder: '100', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'order.total',
+				operator: '>=',
+				value: '100',
+				value_type: 'number',
+				value_label: 'Minimum order total',
+				value_placeholder: '100',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -347,7 +456,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'order_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Order ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'order_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Order ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -364,7 +483,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'data.customer_note', operator: 'contains', value: '', value_type: 'text', value_label: 'Customer note contains (optional)', value_placeholder: 'left at door', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'data.customer_note',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Customer note contains (optional)',
+				value_placeholder: 'left at door',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -381,7 +510,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'order_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Order ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'order_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Order ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -398,10 +537,20 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'order_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Order ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'order_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Order ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// WooCommerce - Subscriptions
 	// ============================================
@@ -425,7 +574,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'subscription.billing_email', operator: 'contains', value: '', value_type: 'text', value_label: 'Billing email contains (optional)', value_placeholder: '@yourdomain.com', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'subscription.billing_email',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Billing email contains (optional)',
+				value_placeholder: '@yourdomain.com',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -448,10 +607,20 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'subscription.status', operator: 'contains', value: 'cancelled', value_type: 'text', value_label: 'Subscription status contains', value_placeholder: 'cancelled', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'subscription.status',
+				operator: 'contains',
+				value: 'cancelled',
+				value_type: 'text',
+				value_label: 'Subscription status contains',
+				value_placeholder: 'cancelled',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// WooCommerce - Stock
 	// ============================================
@@ -459,9 +628,13 @@ const templates: ScenarioTemplate[] = [
 		icon: '📦',
 		title: 'WooCommerce: Low Stock',
 		hook_name: 'woocommerce_low_stock',
-		description: 'Product stock below threshold',
+		description: 'Alert the team when a product reaches five units or fewer.',
 		scenario_name: 'Low Stock Alert',
 		required_plugin: 'woocommerce',
+		category: 'commerce',
+		featured: true,
+		severity: 'warning',
+		default_notes: '{{product.name}} is running low ({{product.stock_quantity}} remaining).',
 		hook_meta: {
 			label: 'Low stock',
 			type: 'action',
@@ -476,7 +649,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'product.stock_quantity', operator: '<=', value: '5', value_type: 'number', value_label: 'Stock quantity at/below', value_placeholder: '5', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'product.stock_quantity',
+				operator: '<=',
+				value: '5',
+				value_type: 'number',
+				value_label: 'Stock quantity at/below',
+				value_placeholder: '5',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -500,7 +683,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'product.stock_quantity', operator: '<=', value: '0', value_type: 'number', value_label: 'Stock quantity at/below', value_placeholder: '0', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'product.stock_quantity',
+				operator: '<=',
+				value: '0',
+				value_type: 'number',
+				value_label: 'Stock quantity at/below',
+				value_placeholder: '0',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -524,10 +717,24 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'stock_status', operator: '=', value: 'outofstock', value_type: 'select', value_label: 'Stock status', value_options: [{ value: 'instock', label: 'In stock' }, { value: 'outofstock', label: 'Out of stock' }, { value: 'onbackorder', label: 'On backorder' }], locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'stock_status',
+				operator: '=',
+				value: 'outofstock',
+				value_type: 'select',
+				value_label: 'Stock status',
+				value_options: [
+					{ value: 'instock', label: 'In stock' },
+					{ value: 'outofstock', label: 'Out of stock' },
+					{ value: 'onbackorder', label: 'On backorder' }
+				],
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// WooCommerce - Reviews
 	// ============================================
@@ -545,10 +752,23 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'comment_approved', operator: '=', value: '0', value_type: 'select', value_label: 'Approval state', value_options: [{ value: '0', label: 'Pending moderation' }, { value: '1', label: 'Approved' }], locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'comment_approved',
+				operator: '=',
+				value: '0',
+				value_type: 'select',
+				value_label: 'Approval state',
+				value_options: [
+					{ value: '0', label: 'Pending moderation' },
+					{ value: '1', label: 'Approved' }
+				],
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// WordPress - Posts
 	// ============================================
@@ -573,7 +793,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'post.post_type', operator: '=', value: 'post', value_type: 'text', value_label: 'Post type', value_placeholder: 'post', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post.post_type',
+				operator: '=',
+				value: 'post',
+				value_type: 'text',
+				value_label: 'Post type',
+				value_placeholder: 'post',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -597,7 +827,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'post_after.post_type', operator: 'contains', value: '', value_type: 'text', value_label: 'Post type contains (optional)', value_placeholder: 'post / page / product', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post_after.post_type',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Post type contains (optional)',
+				value_placeholder: 'post / page / product',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -620,7 +860,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'post.post_type', operator: 'contains', value: '', value_type: 'text', value_label: 'Post type contains (optional)', value_placeholder: 'post', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post.post_type',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Post type contains (optional)',
+				value_placeholder: 'post',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -643,7 +893,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'post.post_type', operator: 'contains', value: '', value_type: 'text', value_label: 'Post type contains (optional)', value_placeholder: 'post', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post.post_type',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Post type contains (optional)',
+				value_placeholder: 'post',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -660,10 +920,20 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'post_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Post ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Post ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// WordPress - Pages
 	// ============================================
@@ -687,10 +957,20 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'post.post_type', operator: '=', value: 'page', value_type: 'text', value_label: 'Post type', value_placeholder: 'page', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post.post_type',
+				operator: '=',
+				value: 'page',
+				value_type: 'text',
+				value_label: 'Post type',
+				value_placeholder: 'page',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// WordPress - Comments
 	// ============================================
@@ -708,7 +988,20 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'comment_approved', operator: '=', value: '1', value_type: 'select', value_label: 'Approval state', value_options: [{ value: '0', label: 'Pending moderation' }, { value: '1', label: 'Approved' }], locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'comment_approved',
+				operator: '=',
+				value: '1',
+				value_type: 'select',
+				value_label: 'Approval state',
+				value_options: [
+					{ value: '0', label: 'Pending moderation' },
+					{ value: '1', label: 'Approved' }
+				],
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -731,7 +1024,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'comment.comment_approved', operator: '=', value: '0', value_type: 'text', value_label: 'Approved flag', value_placeholder: '0', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'comment.comment_approved',
+				operator: '=',
+				value: '0',
+				value_type: 'text',
+				value_label: 'Approved flag',
+				value_placeholder: '0',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -754,7 +1057,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'comment.comment_approved', operator: '=', value: '1', value_type: 'text', value_label: 'Approved flag', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'comment.comment_approved',
+				operator: '=',
+				value: '1',
+				value_type: 'text',
+				value_label: 'Approved flag',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -771,10 +1084,20 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'comment_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Comment ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'comment_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Comment ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// WordPress - Users
 	// ============================================
@@ -792,7 +1115,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'user_id', operator: '>=', value: '1', value_type: 'number', value_label: 'User ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'User ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -809,7 +1142,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3
 		},
 		conditions: [
-			{ field: 'role', operator: 'contains', value: '', value_type: 'text', value_label: 'New role contains (optional)', value_placeholder: 'administrator / shop_manager', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'role',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'New role contains (optional)',
+				value_placeholder: 'administrator / shop_manager',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -832,7 +1175,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'old_user_data.user_email', operator: 'contains', value: '', value_type: 'text', value_label: 'Old email contains (optional)', value_placeholder: '@domain.com', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'old_user_data.user_email',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Old email contains (optional)',
+				value_placeholder: '@domain.com',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -849,16 +1202,30 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'user_login', operator: 'contains', value: '', value_type: 'text', value_label: 'Username contains (optional)', value_placeholder: 'admin', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user_login',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Username contains (optional)',
+				value_placeholder: 'admin',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
 		icon: '🔐',
-		title: 'WordPress: Failed Login Attempts',
+		title: 'WordPress: Failed Login',
 		hook_name: 'wp_login_failed',
-		description: 'Failed login attempt',
+		description: 'Get an alert whenever WordPress rejects a login attempt.',
 		scenario_name: 'Failed Login Attempt',
 		required_plugin: 'wordpress-core',
+		category: 'security',
+		featured: true,
+		severity: 'warning',
+		default_notes: 'Failed WordPress login for {{username}}.',
 		hook_meta: {
 			label: 'Login failed',
 			type: 'action',
@@ -866,7 +1233,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'username', operator: 'contains', value: '', value_type: 'text', value_label: 'Username contains (optional)', value_placeholder: 'admin', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'username',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Username contains (optional)',
+				value_placeholder: 'admin',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -883,7 +1260,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'username', operator: '=', value: 'admin', value_type: 'text', value_label: 'Exact username', value_placeholder: 'admin', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'username',
+				operator: '=',
+				value: 'admin',
+				value_type: 'text',
+				value_label: 'Exact username',
+				value_placeholder: 'admin',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -906,7 +1293,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'user.user_email', operator: 'contains', value: '', value_type: 'text', value_label: 'User email contains (optional)', value_placeholder: '@company.com', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user.user_email',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'User email contains (optional)',
+				value_placeholder: '@company.com',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -923,7 +1320,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'user_id', operator: '>=', value: '1', value_type: 'number', value_label: 'User ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'User ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -939,13 +1346,21 @@ const templates: ScenarioTemplate[] = [
 			arg_names: ['user_id', 'old_user_data'],
 			payload_arity: 2,
 			properties: {
-				old_user_data: [
-					{ name: 'user_email', label: 'Old Email', type: 'string', method: '' }
-				]
+				old_user_data: [{ name: 'user_email', label: 'Old Email', type: 'string', method: '' }]
 			}
 		},
 		conditions: [
-			{ field: 'old_user_data.user_email', operator: 'contains', value: '', value_type: 'text', value_label: 'Old email contains (optional)', value_placeholder: '@domain.com', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'old_user_data.user_email',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Old email contains (optional)',
+				value_placeholder: '@domain.com',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 
@@ -966,7 +1381,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3
 		},
 		conditions: [
-			{ field: 'option', operator: 'contains', value: '', value_type: 'text', value_label: 'Option name contains', value_placeholder: 'blogname', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'option',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Option name contains',
+				value_placeholder: 'blogname',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -983,7 +1408,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'option', operator: 'contains', value: '', value_type: 'text', value_label: 'Option name contains', value_placeholder: 'siteurl', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'option',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Option name contains',
+				value_placeholder: 'siteurl',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1000,7 +1435,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'option', operator: 'contains', value: '', value_type: 'text', value_label: 'Option name contains', value_placeholder: 'blogdescription', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'option',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Option name contains',
+				value_placeholder: 'blogdescription',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1017,7 +1462,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'options', operator: 'contains', value: '', value_type: 'text', value_label: 'Options JSON contains (optional)', value_placeholder: 'plugin', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'options',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Options JSON contains (optional)',
+				value_placeholder: 'plugin',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1034,7 +1489,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'post_ID', operator: '>=', value: '1', value_type: 'number', value_label: 'Attachment ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post_ID',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Attachment ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1051,7 +1516,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'post_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Post ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Post ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1068,7 +1543,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'post_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Post ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Post ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 
@@ -1110,7 +1595,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'new_status', operator: '=', value: 'publish', value_type: 'text', value_label: 'New status', value_placeholder: 'publish', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_status',
+				operator: '=',
+				value: 'publish',
+				value_type: 'text',
+				value_label: 'New status',
+				value_placeholder: 'publish',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1133,7 +1628,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'post.post_type', operator: 'contains', value: '', value_type: 'text', value_label: 'Post type contains (optional)', value_placeholder: 'post', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post.post_type',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Post type contains (optional)',
+				value_placeholder: 'post',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1156,10 +1661,20 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'user.user_email', operator: 'contains', value: '', value_type: 'text', value_label: 'User email contains (optional)', value_placeholder: '@domain.com', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user.user_email',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'User email contains (optional)',
+				value_placeholder: '@domain.com',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// Membership Plugins
 	// ============================================
@@ -1177,7 +1692,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'level_id', operator: 'contains', value: '', value_type: 'text', value_label: 'Membership level ID contains (optional)', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'level_id',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Membership level ID contains (optional)',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1194,10 +1719,85 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'user_id', operator: '>=', value: '1', value_type: 'number', value_label: 'User ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'User ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
+	// ============================================
+	// Learning - LearnDash
+	// ============================================
+	{
+		icon: '🎓',
+		title: 'LearnDash: Course Completed',
+		hook_name: 'learndash_course_completed',
+		description: 'Know when a learner completes an entire course.',
+		scenario_name: 'Course Completed',
+		required_plugin: 'sfwd-lms',
+		category: 'learning',
+		featured: true,
+		severity: 'info',
+		default_notes: 'A learner completed a LearnDash course.',
+		hook_meta: {
+			label: 'Course completed',
+			type: 'action',
+			arg_names: ['course_data'],
+			payload_arity: 1
+		},
+		conditions: []
+	},
+	{
+		icon: '📘',
+		title: 'LearnDash: Lesson Completed',
+		hook_name: 'learndash_lesson_completed',
+		description: 'Receive an alert when a learner finishes a lesson.',
+		scenario_name: 'Lesson Completed',
+		required_plugin: 'sfwd-lms',
+		category: 'learning',
+		severity: 'info',
+		default_notes: 'A learner completed a LearnDash lesson.',
+		hook_meta: {
+			label: 'Lesson completed',
+			type: 'action',
+			arg_names: ['lesson_data'],
+			payload_arity: 1
+		},
+		conditions: []
+	},
+	{
+		icon: '🏆',
+		title: 'LearnDash: Quiz Completed',
+		hook_name: 'learndash_quiz_completed',
+		description: 'Receive an alert whenever a learner completes a quiz, whether they pass or fail.',
+		scenario_name: 'Quiz Completed',
+		required_plugin: 'sfwd-lms',
+		category: 'learning',
+		severity: 'info',
+		default_notes: 'A learner completed a LearnDash quiz.',
+		hook_meta: {
+			label: 'Quiz completed',
+			type: 'action',
+			arg_names: ['quiz_data', 'user'],
+			payload_arity: 2,
+			properties: {
+				user: [
+					{ name: 'user_login', label: 'Username', type: 'string', method: '' },
+					{ name: 'user_email', label: 'Email', type: 'string', method: '' }
+				]
+			}
+		},
+		conditions: []
+	},
+
 	// ============================================
 	// WordPress - Plugins & Themes
 	// ============================================
@@ -1215,7 +1815,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'plugin', operator: 'contains', value: '', value_type: 'text', value_label: 'Plugin file contains (optional)', value_placeholder: 'woocommerce/woocommerce.php', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'plugin',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Plugin file contains (optional)',
+				value_placeholder: 'woocommerce/woocommerce.php',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1232,7 +1842,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'plugin', operator: 'contains', value: '', value_type: 'text', value_label: 'Plugin file contains (optional)', value_placeholder: 'woocommerce/woocommerce.php', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'plugin',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Plugin file contains (optional)',
+				value_placeholder: 'woocommerce/woocommerce.php',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1249,7 +1869,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'new_name', operator: 'contains', value: '', value_type: 'text', value_label: 'New theme name contains (optional)', value_placeholder: 'twentytwentyfour', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'new_name',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'New theme name contains (optional)',
+				value_placeholder: 'twentytwentyfour',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1266,10 +1896,20 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'wp_version', operator: 'contains', value: '', value_type: 'text', value_label: 'WordPress version contains (optional)', value_placeholder: '6.', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'wp_version',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'WordPress version contains (optional)',
+				value_placeholder: '6.',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// Security Events
 	// ============================================
@@ -1277,9 +1917,13 @@ const templates: ScenarioTemplate[] = [
 		icon: '👮',
 		title: 'WordPress: Administrator Created',
 		hook_name: 'set_user_role',
-		description: 'User role set to administrator (often during account creation)',
+		description: 'Get a security alert when a user is newly granted administrator access.',
 		scenario_name: 'Admin Created',
 		required_plugin: 'wordpress-core',
+		category: 'security',
+		featured: true,
+		severity: 'critical',
+		default_notes: 'User #{{user_id}} was granted administrator access.',
 		hook_meta: {
 			label: 'User role changed',
 			type: 'action',
@@ -1287,8 +1931,28 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3
 		},
 		conditions: [
-			{ field: 'role', operator: '=', value: 'administrator', value_type: 'text', value_label: 'New role', value_placeholder: 'administrator', locked: true, lock_field: true, lock_operator: true },
-			{ field: 'old_roles', operator: 'not_contains', value: 'administrator', value_type: 'text', value_label: 'Old roles not contain', value_placeholder: 'administrator', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'role',
+				operator: '=',
+				value: 'administrator',
+				value_type: 'text',
+				value_label: 'New role',
+				value_placeholder: 'administrator',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			},
+			{
+				field: 'old_roles',
+				operator: 'not_contains',
+				value: 'administrator',
+				value_type: 'text',
+				value_label: 'Old roles not contain',
+				value_placeholder: 'administrator',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1311,10 +1975,20 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'user.roles', operator: 'contains', value: 'administrator', value_type: 'text', value_label: 'Role contains', value_placeholder: 'administrator', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user.roles',
+				operator: 'contains',
+				value: 'administrator',
+				value_type: 'text',
+				value_label: 'Role contains',
+				value_placeholder: 'administrator',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// Forms - Contact Form 7
 	// ============================================
@@ -1322,9 +1996,12 @@ const templates: ScenarioTemplate[] = [
 		icon: '📋',
 		title: 'Contact Form 7: Submitted',
 		hook_name: 'wpcf7_mail_sent',
-		description: 'Form successfully submitted',
+		description: 'Know when any Contact Form 7 form is submitted successfully.',
 		scenario_name: 'CF7 Form Submitted',
 		required_plugin: 'contact-form-7',
+		category: 'forms',
+		featured: true,
+		default_notes: 'New submission from {{contact_form.title}}.',
 		hook_meta: {
 			label: 'Form sent',
 			type: 'action',
@@ -1338,7 +2015,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'contact_form.title', operator: 'contains', value: '', value_type: 'text', value_label: 'Form title contains (optional)', value_placeholder: 'Contact', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'contact_form.title',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Form title contains (optional)',
+				value_placeholder: 'Contact',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1361,7 +2048,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'contact_form.title', operator: 'contains', value: '', value_type: 'text', value_label: 'Form title contains (optional)', value_placeholder: 'Contact', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'contact_form.title',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Form title contains (optional)',
+				value_placeholder: 'Contact',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1384,7 +2081,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'contact_form.title', operator: 'contains', value: '', value_type: 'text', value_label: 'Form title contains (optional)', value_placeholder: 'Quote', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'contact_form.title',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Form title contains (optional)',
+				value_placeholder: 'Quote',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1407,7 +2114,17 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'contact_form.title', operator: 'contains', value: '', value_type: 'text', value_label: 'Form title contains (optional)', value_placeholder: 'Contact', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'contact_form.title',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Form title contains (optional)',
+				value_placeholder: 'Contact',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1430,10 +2147,20 @@ const templates: ScenarioTemplate[] = [
 			}
 		},
 		conditions: [
-			{ field: 'contact_form.id', operator: '>=', value: '1', value_type: 'number', value_label: 'Form ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'contact_form.id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Form ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
-	
+
 	// ============================================
 	// Forms - Gravity Forms
 	// ============================================
@@ -1441,9 +2168,12 @@ const templates: ScenarioTemplate[] = [
 		icon: '📬',
 		title: 'Gravity Forms: Submitted',
 		hook_name: 'gform_after_submission',
-		description: 'Form submission completed',
+		description: 'Know when any Gravity Forms entry is submitted successfully.',
 		scenario_name: 'Gravity Form Submitted',
 		required_plugin: 'gravityforms',
+		category: 'forms',
+		featured: true,
+		default_notes: 'A new Gravity Forms entry was submitted.',
 		hook_meta: {
 			label: 'Form submitted',
 			type: 'action',
@@ -1451,7 +2181,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'form.id', operator: 'contains', value: '', value_type: 'text', value_label: 'Form ID contains (optional)', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'form.id',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Form ID contains (optional)',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1468,7 +2208,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'form.id', operator: '=', value: '1', value_type: 'number', value_label: 'Form ID', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'form.id',
+				operator: '=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Form ID',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1485,7 +2235,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'form.id', operator: 'contains', value: '', value_type: 'text', value_label: 'Form ID contains (optional)', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'form.id',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Form ID contains (optional)',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1502,7 +2262,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'form.id', operator: 'contains', value: '', value_type: 'text', value_label: 'Form ID contains (optional)', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'form.id',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Form ID contains (optional)',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1519,7 +2289,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'entry.form_id', operator: '=', value: '1', value_type: 'number', value_label: 'Form ID', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'entry.form_id',
+				operator: '=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Form ID',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1536,7 +2316,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 4
 		},
 		conditions: [
-			{ field: 'user_id', operator: '>=', value: '1', value_type: 'number', value_label: 'User ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'user_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'User ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1553,7 +2343,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'entry_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Entry ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'entry_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Entry ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1570,8 +2370,96 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'entry_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Entry ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'entry_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Entry ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
+	},
+
+	// ============================================
+	// Forms - WPForms, Fluent Forms, Ninja Forms & Elementor Pro
+	// ============================================
+	{
+		icon: '📨',
+		title: 'WPForms: Successful Submission',
+		hook_name: 'wpforms_process_complete',
+		description: 'Get an alert after a WPForms submission finishes successfully.',
+		scenario_name: 'WPForms Submission Received',
+		required_plugin: 'wpforms-lite',
+		category: 'forms',
+		featured: true,
+		severity: 'info',
+		default_notes: 'WPForms entry #{{entry_id}} was submitted successfully.',
+		hook_meta: {
+			label: 'Successful form submission',
+			type: 'action',
+			arg_names: ['fields', 'entry', 'form_data', 'entry_id'],
+			payload_arity: 4
+		},
+		conditions: []
+	},
+	{
+		icon: '📝',
+		title: 'Fluent Forms: Submission Received',
+		hook_name: 'fluentform/submission_inserted',
+		description: 'Get an alert after Fluent Forms saves a new submission.',
+		scenario_name: 'Fluent Forms Submission Received',
+		required_plugin: 'fluentform',
+		category: 'forms',
+		featured: true,
+		severity: 'info',
+		default_notes: 'Fluent Forms submission #{{submission_id}} was received.',
+		hook_meta: {
+			label: 'Form submission received',
+			type: 'action',
+			arg_names: ['submission_id', 'form_data', 'form'],
+			payload_arity: 3
+		},
+		conditions: []
+	},
+	{
+		icon: '🥷',
+		title: 'Ninja Forms: Submission Received',
+		hook_name: 'ninja_forms_after_submission',
+		description: 'Get an alert after Ninja Forms finishes processing a submission.',
+		scenario_name: 'Ninja Forms Submission Received',
+		required_plugin: 'ninja-forms',
+		category: 'forms',
+		severity: 'info',
+		default_notes: 'A new Ninja Forms submission was received.',
+		hook_meta: {
+			label: 'Form submission received',
+			type: 'action',
+			arg_names: ['form_data'],
+			payload_arity: 1
+		},
+		conditions: []
+	},
+	{
+		icon: '📮',
+		title: 'Elementor Pro: Form Submitted',
+		hook_name: 'elementor_pro/forms/new_record',
+		description: 'Get an alert after an Elementor Pro form runs its configured actions.',
+		scenario_name: 'Elementor Form Submitted',
+		required_plugin: 'elementor-pro',
+		category: 'forms',
+		severity: 'info',
+		default_notes: 'A new Elementor Pro form submission was received.',
+		hook_meta: {
+			label: 'Form submitted',
+			type: 'action',
+			arg_names: ['record', 'ajax_handler'],
+			payload_arity: 2
+		},
+		conditions: []
 	},
 
 	// ============================================
@@ -1591,7 +2479,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'indexable', operator: 'contains', value: '', value_type: 'text', value_label: 'Indexable JSON contains (optional)', value_placeholder: 'post', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'indexable',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Indexable JSON contains (optional)',
+				value_placeholder: 'post',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1608,7 +2506,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'post_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Post ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Post ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1644,7 +2552,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'object_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Object ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'object_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Object ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1676,7 +2594,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'redirection_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Redirection ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'redirection_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Redirection ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1693,7 +2621,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'data', operator: 'contains', value: '', value_type: 'text', value_label: 'Schema payload contains (optional)', value_placeholder: 'Article', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'data',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Schema payload contains (optional)',
+				value_placeholder: 'Article',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 
@@ -1714,16 +2652,30 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'backup_info', operator: 'contains', value: '', value_type: 'text', value_label: 'Backup info JSON contains (optional)', value_placeholder: 'success', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'backup_info',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Backup info JSON contains (optional)',
+				value_placeholder: 'success',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
 		icon: '❌',
 		title: 'UpdraftPlus: Backup Failed',
 		hook_name: 'updraft_backup_failed',
-		description: 'Backup failed',
+		description: 'Get an urgent alert when an UpdraftPlus backup fails.',
 		scenario_name: 'Backup Failed',
 		required_plugin: 'updraftplus',
+		category: 'operations',
+		featured: true,
+		severity: 'critical',
+		default_notes: 'UpdraftPlus backup failed: {{error}}',
 		hook_meta: {
 			label: 'Backup failed',
 			type: 'action',
@@ -1731,7 +2683,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'error', operator: 'contains', value: '', value_type: 'text', value_label: 'Error contains (optional)', value_placeholder: 'timeout', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'error',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Error contains (optional)',
+				value_placeholder: 'timeout',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 
@@ -1752,7 +2714,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'ip', operator: 'contains', value: '', value_type: 'text', value_label: 'IP contains (optional)', value_placeholder: '192.168.', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'ip',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'IP contains (optional)',
+				value_placeholder: '192.168.',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 
@@ -1773,8 +2745,73 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'post_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Post ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'post_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Post ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
+	},
+	{
+		icon: '🚧',
+		title: 'Elementor: Maintenance Mode Changed',
+		hook_name: 'elementor/maintenance_mode/mode_changed',
+		description: 'Know when Elementor maintenance or coming-soon mode is enabled, changed, or disabled.',
+		scenario_name: 'Elementor Maintenance Mode Changed',
+		required_plugin: 'elementor',
+		category: 'operations',
+		featured: true,
+		severity: 'warning',
+		default_notes: 'Elementor maintenance mode changed from “{{old_value}}” to “{{value}}”.',
+		hook_meta: {
+			label: 'Maintenance mode changed',
+			type: 'action',
+			arg_names: ['old_value', 'value'],
+			payload_arity: 2
+		},
+		conditions: []
+	},
+	{
+		icon: '🎨',
+		title: 'Elementor: Site Kit Created',
+		hook_name: 'elementor/kit/after_new_kit_created',
+		description: 'Receive an alert when a new Elementor Site Kit is created and optionally made active.',
+		scenario_name: 'Elementor Site Kit Created',
+		required_plugin: 'elementor',
+		category: 'content',
+		severity: 'info',
+		default_notes: 'A new Elementor Site Kit was created.',
+		hook_meta: {
+			label: 'Site Kit created',
+			type: 'action',
+			arg_names: ['kit_data'],
+			payload_arity: 1
+		},
+		conditions: []
+	},
+	{
+		icon: '🧹',
+		title: 'Elementor: Files and Cache Cleared',
+		hook_name: 'elementor/core/files/clear_cache',
+		description: 'Receive an alert after Elementor clears its generated files and cached asset data.',
+		scenario_name: 'Elementor Cache Cleared',
+		required_plugin: 'elementor',
+		category: 'operations',
+		severity: 'info',
+		default_notes: 'Elementor generated files and cache were cleared.',
+		hook_meta: {
+			label: 'Files and cache cleared',
+			type: 'action',
+			arg_names: [],
+			payload_arity: 0
+		},
+		conditions: []
 	},
 
 	// ============================================
@@ -1794,7 +2831,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'contact', operator: 'contains', value: '', value_type: 'text', value_label: 'Contact JSON contains (optional)', value_placeholder: '@gmail.com', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'contact',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Contact JSON contains (optional)',
+				value_placeholder: '@gmail.com',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1811,7 +2858,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2
 		},
 		conditions: [
-			{ field: 'tag_id', operator: '=', value: '1', value_type: 'number', value_label: 'Tag ID', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'tag_id',
+				operator: '=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Tag ID',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 
@@ -1847,7 +2904,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'url', operator: 'contains', value: '', value_type: 'text', value_label: 'URL contains (optional)', value_placeholder: '/shop', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'url',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'URL contains (optional)',
+				value_placeholder: '/shop',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1864,7 +2931,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'tag', operator: 'contains', value: '', value_type: 'text', value_label: 'Tag contains (optional)', value_placeholder: 'post', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'tag',
+				operator: 'contains',
+				value: '',
+				value_type: 'text',
+				value_label: 'Tag contains (optional)',
+				value_placeholder: 'post',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1900,7 +2977,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3
 		},
 		conditions: [
-			{ field: 'status_code', operator: '=', value: '301', value_type: 'number', value_label: 'HTTP status code', value_placeholder: '301', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'status_code',
+				operator: '=',
+				value: '301',
+				value_type: 'number',
+				value_label: 'HTTP status code',
+				value_placeholder: '301',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1917,7 +3004,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'item_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Rule ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'item_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Rule ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1934,7 +3031,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'item_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Rule ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'item_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Rule ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 	{
@@ -1951,7 +3058,17 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1
 		},
 		conditions: [
-			{ field: 'item_id', operator: '>=', value: '1', value_type: 'number', value_label: 'Rule ID at/above', value_placeholder: '1', locked: true, lock_field: true, lock_operator: true }
+			{
+				field: 'item_id',
+				operator: '>=',
+				value: '1',
+				value_type: 'number',
+				value_label: 'Rule ID at/above',
+				value_placeholder: '1',
+				locked: true,
+				lock_field: true,
+				lock_operator: true
+			}
 		]
 	},
 

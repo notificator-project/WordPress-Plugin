@@ -1,156 +1,156 @@
-=== Notificator Companion ===
+=== Notificator – Alerts & Notifications ===
 Contributors: eboxnet
-Tags: notifications, hooks, monitoring, observability, developer-tools
+Donate link: https://buymeacoffee.com/vagelis
+Tags: notifications, alerts, hooks, monitoring, mqtt
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.2
-Stable tag: 1.0.0
+Stable tag: 1.1
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-Monitor selected WordPress hooks and send secure notifications to your Notificator endpoint.
+Turn WordPress events into dashboard alerts, with optional mobile push and MQTT delivery.
 
 == Description ==
 
-Notificator Companion helps administrators monitor important WordPress events by attaching listeners to selected hooks (actions and filters) and sending notifications to an external endpoint.
+Notificator helps site administrators notice important WordPress events without watching logs or writing a complete monitoring integration.
 
-It is built for debugging, observability, and operational monitoring across WordPress Core and plugins.
+Discover events exposed by WordPress and installed plugins, choose the events that matter, and decide how each notification should be delivered. Dashboard notifications work entirely inside WordPress and do not require an account or API key.
 
-= Key Features =
+For remote delivery, connect an optional Notificator API key. The Notificator mobile app can then receive push alerts and display notification details on your phone, while MQTT can deliver events to connected devices.
 
-* Hook scanner for WordPress Core and plugins
-* Scenario-based monitoring (enable only what you need)
-* Template-driven quick start plus custom scenarios
-* Scenario conditions with operators (`=`, `!=`, `>`, `>=`, `<`, `<=`, `contains`, `not_contains`)
-* Scenario notes with placeholder rendering (for example `{{order.total}}`)
-* Severity levels (`info`, `warning`, `critical`)
-* Per-scenario delivery controls (`sendPush`, `sendMqtt`)
-* Multi-API-key support with optional key nicknames
-* Per-key test button support in the admin UI
-* Throttle controls to reduce noisy repeated notifications
-* Notifications log (toggle on/off, pagination, row delete, clear all, CSV export)
-* Optional wp-admin dashboard toasts (delivery mode, duration, position, dismiss mode)
-* Import/export scenarios as JSON
-* Background hook scans via WP-Cron (optional request mode)
-* Concurrent-scan lock using transients
-* Configurable scan hook limit per plugin (default `500`)
-* Extensible API endpoint through `notificator_companion_api_endpoint` filter
-* Extensible templates via `notificator_companion_register_templates` and `notificator_companion_templates`
+= What you can do =
 
-= Quick Start =
+* Discover actions and filters in WordPress Core and installed plugins.
+* Review likely events in a ranked inbox with source, confidence, and noise information.
+* Start from ready-made templates or create a notification from scratch.
+* Deliver each event to the WordPress dashboard, mobile push, MQTT, or a combination.
+* Add conditions so a notification is sent only when its event data matches your rules.
+* Add placeholders, priority, and throttling to make alerts more useful and less noisy.
+* Export notification configurations as JSON and reuse them across WordPress sites.
+* Manage notifications and review delivery status from one activity workspace.
+* Register well-described events and templates from another plugin or theme.
 
-1. Go to `Notificator Companion` in wp-admin.
-2. Add one or more API keys (optionally add nicknames).
-3. Save settings.
-4. Run `Scan Plugins`.
-5. Apply a template or create custom scenarios.
-6. Keep only the scenarios you want enabled.
+= Events, templates, and notifications =
 
-= Scanning Notes =
+These three terms describe different stages:
 
-* Scans can include active plugins only or include inactive plugins.
-* A transient lock prevents overlapping scans.
-* When requested, scans can be queued to run in the background through WP-Cron.
-* Discovered hook data is cached and compacted to keep storage smaller.
-* If uploads storage is not writable, scanner cache handling falls back to plugin data paths.
+* An **event** is something that can happen in WordPress, such as a user signing in or an order changing status. Discovering or registering an event does not start monitoring it.
+* A **template** is a ready-made starting configuration for an event. Applying a template opens a draft that you can review and change.
+* A **notification** is the saved rule that listens for an event. Only enabled notifications can create alerts.
 
-= Security Notes =
+= Safer hook discovery =
 
-* Admin-only access (`manage_options`) for settings and AJAX actions.
-* Nonce validation for admin AJAX endpoints.
-* Outbound requests include bearer auth and HMAC headers (`X-Timestamp`, `X-Signature`).
-* Hook args are not sent by default as raw payload.
-
-== External Services ==
-
-This plugin sends outbound HTTPS requests to an external endpoint.
-
-= Service Endpoint =
-
-Default URL:
-`https://api-wpnotificator.netlify.app/.netlify/functions/wpnotif-api`
-
-Filterable via:
-`notificator_companion_api_endpoint`
-
-= Purpose =
-
-Receive notification events generated from enabled WordPress scenarios.
-
-= Data Sent =
-
-* Notification envelope (type/title/body/severity/source)
-* Scenario metadata (`hook_name`, `scenario_name`, `scenario_notes`)
-* Site metadata (`site_url`, `site_name`, WordPress version, plugin version, timestamp)
-* Delivery flags (`sendPush`, `sendMqtt`)
-
-= Data Not Sent By Default =
-
-* Raw hook argument payloads
-* Database contents
-* User account exports
-
-Note: if you configure scenario notes with placeholders, rendered values can include runtime-derived fields. Configure scenarios responsibly.
-
-== Privacy ==
-
-Notificator Companion does not track end users for analytics.
-
-Operational event metadata is stored in WordPress options for logging/toast features and may be sent to the configured external endpoint when scenarios are triggered.
-
-Site owners are responsible for reviewing their scenario configuration and ensuring compliance with their privacy obligations.
+Scanning runs locally in resumable background batches, processes one plugin at a time, limits per-plugin file and execution work, reuses unchanged results, and prevents overlapping jobs. Existing discoveries remain available until a new scan finishes. Discovery separates likely events from registrations and dynamic patterns. Optional observation samples traffic and batches database writes; it records approximate counts, argument types, and execution context, but not argument values.
 
 == Installation ==
 
-1. Upload this folder to `/wp-content/plugins/notificator-companion/`.
-2. Activate the plugin from `Plugins`.
-3. Open `Notificator Companion` in the left admin menu.
-4. Add API keys and save.
+1. Install and activate Notificator.
+2. Open **Notificator > Overview** in wp-admin.
+3. Select **Scan plugins** to discover available site events.
+4. Apply a template or create a notification from a discovered event.
+5. Keep **Dashboard** enabled to receive alerts inside WordPress.
+6. Optional: get the Notificator mobile app, create an account and API key, then add and enable that key in Settings.
+7. Enable Mobile push or MQTT on the notifications that need remote delivery.
+
+No API key is required for setup, discovery, templates, activity, or dashboard notifications.
 
 == Frequently Asked Questions ==
 
-= Who can configure this plugin? =
+= Do I need a Notificator account or API key? =
 
-Users with the `manage_options` capability.
+No. Dashboard delivery and the plugin's setup and management features work without one. An API key is needed only for mobile push or MQTT delivery.
 
-= Can I use more than one API key? =
+= What is the difference between a template and a notification? =
 
-Yes. You can store multiple keys, add nicknames, and test each key directly from its row.
+A template is an editable starting point. It does not listen for an event by itself. A notification is the saved, enabled rule that listens for an event and delivers an alert through your selected channels.
 
-= Are hook arguments transmitted externally? =
+= Does scanning send my plugin code to an external service? =
 
-Raw hook arguments are not sent directly. Scenario notes can optionally render selected runtime values if you configure placeholders.
+No. Hook discovery runs on your WordPress installation. Optional observation stores metadata such as execution counts and argument types, not argument values.
 
-= Can I export/import scenarios? =
+= Are hook arguments sent to Notificator? =
 
-Yes. Export produces JSON. Import supports merge or replace.
+The plugin does not send raw hook arguments as a complete payload. It sends the notification content and metadata described under External Services.
 
-= Does scanning block the admin? =
+Rendered placeholder values become part of the notification and may contain personal or sensitive information. Review each remote notification before enabling it.
 
-Direct scans run immediately. Background scan requests can be queued via WP-Cron. A transient lock prevents concurrent scan jobs.
+= How do I get a Notificator account? =
 
-= Can developers extend templates? =
+Search for **Notificator** in the [Apple App Store](https://apps.apple.com/) or [Google Play Store](https://play.google.com/store). Install the app and select the option to create an account. Registration is completed in the mobile app.
 
-Yes. Use `notificator_companion_register_templates` and `notificator_companion_templates`.
+= How do I receive notifications in the mobile app? =
+
+Install and sign in to the Notificator mobile app, create an API key from the app, and add that key in the plugin's Settings tab. Enable Mobile push on the notifications you want on your phone and make sure the app has notification permission.
+
+= Is there a Pro or paid version? =
+
+No. Notificator is free and open source, and we intend to keep its current features free. We may introduce optional new features or hosted services in the future, but they will not remove or place the functionality available today behind a paywall.
+
+= Can another plugin register an event or template? =
+
+Yes. Integrations can register documented events with `notificator_companion_register_event()` and provide templates through `notificator_companion_register_templates`. See the repository README and included sample plugin for complete examples.
+
+= Can I reuse my notification setup on another site? =
+
+Yes. Export configured notifications as JSON from Tools and import them on another site. You can merge with the destination setup or replace it. Review plugin availability, hooks, placeholders, API keys, and delivery channels before enabling imported notifications.
+
+= What happens to plugin data when I uninstall it? =
+
+Deactivation keeps the configuration. Deleting the plugin through WordPress removes all plugin-owned settings, notifications, activity, scan caches, scheduled jobs, user metadata, and transients, including across multisite.
+
+The Tools dialog also provides a test reset that can keep saved API keys.
+
+== Support Development ==
+
+If Notificator is useful to you, you can support its continued development through [Buy Me a Coffee](https://buymeacoffee.com/vagelis) or [GitHub Sponsors](https://github.com/sponsors/vagelisp). Donations are optional and do not unlock features or priority access.
+
+For other ways to contribute or support the platform, [get in touch](https://notificator-project.com/contact/).
+
+== External Services ==
+
+Notificator can connect to the Notificator service, operated by Notificator Project, to deliver notifications outside WordPress. This connection is optional. Dashboard-only notifications do not use the service.
+
+The plugin connects to the Notificator API at `https://wpnotif.notificator-project.com` only when an administrator tests an API key or an enabled notification requests Mobile push or MQTT delivery.
+
+= Data sent to the service =
+
+For authentication and request security, the request includes the enabled API key, site origin, timestamp, nonce, and HMAC signature.
+
+For a triggered notification, the request can include:
+
+* Notification title, body, priority, source, rendered notes, hook name, and notification name.
+* Mobile push and MQTT delivery choices.
+* Site URL and name, WordPress and plugin versions, and event timestamp.
+* Administrator-configured placeholder values.
+
+Raw hook arguments, WordPress database contents, and user exports are not sent wholesale.
+
+= How the service uses the data =
+
+The service validates the API key and allowed domains. Notification content may be encrypted with the account's public key and stored in Supabase for the Notificator app. Depending on account settings, it can use Expo for push, HiveMQ for MQTT, and Resend for email. Push previews may be generic while full content remains encrypted.
+
+Use of the remote service is subject to the information published by [Notificator Project](https://notificator-project.com/) and its [documentation](https://docs.notificator-project.com/).
+
+== Privacy ==
+
+Notificator does not add analytics or advertising tracking.
+
+The plugin stores configuration, discovery metadata, activity, dashboard-toast data, and temporary delivery jobs in the WordPress database. Scan caches may be stored in uploads. Observation stores counts and type metadata, not argument values.
+
+Remote delivery is opt-in per notification and requires an enabled API key. Administrators control the notification text and placeholders and are responsible for avoiding unnecessary personal or sensitive information.
+
+Deleting the plugin through WordPress removes plugin data as described in the FAQ.
 
 == Screenshots ==
 
-1. Main admin page with API keys and action bar
-2. Plugin scan modal and discovered hooks
-3. Scenario templates and custom scenario editor
-4. Notification log and tools actions
+1. Overview with setup progress, delivery health, and recent events.
+2. Ready-made templates for popular WordPress plugins and common events.
+3. Discovery inbox with ranked events, plain-language descriptions, and quick creation.
+4. Guided notification editor for choosing a source, event, message, and delivery channels.
 
 == Changelog ==
 
-= 2.0.0 =
-* Reworked admin experience with scenario-focused workflow
-* Multi-key API support with nickname fields and per-key testing
-* Improved scanner with compact cache and storage fallback behavior
-* Import/export scenarios and richer log management tools
-* Dashboard toast notifications and delivery preferences
-* Scan safety improvements: transient lock, background queue support, configurable scan limit
-
-== Upgrade Notice ==
-
-= 2.0.0 =
-Major admin and scanner update with scenarios, improved logging, and safer scan execution.
+= 1.1 =
+* Initial public release of Notificator.
+* Includes local dashboard alerts, optional mobile push and MQTT, event discovery, ready-made templates, conditions, activity history, integration APIs, and complete uninstall cleanup.
