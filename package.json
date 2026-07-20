@@ -1,28 +1,42 @@
 {
-	"name": "notificator-companion-admin-build",
+	"name": "notificator-admin-build",
 	"private": true,
 	"type": "module",
 	"scripts": {
 		"dev": "vite --config vite.admin.config.ts",
 		"build": "vite build --config vite.admin.config.ts && vite build --config vite.admin-toast.config.ts",
 		"build:debug": "vite build --sourcemap --config vite.admin.config.ts && vite build --sourcemap --config vite.admin-toast.config.ts",
+		"format": "bash ./scripts/format.sh",
+		"format:check": "prettier --no-error-on-unmatched-pattern --check \"assets/js/**/*.ts\" \"assets/src/**/*.{ts,scss,css}\" \"*.config.{ts,js}\" README.md package.json tsconfig.json",
+		"check:php": "composer check",
+		"lint:js": "eslint \"assets/**/*.ts\"",
+		"lint:styles": "stylelint \"assets/src/**/*.{css,scss}\"",
+		"lint": "npm run lint:js && npm run lint:styles",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"check": "npm run format:check && npm run lint && npm run check:php && npm run typecheck && npm run build",
 		"watch": "vite build --watch --config vite.admin.config.ts && vite build --watch --config vite.admin-toast.config.ts",
 		"build:release": "bash ./scripts/build-release.sh",
-		"build:release:skip-assets": "bash ./scripts/build-release.sh --skip-build",
-		"release:beta": "bash ./scripts/release-beta.sh"
+		"build:release:skip-assets": "bash ./scripts/build-release.sh --skip-build"
 	},
 	"dependencies": {
 		"alpinejs": "^3.15.8",
-		"cd": "^0.3.3",
 		"notyf": "^3.10.0"
 	},
 	"devDependencies": {
+		"@eslint/js": "^10.0.1",
 		"@tailwindcss/postcss": "^4.1.18",
+		"@types/node": "^26.1.1",
 		"autoprefixer": "^10.4.24",
-		"postcss": "^8.5.6",
+		"eslint": "^10.7.0",
+		"globals": "^17.7.0",
+		"postcss": "^8.5.20",
+		"prettier": "^3.9.5",
 		"sass": "^1.97.3",
+		"stylelint": "^17.14.1",
+		"stylelint-config-standard-scss": "^17.0.0",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.5.4",
-		"vite": "^6.4.2"
+		"typescript-eslint": "^8.65.0",
+		"vite": "^6.4.3"
 	}
 }

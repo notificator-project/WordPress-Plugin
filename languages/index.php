@@ -1,2 +1,6 @@
 <?php
-// Silence is golden.
+/**
+ * Prevent directory browsing when a server does not disable indexes.
+ *
+ * @package NotificatorCompanion
+ */

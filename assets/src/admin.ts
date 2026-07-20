@@ -1,12 +1,14 @@
-// Admin bundle entry (Vite)
-// - Bundles Tailwind + SCSS into admin.css
-// - Bundles scenario templates + admin UI JS
-// - Bundles Alpine.js locally and starts it after our globals are defined
+/**
+ * Main Vite entry for Notificator-owned admin pages.
+ *
+ * Loads compiled styling, registers the template and scenario-builder browser
+ * APIs, initializes Alpine, and exposes the page-local toast adapter.
+ */
 
 import './tailwind.css';
 import './admin.scss';
 
-import { Notyf } from 'notyf';
+import { Notyf, NotyfEvent } from 'notyf';
 import 'notyf/notyf.min.css';
 
 // These scripts are written as side-effect files (IIFEs) and attach to window.
@@ -16,7 +18,49 @@ import '../js/admin-scenarios';
 import Alpine from 'alpinejs';
 
 type ToastType = 'success' | 'error' | 'warn' | 'info';
-type ToastOptions = { duration?: number; url?: string };
+type ToastOptions = { duration?: number; url?: string; html?: boolean };
+type AjaxEnvelope<T = Record<string, unknown>> = { success?: boolean; data?: T };
+
+const escapeHtml = (value: unknown): string =>
+	String(value ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+
+/** Display consistent feedback even when the toast bundle is unavailable. */
+const notify = (message: unknown, type: ToastType = 'info', duration?: number): void => {
+	if (window.notificatorToast?.show) {
+		window.notificatorToast.show(message, type, { duration });
+		return;
+	}
+	window.console?.warn(String(message ?? ''));
+};
+
+/** Send a nonce-protected WordPress admin request and validate its JSON response. */
+const postAdminAction = async <T>(
+	action: string,
+	nonce: string,
+	payload: Record<string, string> = {}
+): Promise<AjaxEnvelope<T>> => {
+	const ajaxUrl = window.notificatorCompanionData?.ajaxUrl || window.ajaxurl || '';
+	if (!ajaxUrl || !action || !nonce) {
+		throw new Error('Missing AJAX configuration.');
+	}
+	const params = new URLSearchParams({ action, nonce, ...payload });
+	const response = await fetch(ajaxUrl, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+		body: params.toString(),
+		credentials: 'same-origin'
+	});
+	const result = (await response.json().catch(() => null)) as AjaxEnvelope<T> | null;
+	if (!response.ok || !result) {
+		throw new Error('The server returned an invalid response.');
+	}
+	return result;
+};
 
 // Expose Alpine for debugging/devtools parity with CDN usage.
 window.Alpine = Alpine;
@@ -29,9 +73,10 @@ const initAdminToasts = (): void => {
 	}
 
 	const toastSettings = data.toastSettings || {};
-	const durationMs = Math.max(1000, Math.min(15000, (parseInt(toastSettings.duration, 10) || 3) * 1000));
-	const positionX = ['left', 'center', 'right'].includes(toastSettings.positionX) ? toastSettings.positionX : 'right';
-	const positionY = ['top', 'bottom'].includes(toastSettings.positionY) ? toastSettings.positionY : 'top';
+	const durationMs = Math.max(1000, Math.min(15000, (parseInt(String(toastSettings.duration ?? 3), 10) || 3) * 1000));
+	const positionX: 'left' | 'center' | 'right' =
+		toastSettings.positionX === 'left' || toastSettings.positionX === 'center' ? toastSettings.positionX : 'right';
+	const positionY: 'top' | 'bottom' = toastSettings.positionY === 'bottom' ? 'bottom' : 'top';
 	const settingsKey = `${durationMs}:${positionX}:${positionY}`;
 
 	if (window.notificatorToastSettings !== settingsKey) {
@@ -48,7 +93,8 @@ const initAdminToasts = (): void => {
 		if (!notyf) {
 			return;
 		}
-		const text = String(message ?? '').replace(/^[✅❌⚠️🔔]\s*/, '');
+		const rawText = String(message ?? '').replace(/^[✅❌⚠️🔔]\s*/, '');
+		const text = options.html ? rawText : escapeHtml(rawText);
 		const duration = typeof options.duration === 'number' ? options.duration : durationMs;
 		const url = typeof options.url === 'string' ? options.url : undefined;
 		const colors = {
@@ -57,21 +103,19 @@ const initAdminToasts = (): void => {
 			warn: '#f59e0b',
 			info: '#2563eb'
 		};
-		const onClick = url
-			? () => {
-				window.location.href = url;
-			}
-			: undefined;
 		const variant = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
-		notyf.open({
+		const notification = notyf.open({
 			type: variant,
 			message: text,
 			background: colors[type] || colors.info,
 			duration,
-			className: `notificator-toast notificator-toast--${type}`,
-			clickable: !!onClick,
-			onClick
+			className: `notificator-toast notificator-toast--${type}`
 		});
+		if (url) {
+			notification.on(NotyfEvent.Click, () => {
+				window.location.href = url;
+			});
+		}
 	};
 
 	if (!window.notificatorToast) {
@@ -114,6 +158,7 @@ if (document.readyState === 'loading') {
 	initAdminToasts();
 }
 
+/** Initialize activity filtering and client-side pagination. */
 function initLogSearch(): void {
 	const input = document.getElementById('notificator-log-search') as HTMLInputElement | null;
 	const table = document.querySelector('.notificator-log-table') as HTMLTableElement | null;
@@ -123,14 +168,23 @@ function initLogSearch(): void {
 	const next = document.getElementById('notificator-log-next') as HTMLButtonElement | null;
 	const page = document.getElementById('notificator-log-page') as HTMLElement | null;
 	const perPageSelect = document.getElementById('notificator-log-per-page') as HTMLSelectElement | null;
+	const statusFilter = document.getElementById('notificator-log-status-filter') as HTMLSelectElement | null;
+	const severityFilter = document.getElementById('notificator-log-severity-filter') as HTMLSelectElement | null;
+	const reset = document.getElementById('notificator-log-reset') as HTMLButtonElement | null;
 	if (!input || !table) {
 		return;
 	}
 
-	const rows = Array.from(table.querySelectorAll('tbody tr')) as HTMLTableRowElement[];
 	let perPage = perPageSelect ? parseInt(perPageSelect.value, 10) || 20 : 20;
 	let currentPage = 1;
-	let filteredRows = rows;
+	let filteredRows: HTMLTableRowElement[] = [];
+	const getRows = (): HTMLTableRowElement[] =>
+		Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr.notificator-log-row'));
+	const normalize = (value: string): string =>
+		value
+			.normalize('NFKD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.toLocaleLowerCase();
 
 	const applyPagination = () => {
 		const totalPages = Math.max(1, Math.ceil(filteredRows.length / perPage));
@@ -139,8 +193,11 @@ function initLogSearch(): void {
 		}
 		const start = (currentPage - 1) * perPage;
 		const end = start + perPage;
+		getRows().forEach((row) => {
+			row.hidden = true;
+		});
 		filteredRows.forEach((row, index) => {
-			row.style.display = index >= start && index < end ? '' : 'none';
+			row.hidden = !(index >= start && index < end);
 		});
 
 		if (page) {
@@ -155,16 +212,25 @@ function initLogSearch(): void {
 	};
 
 	const applyFilter = () => {
-		const query = input.value.trim().toLowerCase();
-		let visible = 0;
-		filteredRows = rows.filter((row) => row && row.isConnected).filter((row) => {
-			const text = row.textContent ? row.textContent.toLowerCase() : '';
-			const match = !query || text.includes(query);
-			if (match) {
-				visible += 1;
-			}
-			return match;
+		const terms = normalize(input.value.trim()).split(/\s+/).filter(Boolean);
+		const selectedStatus = statusFilter ? statusFilter.value : '';
+		const selectedSeverity = severityFilter ? severityFilter.value : '';
+		const statusGroups: Record<string, string[]> = {
+			delivered: ['delivered', 'sent', 'dashboard_only'],
+			queued: ['pending', 'retrying'],
+			attention: ['failed', 'partial', 'not_sent', 'connection_required'],
+			suppressed: ['throttled', 'delivery_disabled']
+		};
+		filteredRows = getRows().filter((row) => {
+			const text = normalize(row.dataset.logSearch || row.textContent || '');
+			const rowStatus = row.dataset.logStatus || '';
+			const rowSeverity = row.dataset.logSeverity || '';
+			const statusMatch = !selectedStatus || (statusGroups[selectedStatus] || []).includes(rowStatus);
+			const severityMatch = !selectedSeverity || selectedSeverity === rowSeverity;
+			const searchMatch = terms.every((term) => text.includes(term));
+			return searchMatch && statusMatch && severityMatch;
 		});
+		const visible = filteredRows.length;
 		currentPage = 1;
 		applyPagination();
 
@@ -209,79 +275,128 @@ function initLogSearch(): void {
 	}
 
 	input.addEventListener('input', applyFilter);
+	statusFilter?.addEventListener('change', applyFilter);
+	severityFilter?.addEventListener('change', applyFilter);
+	reset?.addEventListener('click', () => {
+		input.value = '';
+		if (statusFilter) statusFilter.value = '';
+		if (severityFilter) severityFilter.value = '';
+		applyFilter();
+		input.focus();
+	});
 	applyFilter();
 }
 
+/** Persist binary preferences without reloading the settings workspace. */
+function initPreferenceToggles(): void {
+	type PreferenceDefinition = {
+		button: HTMLButtonElement | null;
+		kind: 'log' | 'toasts';
+		action?: string;
+		nonce?: string;
+		attribute: 'data-log-enabled' | 'data-toasts-enabled';
+	};
+
+	const data = window.notificatorCompanionData || {};
+	const actions = data.actions || {};
+	const nonces = data.nonces || {};
+	const definitions: PreferenceDefinition[] = [
+		{
+			button: document.getElementById('notificator-toggle-log') as HTMLButtonElement | null,
+			kind: 'log',
+			action: actions.toggleLog,
+			nonce: nonces.toggleLog,
+			attribute: 'data-log-enabled'
+		},
+		{
+			button: document.getElementById('notificator-toggle-admin-toasts') as HTMLButtonElement | null,
+			kind: 'toasts',
+			action: actions.toggleAdminToasts,
+			nonce: nonces.toggleAdminToasts,
+			attribute: 'data-toasts-enabled'
+		}
+	];
+
+	const render = (definition: PreferenceDefinition, enabled: boolean): void => {
+		const { button, kind, attribute } = definition;
+		if (!button) return;
+		const isLog = kind === 'log';
+		button.setAttribute(attribute, enabled ? '1' : '0');
+		button.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+		button.innerHTML = `<span class="dashicons ${enabled ? 'dashicons-no' : 'dashicons-yes'}"></span>${
+			isLog ? (enabled ? 'Disable activity log' : 'Enable activity log') : enabled ? 'Turn off' : 'Turn on'
+		}`;
+		if (!isLog) {
+			const settings = document.getElementById('notificator-dashboard-alert-settings');
+			settings?.classList.toggle('is-enabled', enabled);
+			settings?.classList.toggle('is-disabled', !enabled);
+		}
+		const cardStatus = document.getElementById(
+			isLog ? 'notificator-log-card-status' : 'notificator-dashboard-card-status'
+		);
+		const summary = document.getElementById(isLog ? 'notificator-log-summary' : 'notificator-dashboard-summary');
+		[cardStatus, summary].forEach((element) => {
+			if (!element) return;
+			element.classList.toggle('is-active', enabled);
+			element.classList.toggle('is-neutral', !enabled);
+			const label = element.matches('.notificator-card-status') ? element : element.querySelector('strong');
+			if (label) label.textContent = enabled ? 'On' : 'Off';
+		});
+	};
+
+	definitions.forEach((definition) => {
+		const { button, action, nonce, attribute } = definition;
+		if (!button) return;
+		button.addEventListener('click', async (event) => {
+			event.preventDefault();
+			const enabled = button.getAttribute(attribute) === '1';
+			button.disabled = true;
+			try {
+				const result = await postAdminAction<{ enabled?: boolean; message?: string }>(action || '', nonce || '', {
+					state: enabled ? 'disable' : 'enable'
+				});
+				if (!result.success) {
+					throw new Error(result.data?.message || 'Unable to update this preference.');
+				}
+				const nextEnabled = !!result.data?.enabled;
+				render(definition, nextEnabled);
+				if (definition.kind === 'toasts') {
+					data.toastsEnabled = nextEnabled;
+					document.dispatchEvent(
+						new CustomEvent('notificator:admin-toasts-toggle', { detail: { enabled: nextEnabled } })
+					);
+				}
+				notify(result.data?.message || 'Preference updated.', 'success');
+			} catch (error) {
+				notify(error instanceof Error ? error.message : 'Network error.', 'error');
+			} finally {
+				button.disabled = false;
+			}
+		});
+	});
+}
+
+/** Bind activity-log mutations and CSV export to nonce-protected AJAX actions. */
 function initLogTools(): void {
-	const toggleBtn = document.getElementById('notificator-toggle-log') as HTMLButtonElement | null;
 	const exportBtn = document.getElementById('notificator-export-log') as HTMLButtonElement | null;
 	const clearBtn = document.getElementById('notificator-clear-log') as HTMLButtonElement | null;
 	const logTable = document.querySelector('.notificator-log-table') as HTMLTableElement | null;
 	const data = window.notificatorCompanionData || {};
-	const ajaxUrl = data.ajaxUrl || '';
 	const actions = (data.actions || {}) as Record<string, string>;
 	const nonces = (data.nonces || {}) as Record<string, string>;
 
-	const postAction = (action: string, nonce: string, payload: Record<string, string>): Promise<Response> => {
-		const params = new URLSearchParams();
-		params.set('action', action);
-		params.set('nonce', nonce);
-		Object.keys(payload).forEach((key) => params.set(key, payload[key]));
-		return fetch(ajaxUrl, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-			body: params.toString(),
-			credentials: 'same-origin',
-		});
-	};
-
-	if (toggleBtn) {
-		toggleBtn.addEventListener('click', () => {
-			if (!ajaxUrl || !actions.toggleLog || !nonces.toggleLog) {
-				alert('Missing AJAX configuration.');
-				return;
-			}
-			const isEnabled = toggleBtn.getAttribute('data-log-enabled') === '1';
-			const nextState = isEnabled ? 'disable' : 'enable';
-			const confirmText = isEnabled ? 'Disable notifications log?' : 'Enable notifications log?';
-			if (!confirm(confirmText)) {
-				return;
-			}
-			toggleBtn.disabled = true;
-			postAction(actions.toggleLog, nonces.toggleLog, { state: nextState })
-				.then((res) => res.json())
-				.then((json) => {
-					if (json && json.success) {
-						alert(json.data.message || 'Log updated.');
-						window.location.reload();
-					} else {
-						alert((json && json.data && json.data.message) || 'Failed to update log.');
-					}
-				})
-				.catch(() => alert('Network error.'))
-				.finally(() => {
-					toggleBtn.disabled = false;
-				});
-		});
-	}
-
 	if (exportBtn) {
-			exportBtn.addEventListener('click', () => {
-			if (!ajaxUrl || !actions.exportLog || !nonces.exportLog) {
-				alert('Missing AJAX configuration.');
-				return;
-			}
+		exportBtn.addEventListener('click', () => {
 			exportBtn.disabled = true;
 			const original = exportBtn.innerHTML;
 			exportBtn.innerHTML = '<span class="dashicons dashicons-update spin"></span> Exporting...';
-			postAction(actions.exportLog, nonces.exportLog, {})
-				.then((res) => res.json())
+			postAdminAction<{ csv?: string; file_name?: string; message?: string }>(actions.exportLog, nonces.exportLog)
 				.then((json) => {
 					if (!json || !json.success) {
-						throw new Error((json && json.data && json.data.message) || 'Export failed');
+						throw new Error(json.data?.message || 'Export failed');
 					}
-					const csv = json.data && json.data.csv ? json.data.csv : '';
-					const fileName = json.data && json.data.file_name ? json.data.file_name : 'notificator-log.csv';
+					const csv = json.data?.csv || '';
+					const fileName = json.data?.file_name || 'notificator-log.csv';
 					const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
 					const url = URL.createObjectURL(blob);
 					const link = document.createElement('a');
@@ -291,8 +406,9 @@ function initLogTools(): void {
 					link.click();
 					link.remove();
 					URL.revokeObjectURL(url);
+					notify('Log exported.', 'success');
 				})
-				.catch((err) => alert(err && err.message ? err.message : 'Export failed'))
+				.catch((error) => notify(error instanceof Error ? error.message : 'Export failed', 'error'))
 				.finally(() => {
 					exportBtn.disabled = false;
 					exportBtn.innerHTML = original;
@@ -302,24 +418,19 @@ function initLogTools(): void {
 
 	if (clearBtn) {
 		clearBtn.addEventListener('click', () => {
-			if (!ajaxUrl || !actions.clearLog || !nonces.clearLog) {
-				alert('Missing AJAX configuration.');
-				return;
-			}
 			if (!confirm('Clear all log entries?')) {
 				return;
 			}
 			clearBtn.disabled = true;
-			postAction(actions.clearLog, nonces.clearLog, {})
-				.then((res) => res.json())
+			postAdminAction<{ message?: string }>(actions.clearLog, nonces.clearLog)
 				.then((json) => {
 					if (json && json.success) {
 						window.location.reload();
 					} else {
-						alert((json && json.data && json.data.message) || 'Failed to clear log.');
+						throw new Error(json.data?.message || 'Failed to clear log.');
 					}
 				})
-				.catch(() => alert('Network error.'))
+				.catch((error) => notify(error instanceof Error ? error.message : 'Network error.', 'error'))
 				.finally(() => {
 					clearBtn.disabled = false;
 				});
@@ -328,9 +439,7 @@ function initLogTools(): void {
 
 	if (logTable) {
 		logTable.addEventListener('click', (event) => {
-			const target = event.target instanceof Element
-				? event.target.closest('.notificator-log-delete')
-				: null;
+			const target = event.target instanceof Element ? event.target.closest('.notificator-log-delete') : null;
 			if (!target) {
 				return;
 			}
@@ -339,18 +448,13 @@ function initLogTools(): void {
 			if (!entryId) {
 				return;
 			}
-			if (!ajaxUrl || !actions.deleteLog || !nonces.deleteLog) {
-				alert('Missing AJAX configuration.');
-				return;
-			}
 			if (!confirm('Delete this log entry?')) {
 				return;
 			}
 			if (actionButton) {
 				actionButton.disabled = true;
 			}
-			postAction(actions.deleteLog, nonces.deleteLog, { entry_id: entryId })
-				.then((res) => res.json())
+			postAdminAction<{ message?: string }>(actions.deleteLog, nonces.deleteLog, { entry_id: entryId })
 				.then((json) => {
 					if (json && json.success) {
 						const row = target.closest('tr');
@@ -374,10 +478,10 @@ function initLogTools(): void {
 							}
 						}
 					} else {
-						alert((json && json.data && json.data.message) || 'Failed to delete log entry.');
+						throw new Error(json.data?.message || 'Failed to delete log entry.');
 					}
 				})
-				.catch(() => alert('Network error.'))
+				.catch((error) => notify(error instanceof Error ? error.message : 'Network error.', 'error'))
 				.finally(() => {
 					if (actionButton) {
 						actionButton.disabled = false;
@@ -387,10 +491,243 @@ function initLogTools(): void {
 	}
 }
 
+/** Manage the tools dialog, including keyboard and backdrop dismissal. */
+function initToolsModal(): void {
+	const details = document.getElementById('notificator-scenarios-menu') as HTMLDetailsElement | null;
+	const overviewTrigger = document.getElementById('notificator-overview-tools') as HTMLButtonElement | null;
+	const headerTrigger = document.getElementById('notificator-header-tools') as HTMLButtonElement | null;
+	const resetTestData = document.getElementById('notificator-reset-test-data') as HTMLButtonElement | null;
+	if (!details) return;
+	const data = window.notificatorCompanionData || {};
+	const actions = (data.actions || {}) as Record<string, string>;
+	const nonces = (data.nonces || {}) as Record<string, string>;
+
+	const close = (): void => {
+		details.open = false;
+		document.body.classList.remove('notificator-modal-open');
+		overviewTrigger?.setAttribute('aria-expanded', 'false');
+		headerTrigger?.setAttribute('aria-expanded', 'false');
+	};
+	const open = (): void => {
+		if (details.dataset.notificatorDisabled === '1') return;
+		details.open = true;
+		document.body.classList.add('notificator-modal-open');
+		overviewTrigger?.setAttribute('aria-expanded', 'true');
+		headerTrigger?.setAttribute('aria-expanded', 'true');
+		window.setTimeout(
+			() =>
+				details.querySelector<HTMLElement>('.notificator-tools-modal button, .notificator-tools-modal input')?.focus(),
+			0
+		);
+	};
+	const openFromTrigger = (event: Event): void => {
+		event.preventDefault();
+		event.stopPropagation();
+		open();
+	};
+
+	details.addEventListener('toggle', () => {
+		document.body.classList.toggle('notificator-modal-open', details.open);
+	});
+	details
+		.querySelectorAll<HTMLElement>('[data-notificator-tools-close]')
+		.forEach((button) => button.addEventListener('click', close));
+	details
+		.querySelectorAll<HTMLElement>('#notificator-import-scenarios')
+		.forEach((button) => button.addEventListener('click', () => window.setTimeout(close, 0)));
+	overviewTrigger?.setAttribute('aria-controls', details.id);
+	headerTrigger?.setAttribute('aria-controls', details.id);
+	overviewTrigger?.setAttribute('aria-expanded', 'false');
+	headerTrigger?.setAttribute('aria-expanded', 'false');
+	overviewTrigger?.addEventListener('click', openFromTrigger);
+	headerTrigger?.addEventListener('click', openFromTrigger);
+	resetTestData?.addEventListener('click', () => {
+		if (!actions.resetTestData || !nonces.resetTestData) return;
+		if (
+			!window.confirm(
+				'Reset notifications, activity, scan results, observation data, and preferences? Your API keys and their enabled states will be kept.'
+			)
+		)
+			return;
+		resetTestData.disabled = true;
+		const original = resetTestData.innerHTML;
+		resetTestData.innerHTML = '<span class="dashicons dashicons-update spin"></span> Resetting…';
+		const body = new URLSearchParams({ action: actions.resetTestData, nonce: nonces.resetTestData });
+		fetch(data.ajaxUrl || '', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body: body.toString()
+		})
+			.then((response) => response.json())
+			.then((json) => {
+				if (!json?.success) throw new Error(json?.data?.message || 'Unable to reset plugin data.');
+				window.notificatorToast?.show(json.data.message, 'success');
+				window.setTimeout(() => window.location.reload(), 800);
+			})
+			.catch((error) => {
+				window.notificatorToast?.show(error.message, 'error');
+				resetTestData.disabled = false;
+				resetTestData.innerHTML = original;
+			});
+	});
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape' && details.open) close();
+	});
+}
+
+/** Route every scan entry point through the shared scanner workflow. */
+function initScanTriggers(): void {
+	const details = document.getElementById('notificator-scenarios-menu') as HTMLDetailsElement | null;
+	document
+		.querySelectorAll<HTMLButtonElement>('#scan-plugins-btn, #auto-scan-btn, #notificator-scan-plugins-tool')
+		.forEach((button) => {
+			button.addEventListener('click', (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+				if (button.disabled || typeof window.startPluginScan !== 'function') return;
+				if (details?.open) details.open = false;
+				document.body.classList.remove('notificator-modal-open');
+				window.requestAnimationFrame(() => window.startPluginScan?.());
+			});
+		});
+}
+
+/** Filter, rank, ignore, and promote discovered events into the builder. */
+function initDiscoveryInbox(): void {
+	const list = document.getElementById('notificator-discovery-list');
+	const search = document.getElementById('notificator-discovery-search') as HTMLInputElement | null;
+	const filter = document.getElementById('notificator-discovery-filter') as HTMLSelectElement | null;
+	const empty = document.getElementById('notificator-discovery-empty') as HTMLElement | null;
+	const observationToggle = document.getElementById('notificator-observation-toggle') as HTMLButtonElement | null;
+	const browseAll = document.getElementById('notificator-browse-all-events') as HTMLButtonElement | null;
+	if (!list || !search || !filter) return;
+	const data = window.notificatorCompanionData || {};
+	const actions = (data.actions || {}) as Record<string, string>;
+	const nonces = (data.nonces || {}) as Record<string, string>;
+
+	type DiscoveryResponse = {
+		success?: boolean;
+		data?: { ignored?: boolean; message?: string };
+	};
+	const post = (action: string, nonce: string, payload: Record<string, string> = {}): Promise<DiscoveryResponse> => {
+		const body = new URLSearchParams({ action, nonce, ...payload });
+		return fetch(data.ajaxUrl || '', {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+			body: body.toString()
+		}).then((response) => response.json() as Promise<DiscoveryResponse>);
+	};
+	const matchesMode = (item: HTMLElement, mode: string): boolean =>
+		mode === 'all'
+			? item.dataset.ignored !== '1'
+			: mode === 'recommended'
+				? item.dataset.recommended === '1' && item.dataset.ignored !== '1'
+				: mode === 'observed'
+					? item.dataset.observed === '1' && item.dataset.ignored !== '1'
+					: mode === 'noisy'
+						? item.dataset.risk === 'potentially_noisy' && item.dataset.ignored !== '1'
+						: mode === 'dynamic'
+							? item.dataset.dynamic === '1' && item.dataset.ignored !== '1'
+							: mode === 'registration'
+								? item.dataset.registration === '1' && item.dataset.ignored !== '1'
+								: item.dataset.ignored === '1';
+	const updateFilterCounts = (): void => {
+		const items = Array.from(list.querySelectorAll<HTMLElement>('[data-discovery-item]'));
+		Array.from(filter.options).forEach((option) => {
+			const count = items.filter((item) => matchesMode(item, option.value)).length;
+			option.textContent = `${option.dataset.filterLabel || option.value} (${count})`;
+			option.disabled = count === 0 && option.value !== 'ignored';
+		});
+	};
+
+	const apply = (): void => {
+		const query = search.value.trim().toLocaleLowerCase();
+		const mode = filter.value;
+		let visible = 0;
+		list.querySelectorAll<HTMLElement>('[data-discovery-item]').forEach((item, index) => {
+			const rank = Number(item.dataset.discoveryRank ?? index);
+			const priority = Number(item.dataset.recommendPriority ?? 999);
+			item.dataset.discoveryRank = String(rank);
+			item.style.order = String(mode === 'recommended' ? priority * 10000 + rank : rank);
+			const matchesQuery = !query || (item.dataset.search || '').includes(query);
+			item.hidden = !(matchesQuery && matchesMode(item, mode));
+			if (!item.hidden) visible += 1;
+		});
+		if (empty) empty.hidden = visible > 0;
+	};
+
+	search.addEventListener('input', apply);
+	filter.addEventListener('change', apply);
+	browseAll?.addEventListener('click', () => {
+		const builder = window.notificatorScenarioBuilder;
+		if (!builder || typeof builder.openAddModal !== 'function') return;
+		builder.openAddModal?.();
+	});
+	list.addEventListener('click', (event) => {
+		const target = event.target instanceof Element ? event.target : null;
+		const create = target?.closest<HTMLButtonElement>('[data-discovery-create]');
+		if (create && !create.disabled) {
+			const builder = window.notificatorScenarioBuilder;
+			const pluginKey = create.dataset.plugin || '';
+			const hookName = create.dataset.hook || '';
+			if (builder && hookName) {
+				builder.openAddModal?.();
+				builder.selectedPluginModal = pluginKey;
+				const meta = builder.availablePlugins?.[pluginKey]?.hooks?.[hookName] || hookName;
+				builder.selectHook?.(hookName, meta);
+			}
+			return;
+		}
+		const ignore = target?.closest<HTMLButtonElement>('[data-discovery-ignore]');
+		if (!ignore || !actions.discoveryIgnore || !nonces.discovery) return;
+		ignore.disabled = true;
+		post(actions.discoveryIgnore, nonces.discovery, { candidate_id: ignore.dataset.candidateId || '' })
+			.then((json) => {
+				if (!json?.success) throw new Error(json?.data?.message || 'Unable to update discovery item.');
+				const responseData = json.data || {};
+				const item = ignore.closest<HTMLElement>('[data-discovery-item]');
+				if (item) item.dataset.ignored = responseData.ignored ? '1' : '0';
+				ignore.textContent = responseData.ignored ? 'Restore' : 'Ignore';
+				updateFilterCounts();
+				apply();
+			})
+			.catch((error) => window.notificatorToast?.show(error.message, 'error'))
+			.finally(() => {
+				ignore.disabled = false;
+			});
+	});
+
+	observationToggle?.addEventListener('click', () => {
+		const observing = observationToggle.dataset.observing === '1';
+		const action = observing ? actions.observationStop : actions.observationStart;
+		if (!action || !nonces.observation) return;
+		observationToggle.disabled = true;
+		post(action, nonces.observation, observing ? {} : { duration: '600' })
+			.then((json) => {
+				if (!json?.success) throw new Error(json?.data?.message || 'Unable to update observation.');
+				window.location.reload();
+			})
+			.catch((error) => {
+				window.notificatorToast?.show(error.message, 'error');
+				observationToggle.disabled = false;
+			});
+	});
+	updateFilterCounts();
+	apply();
+}
+
 if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', initLogSearch);
 } else {
 	initLogSearch();
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initPreferenceToggles);
+} else {
+	initPreferenceToggles();
 }
 
 if (document.readyState === 'loading') {
@@ -399,17 +736,33 @@ if (document.readyState === 'loading') {
 	initLogTools();
 }
 
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initToolsModal);
+} else {
+	initToolsModal();
+}
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initScanTriggers);
+} else {
+	initScanTriggers();
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initDiscoveryInbox);
+} else {
+	initDiscoveryInbox();
+}
+
+/** Keep API-key availability notices synchronized with editable key rows. */
 function initApiKeyWarning(): void {
 	const apiContainer = document.getElementById('notificator-api-keys') as HTMLElement | null;
 	const warning = document.querySelector('[data-notificator-lock="api-warning"]') as HTMLElement | null;
 	if (!apiContainer || !warning) {
 		return;
 	}
-	const inputs = Array.from(
-		apiContainer.querySelectorAll('input[name*="[api_keys]"]')
-	) as HTMLInputElement[];
-	const hasKey = apiContainer.getAttribute('data-has-api-key') === '1'
-		|| inputs.some((input) => input.value && input.value.trim());
+	const inputs = Array.from(apiContainer.querySelectorAll('input[name*="[api_keys]"]')) as HTMLInputElement[];
+	const hasKey =
+		apiContainer.getAttribute('data-has-api-key') === '1' || inputs.some((input) => input.value && input.value.trim());
 	if (hasKey) {
 		warning.setAttribute('hidden', '');
 		apiContainer.setAttribute('data-has-api-key', '1');
@@ -425,13 +778,15 @@ if (document.readyState === 'loading') {
 	initApiKeyWarning();
 }
 
+/** Persist dashboard-alert preferences without a full settings-page reload. */
 function initToastSettingsAutosave(): void {
+	const pollIntervalInput = document.getElementById('notificator-toast-poll-interval') as HTMLSelectElement | null;
 	const durationInput = document.getElementById('notificator-toast-duration') as HTMLInputElement | null;
 	const positionX = document.getElementById('notificator-toast-position-x') as HTMLSelectElement | null;
 	const positionY = document.getElementById('notificator-toast-position-y') as HTMLSelectElement | null;
 	const deliveryMode = document.getElementById('notificator-toast-delivery') as HTMLSelectElement | null;
 	const form = document.querySelector('form[action="options.php"]') as HTMLFormElement | null;
-	if (!durationInput || !positionX || !positionY || !deliveryMode || !form) {
+	if (!pollIntervalInput || !durationInput || !positionX || !positionY || !deliveryMode || !form) {
 		return;
 	}
 
@@ -463,8 +818,22 @@ function initToastSettingsAutosave(): void {
 		window.notificatorCompanionData = window.notificatorCompanionData || {};
 		window.notificatorCompanionData.toastSettings = nextSettings;
 		if (window.notificatorAdminToastData) {
+			window.notificatorAdminToastData.pollInterval = Math.max(
+				15,
+				Math.min(300, parseInt(pollIntervalInput.value, 10) || 30)
+			);
 			window.notificatorAdminToastData.toastSettings = nextSettings;
 			window.notificatorAdminToastData.toastDeliveryMode = nextSettings.deliveryMode;
+		}
+		const dashboardSummaryDetail = document.querySelector<HTMLElement>('#notificator-dashboard-summary em');
+		if (dashboardSummaryDetail) {
+			const seconds = Math.max(15, Math.min(300, parseInt(pollIntervalInput.value, 10) || 30));
+			dashboardSummaryDetail.textContent =
+				seconds === 60
+					? 'Every minute'
+					: seconds % 60 === 0
+						? `Every ${seconds / 60} minutes`
+						: `Every ${seconds} seconds`;
 		}
 		initAdminToasts();
 	};
@@ -473,9 +842,19 @@ function initToastSettingsAutosave(): void {
 			clearTimeout(timer);
 		}
 		timer = window.setTimeout(() => {
-			const formData = new FormData(form);
+			const formData = new FormData();
 			formData.append('action', actions.saveSettings);
 			formData.append('nonce', nonces.saveSettings);
+			formData.append(
+				'settings_patch',
+				JSON.stringify({
+					toast_poll_interval: Math.max(15, Math.min(300, parseInt(pollIntervalInput.value, 10) || 30)),
+					toast_duration: parseInt(durationInput.value, 10) || 3,
+					toast_position_x: positionX.value || 'right',
+					toast_position_y: positionY.value || 'top',
+					toast_delivery_mode: deliveryMode.value || 'account'
+				})
+			);
 			fetch(ajaxUrl, {
 				method: 'POST',
 				body: formData,
@@ -496,6 +875,7 @@ function initToastSettingsAutosave(): void {
 	};
 
 	['input', 'change'].forEach((evt) => {
+		pollIntervalInput.addEventListener(evt, save);
 		durationInput.addEventListener(evt, save);
 		positionX.addEventListener(evt, save);
 		positionY.addEventListener(evt, save);
@@ -503,6 +883,7 @@ function initToastSettingsAutosave(): void {
 	});
 }
 
+/** Persist delivery and discovery limits after a short input debounce. */
 function initLimitsAutosave(): void {
 	const throttleInput = document.getElementById('notificator-throttle-seconds') as HTMLInputElement | null;
 	const scanHookLimitInput = document.getElementById('notificator-scan-hook-limit') as HTMLInputElement | null;
@@ -534,9 +915,16 @@ function initLimitsAutosave(): void {
 			clearTimeout(timer);
 		}
 		timer = window.setTimeout(() => {
-			const formData = new FormData(form);
+			const formData = new FormData();
 			formData.append('action', actions.saveSettings);
 			formData.append('nonce', nonces.saveSettings);
+			formData.append(
+				'settings_patch',
+				JSON.stringify({
+					throttle_seconds: parseInt(throttleInput.value, 10) || 0,
+					scan_hook_limit: parseInt(scanHookLimitInput.value, 10) || 500
+				})
+			);
 			fetch(ajaxUrl, {
 				method: 'POST',
 				body: formData,
@@ -561,10 +949,11 @@ function initLimitsAutosave(): void {
 	});
 }
 
+/** Isolate unrelated WordPress notices from the app-style workspace layout. */
 function moveWpNotices(): void {
 	const target = document.getElementById('notificator-admin-notices');
 	const selectors = ['#message', '.notice', '.updated', '.error', '.settings-error'];
-	const notices = Array.from(document.querySelectorAll(selectors.join(','))).filter((node) => {
+	const notices = Array.from(document.querySelectorAll<HTMLElement>(selectors.join(','))).filter((node) => {
 		if (!(node instanceof HTMLElement)) {
 			return false;
 		}
@@ -579,10 +968,9 @@ function moveWpNotices(): void {
 			return false;
 		}
 		return (
-			parent.id === 'wpbody-content'
-			|| parent.classList.contains('wrap')
-			|| parent.classList.contains('notificator-companion-wrap')
-			|| node.closest('.notificator-companion-header') !== null
+			parent.id === 'wpbody-content' ||
+			parent.classList.contains('wrap') ||
+			parent.classList.contains('notificator-companion-wrap')
 		);
 	});
 
@@ -598,8 +986,14 @@ function moveWpNotices(): void {
 	}
 
 	if (!window.notificatorNoticesObserver && typeof MutationObserver !== 'undefined') {
+		let updateScheduled = false;
 		const observer = new MutationObserver(() => {
-			moveWpNotices();
+			if (updateScheduled) return;
+			updateScheduled = true;
+			window.requestAnimationFrame(() => {
+				updateScheduled = false;
+				moveWpNotices();
+			});
 		});
 		observer.observe(document.body, { childList: true, subtree: true });
 		window.notificatorNoticesObserver = observer;
@@ -622,4 +1016,90 @@ if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', moveWpNotices);
 } else {
 	moveWpNotices();
+}
+
+/**
+ * Workspace navigation. Existing section ids remain supported so
+ * bookmarks and links from older releases continue to land in the right place.
+ */
+function initWorkspaceNavigation(): void {
+	const panels = Array.from(document.querySelectorAll<HTMLElement>('[data-notificator-workspace]'));
+	const tabs = Array.from(
+		document.querySelectorAll<HTMLElement>('.notificator-workspace-tabs [data-notificator-workspace-tab]')
+	);
+	const title = document.getElementById('notificator-workspace-title');
+	const shell = document.querySelector<HTMLElement>('.notificator-companion-wrap');
+	if (!panels.length || !tabs.length) return;
+
+	const labels: Record<string, string> = {
+		overview: 'Overview',
+		notifications: 'Notifications',
+		activity: 'Activity',
+		settings: 'Settings',
+		developer: 'Developer',
+		support: 'Support'
+	};
+	const legacy: Record<string, string> = {
+		'notificator-api': 'settings',
+		'notificator-help': 'support',
+		'notificator-templates': 'notifications',
+		'notificator-builder': 'notifications',
+		'notificator-log': 'activity',
+		'notificator-integrations': 'developer'
+	};
+
+	const resolveWorkspace = (): string => {
+		const hash = window.location.hash.replace(/^#/, '');
+		if (labels[hash]) return hash;
+		if (legacy[hash]) return legacy[hash];
+		const initial = shell?.dataset.notificatorInitialWorkspace || '';
+		return labels[initial] ? initial : 'overview';
+	};
+
+	const activate = (workspace: string, updateHash = true): void => {
+		const next = labels[workspace] ? workspace : 'overview';
+		if (shell) shell.dataset.notificatorCurrentWorkspace = next;
+		panels.forEach((panel) => {
+			panel.hidden = panel.dataset.notificatorWorkspace !== next;
+		});
+		tabs.forEach((tab) => {
+			const active = tab.dataset.notificatorWorkspaceTab === next;
+			tab.classList.toggle('is-active', active);
+			if (active) tab.setAttribute('aria-current', 'page');
+			else tab.removeAttribute('aria-current');
+		});
+		if (title) title.textContent = labels[next];
+		if (updateHash && window.location.hash !== `#${next}`) {
+			history.replaceState(null, '', `#${next}`);
+		}
+		const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+	};
+
+	document.addEventListener('click', (event) => {
+		const target =
+			event.target instanceof Element ? event.target.closest<HTMLElement>('[data-notificator-workspace-tab]') : null;
+		if (!target) return;
+		const workspace = target.dataset.notificatorWorkspaceTab;
+		if (!workspace) return;
+		event.preventDefault();
+		activate(workspace);
+	});
+
+	document.addEventListener('click', (event) => {
+		const target =
+			event.target instanceof Element ? event.target.closest<HTMLElement>('[data-notificator-create]') : null;
+		if (!target || target.hasAttribute('disabled')) return;
+		activate('notifications');
+		window.dispatchEvent(new CustomEvent('notificator:add-scenario'));
+	});
+
+	window.addEventListener('hashchange', () => activate(resolveWorkspace(), false));
+	activate(resolveWorkspace(), false);
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initWorkspaceNavigation);
+} else {
+	initWorkspaceNavigation();
 }

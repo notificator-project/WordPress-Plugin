@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<ruleset name="Notificator">
+	<description>Release coding standards for the Notificator WordPress plugin.</description>
+
+	<file>notificator.php</file>
+	<file>admin</file>
+	<file>includes</file>
+	<file>languages</file>
+	<file>uninstall.php</file>
+	<file>examples/notificator-sample-plugin</file>
+
+	<exclude-pattern>*/assets/dist/*</exclude-pattern>
+	<exclude-pattern>*/dist/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+
+	<arg name="basepath" value="."/>
+	<arg name="colors"/>
+	<arg name="extensions" value="php"/>
+	<arg value="sp"/>
+
+	<config name="minimum_supported_wp_version" value="5.0"/>
+	<config name="testVersion" value="7.2-"/>
+
+	<rule ref="WordPress-Core"/>
+	<rule ref="WordPress-Docs"/>
+	<rule ref="WordPress-Extra"/>
+	<rule ref="PHPCompatibilityWP"/>
+
+	<!-- Legacy filenames and the mixed bootstrap are part of the public plugin layout. -->
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>notificator.php</exclude-pattern>
+		<exclude-pattern>admin/class-admin-page.php</exclude-pattern>
+		<exclude-pattern>includes/class-plugin-scanner.php</exclude-pattern>
+		<exclude-pattern>includes/class-delivery-queue.php</exclude-pattern>
+		<exclude-pattern>includes/class-health-service.php</exclude-pattern>
+	</rule>
+	<rule ref="Universal.Files.SeparateFunctionsFromOO.Mixed">
+		<exclude-pattern>notificator.php</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="notificator"/>
+				<element value="Notificator"/>
+				<element value="NOTIFICATOR"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

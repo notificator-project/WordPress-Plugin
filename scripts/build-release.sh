@@ -3,15 +3,20 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
-PACKAGE_SLUG="notificator-companion"
+PACKAGE_SLUG="notificator"
 PACKAGE_DIR="$DIST_DIR/$PACKAGE_SLUG"
 ZIP_PATH="$DIST_DIR/$PACKAGE_SLUG.zip"
+SAMPLE_SLUG="notificator-sample-plugin"
+SAMPLE_ZIP="$ROOT_DIR/examples/$SAMPLE_SLUG.zip"
 
 SKIP_BUILD="${1:-}"
 
 if [[ "$SKIP_BUILD" != "--skip-build" ]]; then
-  echo "Building admin assets..."
-  npm --prefix "$ROOT_DIR" run build
+	echo "Formatting source files..."
+	npm --prefix "$ROOT_DIR" run format
+
+	echo "Type-checking and building admin assets..."
+	npm --prefix "$ROOT_DIR" run check
 fi
 
 echo "Preparing release directory..."
@@ -19,24 +24,51 @@ rm -rf "$PACKAGE_DIR"
 mkdir -p "$PACKAGE_DIR"
 
 # Copy only runtime/distribution files.
-cp "$ROOT_DIR/notificator-companion.php" "$PACKAGE_DIR/"
+cp "$ROOT_DIR/notificator.php" "$PACKAGE_DIR/"
 cp "$ROOT_DIR/readme.txt" "$PACKAGE_DIR/"
 cp "$ROOT_DIR/uninstall.php" "$PACKAGE_DIR/"
 
 cp -R "$ROOT_DIR/admin" "$PACKAGE_DIR/"
-cp -R "$ROOT_DIR/assets" "$PACKAGE_DIR/"
+mkdir -p "$PACKAGE_DIR/assets"
+cp -R "$ROOT_DIR/assets/dist" "$PACKAGE_DIR/assets/"
 cp -R "$ROOT_DIR/includes" "$PACKAGE_DIR/"
 cp -R "$ROOT_DIR/languages" "$PACKAGE_DIR/"
 
 # Remove junk files that can trigger Plugin Check warnings.
 find "$PACKAGE_DIR" -name '.DS_Store' -delete
+find "$PACKAGE_DIR" -name '*.backup' -delete
+find "$PACKAGE_DIR" -name 'methods_insert.txt' -delete
+
+for required_file in notificator.php readme.txt uninstall.php assets/dist/admin.js assets/dist/admin.css assets/dist/admin-toast.js assets/dist/admin-toast.css; do
+	if [[ ! -f "$PACKAGE_DIR/$required_file" ]]; then
+		echo "Missing required release file: $required_file" >&2
+		exit 1
+	fi
+done
+
+if find "$PACKAGE_DIR" -type f \( -name '*.map' -o -name '*.backup' -o -name '.DS_Store' \) -print -quit | grep -q .; then
+	echo "Development-only files remain in the release package." >&2
+	exit 1
+fi
+
+echo "Building sample integration package..."
+rm -f "$ROOT_DIR/examples/notificator-companion-sample-plugin.zip"
+rm -f "$SAMPLE_ZIP"
+(
+  cd "$ROOT_DIR/examples"
+  zip -rq "$SAMPLE_ZIP" "$SAMPLE_SLUG"
+)
 
 mkdir -p "$DIST_DIR"
+rm -rf "$DIST_DIR/notificator-companion"
+rm -f "$DIST_DIR/notificator-companion.zip"
 rm -f "$ZIP_PATH"
 
 (
-  cd "$DIST_DIR"
-  zip -rq "$ZIP_PATH" "$PACKAGE_SLUG"
+	cd "$DIST_DIR"
+	zip -rq "$ZIP_PATH" "$PACKAGE_SLUG"
 )
+
+unzip -tq "$ZIP_PATH" >/dev/null
 
 echo "Release package created: $ZIP_PATH"

@@ -5,11 +5,11 @@
    We provide a small, scoped reset in admin.scss under .notificator-companion-wrap.
 */
 
-@import "tailwindcss/theme";
-@import "tailwindcss/utilities";
+@import 'tailwindcss/theme';
+@import 'tailwindcss/utilities';
 
 /* Ensure Tailwind scans our WordPress admin markup and any JS templates. */
 @source "../../admin/**/*.php";
 @source "../../includes/**/*.php";
-@source "../js/**/*.js";
-@source "./**/*.js";
+@source "../js/**/*.ts";
+@source "./**/*.ts";

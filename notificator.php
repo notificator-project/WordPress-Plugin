@@ -1,15 +1,15 @@
 <?php
-
 /**
- * Plugin Name: Notificator Companion
- * Plugin URI: https://github.com/notificator-project/WordPress-Plugin
- * Description: WordPress companion plugin for Notificator app. Send notifications, monitor events, and integrate with your notification service.
- * Version: 1.1.0-beta.3
+ * Plugin Name: Notificator – Alerts & Notifications
+ * Plugin URI: https://github.com/vagelisp/netlify-uptime-monitor/tree/main/plugin
+ * Description: Turn WordPress events into dashboard alerts, with optional mobile push and MQTT delivery.
+ * Version: 1.1
  * Author: Vagelis Papaioannou
  * Author URI: https://github.com/vagelisp
  * License: GPL-3.0-or-later
- * Text Domain: notificator-companion
+ * Text Domain: notificator
  * Domain Path: /languages
+ * Requires at least: 5.0
  * Requires PHP: 7.2
  *
  * @package NotificatorCompanion
@@ -21,11 +21,106 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'NOTIFICATOR_COMPANION_VERSION', '1.1.0-beta.3' );
+define( 'NOTIFICATOR_COMPANION_VERSION', '1.1' );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_FILE', __FILE__ );
-define( 'NOTIFICATOR_COMPANION_API_ENDPOINT', 'https://api-wpnotificator.netlify.app/.netlify/functions/wpnotif-api' );
+define( 'NOTIFICATOR_COMPANION_API_ENDPOINT', 'https://wpnotif.notificator-project.com' );
+
+if ( ! function_exists( 'notificator_companion_register_event' ) ) {
+	/**
+	 * Register a WordPress event exposed by a plugin or theme.
+	 *
+	 * Registered events are added to the Discover inbox without relying on a
+	 * source scan. Integrations must still emit the event with do_action().
+	 *
+	 * Required key: `hook_name`. Optional keys: `label`, `description`,
+	 * `plugin_slug`, `plugin_name`, `plugin_file`, `arg_names`, and `properties`.
+	 *
+	 * @param array $event Event definition.
+	 * @return bool True when the event was registered.
+	 */
+	function notificator_companion_register_event( $event ) {
+		global $notificator_companion_registered_events;
+
+		if ( ! is_array( $event ) || empty( $event['hook_name'] ) || ! is_string( $event['hook_name'] ) ) {
+			return false;
+		}
+
+		$hook_name = trim( $event['hook_name'] );
+		if ( '' === $hook_name || ! preg_match( '/^[A-Za-z0-9_.:\/-]+$/', $hook_name ) ) {
+			return false;
+		}
+
+		$plugin_slug = isset( $event['plugin_slug'] ) ? sanitize_key( (string) $event['plugin_slug'] ) : 'custom-integrations';
+		if ( '' === $plugin_slug ) {
+			$plugin_slug = 'custom-integrations';
+		}
+
+		$arg_names = array();
+		if ( isset( $event['arg_names'] ) && is_array( $event['arg_names'] ) ) {
+			foreach ( $event['arg_names'] as $arg_name ) {
+				$arg_name = sanitize_key( (string) $arg_name );
+				if ( '' !== $arg_name ) {
+					$arg_names[] = $arg_name;
+				}
+			}
+		}
+
+		$label = isset( $event['label'] ) ? sanitize_text_field( (string) $event['label'] ) : '';
+		if ( '' === $label ) {
+			$label = ucwords( str_replace( array( '_', '-', '/', '.' ), ' ', $hook_name ) );
+		}
+
+		$definition = array(
+			'hook_name'   => $hook_name,
+			'label'       => $label,
+			'description' => isset( $event['description'] ) ? sanitize_text_field( (string) $event['description'] ) : '',
+			'plugin_slug' => $plugin_slug,
+			'plugin_name' => isset( $event['plugin_name'] ) ? sanitize_text_field( (string) $event['plugin_name'] ) : $plugin_slug,
+			'plugin_file' => isset( $event['plugin_file'] ) ? sanitize_text_field( (string) $event['plugin_file'] ) : '',
+			'arg_names'   => array_values( array_unique( $arg_names ) ),
+			'properties'  => isset( $event['properties'] ) && is_array( $event['properties'] ) ? $event['properties'] : array(),
+		);
+
+		if ( ! is_array( $notificator_companion_registered_events ) ) {
+			$notificator_companion_registered_events = array();
+		}
+		$notificator_companion_registered_events[ $plugin_slug . '|' . $hook_name ] = $definition;
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'notificator_companion_load_registered_events' ) ) {
+	/**
+	 * Load event definitions supplied by third-party integrations once per request.
+	 *
+	 * @return void
+	 */
+	function notificator_companion_load_registered_events() {
+		global $notificator_companion_events_loaded;
+		if ( ! empty( $notificator_companion_events_loaded ) ) {
+			return;
+		}
+		$notificator_companion_events_loaded = true;
+		do_action( 'notificator_companion_register_events' );
+	}
+}
+
+if ( ! function_exists( 'notificator_companion_get_registered_events' ) ) {
+	/**
+	 * Get registered third-party event definitions.
+	 *
+	 * @return array<int,array> Registered events.
+	 */
+	function notificator_companion_get_registered_events() {
+		global $notificator_companion_registered_events;
+		notificator_companion_load_registered_events();
+		$events = is_array( $notificator_companion_registered_events ) ? array_values( $notificator_companion_registered_events ) : array();
+		return array_values( array_filter( apply_filters( 'notificator_companion_registered_events', $events ), 'is_array' ) );
+	}
+}
 
 if ( ! function_exists( 'notificator_companion_get_api_endpoint' ) ) {
 	/**
@@ -44,24 +139,20 @@ if ( ! function_exists( 'notificator_companion_get_api_endpoint' ) ) {
 // Include required files.
 require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'admin/class-admin-page.php';
 require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'includes/class-plugin-scanner.php';
+require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'includes/class-health-service.php';
+require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'includes/class-delivery-queue.php';
 
-/**
- * Register a scenario template for the Notificator admin UI.
- *
- * Expected keys (all strings unless noted):
- * - icon (string) Emoji or dashicon class (e.g. dashicons-admin-generic).
- * - title (string) Template title shown in the UI.
- * - hook_name (string) Hook to target when creating a scenario.
- * - description (string) Short description for the template.
- * - scenario_name (string) Default scenario name when applied.
- * - required_plugin (string) Plugin slug used for filtering.
- * - hook_meta (array) Optional hook metadata (arg_names, payload_arity, properties).
- * - conditions (array) Optional prefilled conditions list.
- *
- * @param array $template Template definition.
- * @return void
- */
 if ( ! function_exists( 'notificator_companion_register_template' ) ) {
+	/**
+	 * Register a scenario template for the Notificator admin UI.
+	 *
+	 * Expected keys are `icon`, `title`, `hook_name`, `description`,
+	 * `scenario_name`, and `required_plugin`. Optional `hook_meta` and
+	 * `conditions` arrays can prefill payload details and builder conditions.
+	 *
+	 * @param array $template Template definition.
+	 * @return void
+	 */
 	function notificator_companion_register_template( $template ) {
 		global $notificator_companion_registered_templates;
 
@@ -75,12 +166,12 @@ if ( ! function_exists( 'notificator_companion_register_template' ) ) {
 	}
 }
 
-/**
- * Get registered scenario templates.
- *
- * @return array<int, array> Registered templates.
- */
 if ( ! function_exists( 'notificator_companion_get_registered_templates' ) ) {
+	/**
+	 * Get registered scenario templates.
+	 *
+	 * @return array<int, array> Registered templates.
+	 */
 	function notificator_companion_get_registered_templates() {
 		global $notificator_companion_registered_templates;
 
@@ -126,6 +217,34 @@ class Notificator_Companion {
 	private $plugin_scanner;
 
 	/**
+	 * Runtime delivery and scan health recorder.
+	 *
+	 * @var Notificator_Companion_Health_Service
+	 */
+	private $health_service;
+
+	/**
+	 * Retry-aware remote delivery service.
+	 *
+	 * @var Notificator_Companion_Delivery_Queue
+	 */
+	private $delivery_queue;
+
+	/**
+	 * Hook names eligible for short-lived runtime observation.
+	 *
+	 * @var array<string,bool>
+	 */
+	private $observation_candidates = array();
+
+	/**
+	 * Aggregated runtime observations waiting to be persisted.
+	 *
+	 * @var array<string,array>
+	 */
+	private $observation_buffer = array();
+
+	/**
 	 * Get plugin instance (Singleton pattern)
 	 *
 	 * @return Notificator_Companion
@@ -144,6 +263,8 @@ class Notificator_Companion {
 		// Initialize components.
 		$this->admin_page     = new Notificator_Companion_Admin_Page( $this );
 		$this->plugin_scanner = new Notificator_Companion_Plugin_Scanner();
+		$this->health_service = new Notificator_Companion_Health_Service();
+		$this->delivery_queue = new Notificator_Companion_Delivery_Queue( array( $this, 'get_delivery_request_headers' ) );
 
 		// Register hooks.
 		$this->register_hooks();
@@ -165,6 +286,7 @@ class Notificator_Companion {
 		// AJAX handlers.
 		add_action( 'wp_ajax_notificator_companion_test', array( $this, 'handle_test_notification' ) );
 		add_action( 'wp_ajax_notificator_companion_refresh_hooks', array( $this, 'handle_refresh_hooks' ) );
+		add_action( 'wp_ajax_notificator_companion_get_health', array( $this, 'handle_get_health' ) );
 		add_action( 'wp_ajax_notificator_companion_save_settings', array( $this, 'handle_save_settings_ajax' ) );
 		add_action( 'wp_ajax_notificator_companion_export_hooks', array( $this, 'handle_export_hooks' ) );
 		add_action( 'wp_ajax_notificator_companion_import_hooks', array( $this, 'handle_import_hooks' ) );
@@ -173,32 +295,47 @@ class Notificator_Companion {
 		add_action( 'wp_ajax_notificator_companion_clear_log', array( $this, 'handle_clear_log' ) );
 		add_action( 'wp_ajax_notificator_companion_delete_log_entry', array( $this, 'handle_delete_log_entry' ) );
 		add_action( 'wp_ajax_notificator_companion_toggle_admin_toasts', array( $this, 'handle_toggle_admin_toasts' ) );
+		add_action( 'wp_ajax_notificator_companion_discovery_ignore', array( $this, 'handle_discovery_ignore' ) );
+		add_action( 'wp_ajax_notificator_companion_observation_start', array( $this, 'handle_observation_start' ) );
+		add_action( 'wp_ajax_notificator_companion_observation_stop', array( $this, 'handle_observation_stop' ) );
+		add_action( 'wp_ajax_notificator_companion_reset_test_data', array( $this, 'handle_reset_test_data' ) );
 		add_action( 'wp_ajax_notificator_companion_fetch_admin_toasts', array( $this, 'handle_fetch_admin_toasts' ) );
 		add_action( 'notificator_companion_run_background_scan', array( $this, 'handle_background_scan_event' ), 10, 1 );
+		add_action( 'notificator_companion_delivery_result', array( $this, 'handle_delivery_result' ), 10, 3 );
+		add_action( 'notificator_companion_scan_progress', array( $this, 'handle_scan_progress' ), 10, 1 );
 
 		// Initialize hook listeners.
+		add_action( 'init', array( $this, 'setup_hook_observation' ), 1 );
 		add_action( 'init', array( $this, 'setup_hook_listeners' ) );
-
+		add_action( 'shutdown', array( $this, 'flush_hook_observation' ), 1 );
 	}
 
 	/**
 	 * Enqueue global admin toast assets and render queued toasts.
 	 *
-	 * @param string $hook Current admin page hook.
 	 * @return void
 	 */
-	public function enqueue_admin_toast_assets( $hook ) {
+	public function enqueue_admin_toast_assets() {
 		$options = get_option( $this->option_name );
 		if ( ! is_array( $options ) ) {
 			$options = array();
 		}
 		$admin_toasts_enabled = ! isset( $options['admin_toasts_enabled'] ) || (bool) $options['admin_toasts_enabled'];
-		if ( ! $admin_toasts_enabled ) {
-			return;
-		}
-		$toast_delivery_mode = isset( $options['toast_delivery_mode'] ) ? (string) $options['toast_delivery_mode'] : 'account';
+		$toast_delivery_mode  = isset( $options['toast_delivery_mode'] ) ? (string) $options['toast_delivery_mode'] : 'account';
 		if ( ! in_array( $toast_delivery_mode, array( 'account', 'tab' ), true ) ) {
 			$toast_delivery_mode = 'account';
+		}
+		$page           = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_plugin_page = 0 === strpos( $page, 'notificator' );
+		if ( ! $admin_toasts_enabled && ! $is_plugin_page ) {
+			return;
+		}
+
+		$handle         = 'notificator-companion-admin-toast';
+		$toast_css_path = NOTIFICATOR_COMPANION_PLUGIN_DIR . 'assets/dist/admin-toast.css';
+		$toast_js_path  = NOTIFICATOR_COMPANION_PLUGIN_DIR . 'assets/dist/admin-toast.js';
+		if ( ! file_exists( $toast_js_path ) ) {
+			return;
 		}
 
 		$toasts = get_option( 'notificator_companion_admin_toasts', array() );
@@ -207,19 +344,19 @@ class Notificator_Companion {
 		}
 
 		$settings_url = current_user_can( 'manage_options' )
-			? admin_url( 'admin.php?page=notificator-companion#notificator-log' )
+			? admin_url( 'admin.php?page=notificator#notificator-log' )
 			: '';
-		$clean = ( 'tab' === $toast_delivery_mode )
-			? $this->get_recent_admin_toasts( $toasts, $settings_url )
-			: $this->get_unseen_admin_toasts( $toasts, $settings_url );
+		$clean        = array();
+		if ( $admin_toasts_enabled ) {
+			$clean = ( 'tab' === $toast_delivery_mode )
+				? $this->get_recent_admin_toasts( $toasts, $settings_url )
+				: $this->get_unseen_admin_toasts( $toasts, $settings_url );
+		}
 
 		if ( empty( $clean ) ) {
 			$clean = array();
 		}
 
-		$handle = 'notificator-companion-admin-toast';
-		$toast_css_path = NOTIFICATOR_COMPANION_PLUGIN_DIR . 'assets/dist/admin-toast.css';
-		$toast_js_path  = NOTIFICATOR_COMPANION_PLUGIN_DIR . 'assets/dist/admin-toast.js';
 		if ( file_exists( $toast_css_path ) ) {
 			wp_enqueue_style(
 				$handle,
@@ -228,43 +365,32 @@ class Notificator_Companion {
 				(string) filemtime( $toast_css_path )
 			);
 		}
-		wp_add_inline_style(
+		wp_enqueue_script(
 			$handle,
-			''
+			NOTIFICATOR_COMPANION_PLUGIN_URL . 'assets/dist/admin-toast.js',
+			array(),
+			(string) filemtime( $toast_js_path ),
+			true
 		);
-		if ( file_exists( $toast_js_path ) ) {
-			wp_enqueue_script(
-				$handle,
-				NOTIFICATOR_COMPANION_PLUGIN_URL . 'assets/dist/admin-toast.js',
-				array(),
-				(string) filemtime( $toast_js_path ),
-				true
-			);
-		}
-		wp_add_inline_script(
+		wp_localize_script(
 			$handle,
-			"window.notificatorAdminToastData=" . wp_json_encode(
-				array(
-					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-					'action'  => 'notificator_companion_fetch_admin_toasts',
-					'nonce'   => wp_create_nonce( 'notificator_companion_fetch_admin_toasts' ),
-					'toastDeliveryMode' => $toast_delivery_mode,
-					'toastSettings' => array(
-						'duration'  => isset( $options['toast_duration'] ) ? (int) $options['toast_duration'] : 3,
-						'positionX' => isset( $options['toast_position_x'] ) ? (string) $options['toast_position_x'] : 'right',
-						'positionY' => isset( $options['toast_position_y'] ) ? (string) $options['toast_position_y'] : 'top',
-						'dismissMode' => isset( $options['toast_dismiss_mode'] ) ? (string) $options['toast_dismiss_mode'] : 'auto',
-					),
-				)
-			) . ";",
-			'before'
+			'notificatorAdminToastData',
+			array(
+				'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+				'action'            => 'notificator_companion_fetch_admin_toasts',
+				'nonce'             => wp_create_nonce( 'notificator_companion_fetch_admin_toasts' ),
+				'enabled'           => $admin_toasts_enabled,
+				'pollInterval'      => isset( $options['toast_poll_interval'] ) ? (int) $options['toast_poll_interval'] : 30,
+				'toastDeliveryMode' => $toast_delivery_mode,
+				'toastSettings'     => array(
+					'duration'    => isset( $options['toast_duration'] ) ? (int) $options['toast_duration'] : 3,
+					'positionX'   => isset( $options['toast_position_x'] ) ? (string) $options['toast_position_x'] : 'right',
+					'positionY'   => isset( $options['toast_position_y'] ) ? (string) $options['toast_position_y'] : 'top',
+					'dismissMode' => isset( $options['toast_dismiss_mode'] ) ? (string) $options['toast_dismiss_mode'] : 'auto',
+				),
+				'pendingToasts'     => $clean,
+			)
 		);
-		wp_add_inline_script(
-			$handle,
-			"(function(){var toasts=" . wp_json_encode( $clean ) . ";function readSeen(storage,key){try{var raw=storage.getItem(key);var arr=raw?JSON.parse(raw):[];return Array.isArray(arr)?arr:[];}catch(e){return [];}}function getSeen(){var session=readSeen(window.sessionStorage,'notificatorToastSeen');var local=readSeen(window.localStorage,'notificatorToastSeenGlobal');return Array.from(new Set(session.concat(local)));}function setSeen(arr){try{var data=JSON.stringify(arr);window.sessionStorage.setItem('notificatorToastSeen',data);window.localStorage.setItem('notificatorToastSeenGlobal',data);}catch(e){}}function flush(){if(!window.notificatorToast||!window.notificatorToast.show){return false;}var seen=getSeen();var changed=false;var data=window.notificatorAdminToastData||{};var deliveryMode=(data.toastDeliveryMode||data.toastSettings&&data.toastSettings.deliveryMode||'account')==='tab'?'tab':'account';var now=Math.floor(Date.now()/1000);if(Array.isArray(toasts)){toasts.forEach(function(t){if(!t||(!t.message&&!t.title&&!t.notes)){return;}if(deliveryMode==='tab'&&t.time){var toastTime=parseInt(t.time,10);if(!isNaN(toastTime)&&toastTime>0&&(now-toastTime)>180){return;}}var seq=parseInt(t.seq,10);if(!isNaN(seq)&&seq>0){if(seen.indexOf(seq)!==-1){return;}seen.push(seq);if(seen.length>100){seen=seen.slice(seen.length-100);}changed=true;}var msg=window.notificatorToast.formatMessage?window.notificatorToast.formatMessage(t):t.message;if(!msg){return;}window.notificatorToast.show(msg,t.type,{url:t.url});});}if(changed){setSeen(seen);}return true;}if(flush()){return;}var tries=0;var timer=setInterval(function(){tries++;if(flush()||tries>=20){clearInterval(timer);}},200);})();",
-			'after'
-		);
-
 	}
 
 	/**
@@ -274,7 +400,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_export_hooks', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
@@ -283,7 +409,7 @@ class Notificator_Companion {
 			$options = array();
 		}
 
-		$hooks = isset( $options['hooks'] ) && is_array( $options['hooks'] ) ? array_values( $options['hooks'] ) : array();
+		$hooks     = isset( $options['hooks'] ) && is_array( $options['hooks'] ) ? array_values( $options['hooks'] ) : array();
 		$sanitized = $this->sanitize_settings( array( 'hooks' => $hooks ) );
 		$hooks_out = isset( $sanitized['hooks'] ) && is_array( $sanitized['hooks'] ) ? array_values( $sanitized['hooks'] ) : array();
 
@@ -291,7 +417,7 @@ class Notificator_Companion {
 			'schema_version' => 1,
 			'exported_at'    => gmdate( 'c' ),
 			'plugin'         => array(
-				'slug'    => 'notificator-companion',
+				'slug'    => 'notificator',
 				'version' => defined( 'NOTIFICATOR_COMPANION_VERSION' ) ? NOTIFICATOR_COMPANION_VERSION : '',
 			),
 			'site'           => array(
@@ -317,7 +443,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_import_hooks', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
@@ -329,17 +455,17 @@ class Notificator_Companion {
 		$payload_input = filter_input( INPUT_POST, 'payload', FILTER_UNSAFE_RAW );
 		$payload_raw   = is_string( $payload_input ) ? trim( wp_unslash( $payload_input ) ) : '';
 		if ( '' === $payload_raw ) {
-			wp_send_json_error( array( 'message' => __( 'Missing import payload', 'notificator-companion' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Missing import payload', 'notificator' ) ), 400 );
 			return;
 		}
 
 		$data = json_decode( $payload_raw, true );
 		if ( ! is_array( $data ) ) {
-			$message = __( 'Invalid JSON file', 'notificator-companion' );
+			$message = __( 'Invalid JSON file', 'notificator' );
 			if ( JSON_ERROR_NONE !== json_last_error() ) {
 				$message = sprintf(
 					/* translators: %s is the JSON error message. */
-					__( 'Invalid JSON file: %s', 'notificator-companion' ),
+					__( 'Invalid JSON file: %s', 'notificator' ),
 					json_last_error_msg()
 				);
 			}
@@ -356,14 +482,14 @@ class Notificator_Companion {
 		}
 
 		if ( ! is_array( $hooks_in ) ) {
-			wp_send_json_error( array( 'message' => __( 'No scenarios found in import file', 'notificator-companion' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'No scenarios found in import file', 'notificator' ) ), 400 );
 			return;
 		}
 
-		$sanitized = $this->sanitize_settings( array( 'hooks' => $hooks_in ) );
+		$sanitized    = $this->sanitize_settings( array( 'hooks' => $hooks_in ) );
 		$import_hooks = isset( $sanitized['hooks'] ) && is_array( $sanitized['hooks'] ) ? array_values( $sanitized['hooks'] ) : array();
 		if ( empty( $import_hooks ) ) {
-			wp_send_json_error( array( 'message' => __( 'Import file contained no valid scenarios', 'notificator-companion' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Import file contained no valid scenarios', 'notificator' ) ), 400 );
 			return;
 		}
 
@@ -403,25 +529,25 @@ class Notificator_Companion {
 				}
 				$base_name = trim( $base_name );
 				if ( '' === $base_name ) {
-					$base_name = __( 'Imported scenario', 'notificator-companion' );
+					$base_name = __( 'Imported scenario', 'notificator' );
 				}
 
-				$name = $base_name;
+				$name  = $base_name;
 				$lower = strtolower( $name );
 				if ( isset( $existing_names[ $lower ] ) ) {
-					$suffix = __( ' (imported)', 'notificator-companion' );
-					$name = $base_name . $suffix;
-					$i = 2;
+					$suffix = __( ' (imported)', 'notificator' );
+					$name   = $base_name . $suffix;
+					$i      = 2;
 					while ( isset( $existing_names[ strtolower( $name ) ] ) ) {
 						$name = $base_name . $suffix . ' ' . $i;
-						$i++;
+						++$i;
 						if ( $i > 50 ) {
 							break;
 						}
 					}
 				}
 
-				$hook['scenario_name'] = $name;
+				$hook['scenario_name']                 = $name;
 				$existing_names[ strtolower( $name ) ] = true;
 			}
 			unset( $hook );
@@ -436,8 +562,8 @@ class Notificator_Companion {
 		wp_send_json_success(
 			array(
 				'message' => ( 'replace' === $mode )
-					? __( 'Scenarios imported (replaced existing).', 'notificator-companion' )
-					: __( 'Scenarios imported (merged).', 'notificator-companion' ),
+					? __( 'Scenarios imported (replaced existing).', 'notificator' )
+					: __( 'Scenarios imported (merged).', 'notificator' ),
 				'hooks'   => isset( $options['hooks'] ) ? $options['hooks'] : array(),
 			)
 		);
@@ -450,15 +576,43 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_save_settings', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
-		$input = isset( $_POST[ $this->option_name ] )
-			? map_deep( wp_unslash( $_POST[ $this->option_name ] ), 'sanitize_text_field' )
-			: null;
+		$settings_patch_json = '';
+		if ( isset( $_POST['settings_patch'] ) && is_string( $_POST['settings_patch'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Raw JSON must remain intact and every accepted value is allowlisted and sanitized below.
+			$settings_patch_json = wp_unslash( $_POST['settings_patch'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Decoded values are allowlisted and sanitized before storage.
+		}
+		$patch = '' !== $settings_patch_json ? json_decode( $settings_patch_json, true ) : null;
+		if ( is_array( $patch ) ) {
+			$allowed_patch_keys = array(
+				'log_per_page',
+				'log_enabled',
+				'admin_toasts_enabled',
+				'toast_poll_interval',
+				'toast_duration',
+				'toast_position_x',
+				'toast_position_y',
+				'toast_delivery_mode',
+				'toast_dismiss_mode',
+				'throttle_seconds',
+				'scan_hook_limit',
+			);
+			$current            = get_option( $this->option_name, array() );
+			$input              = is_array( $current ) ? $current : array();
+			foreach ( $allowed_patch_keys as $key ) {
+				if ( array_key_exists( $key, $patch ) ) {
+					$input[ $key ] = sanitize_text_field( (string) $patch[ $key ] );
+				}
+			}
+		} else {
+			$input = isset( $_POST[ $this->option_name ] )
+				? map_deep( wp_unslash( $_POST[ $this->option_name ] ), 'sanitize_text_field' )
+				: null;
+		}
 		if ( ! is_array( $input ) ) {
-			wp_send_json_error( array( 'message' => __( 'Missing settings payload', 'notificator-companion' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Missing settings payload', 'notificator' ) ), 400 );
 			return;
 		}
 
@@ -467,8 +621,8 @@ class Notificator_Companion {
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Saved', 'notificator-companion' ),
-				'hooks'    => isset( $sanitized['hooks'] ) ? $sanitized['hooks'] : array(),
+				'message' => __( 'Saved', 'notificator' ),
+				'hooks'   => isset( $sanitized['hooks'] ) ? $sanitized['hooks'] : array(),
 			)
 		);
 	}
@@ -480,13 +634,13 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_toggle_log', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
 		$state = isset( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '';
 		if ( ! in_array( $state, array( 'enable', 'disable' ), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator-companion' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator' ) ), 400 );
 			return;
 		}
 
@@ -495,12 +649,12 @@ class Notificator_Companion {
 			$options = array();
 		}
 		$options['log_enabled'] = ( 'enable' === $state );
-		$options = $this->sanitize_settings( $options );
+		$options                = $this->sanitize_settings( $options );
 		update_option( $this->option_name, $options, false );
 
 		$message = ( 'enable' === $state )
-			? __( 'Notifications log enabled.', 'notificator-companion' )
-			: __( 'Notifications log disabled.', 'notificator-companion' );
+			? __( 'Notifications log enabled.', 'notificator' )
+			: __( 'Notifications log disabled.', 'notificator' );
 
 		wp_send_json_success(
 			array(
@@ -517,13 +671,13 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_toggle_admin_toasts', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
 		$state = isset( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '';
 		if ( ! in_array( $state, array( 'enable', 'disable' ), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator-companion' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator' ) ), 400 );
 			return;
 		}
 
@@ -532,12 +686,12 @@ class Notificator_Companion {
 			$options = array();
 		}
 		$options['admin_toasts_enabled'] = ( 'enable' === $state );
-		$options = $this->sanitize_settings( $options );
+		$options                         = $this->sanitize_settings( $options );
 		update_option( $this->option_name, $options, false );
 
 		$message = ( 'enable' === $state )
-			? __( 'Dashboard toasts enabled.', 'notificator-companion' )
-			: __( 'Dashboard toasts disabled.', 'notificator-companion' );
+			? __( 'Dashboard alerts enabled.', 'notificator' )
+			: __( 'Dashboard alerts disabled.', 'notificator' );
 
 		wp_send_json_success(
 			array(
@@ -553,13 +707,13 @@ class Notificator_Companion {
 	public function handle_export_log() {
 		check_ajax_referer( 'notificator_companion_export_log', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
 		$log = get_option( 'notificator_companion_notification_log', array() );
 		if ( ! is_array( $log ) || empty( $log ) ) {
-			wp_send_json_error( array( 'message' => __( 'No log entries found', 'notificator-companion' ) ), 404 );
+			wp_send_json_error( array( 'message' => __( 'No log entries found', 'notificator' ) ), 404 );
 			return;
 		}
 
@@ -573,7 +727,7 @@ class Notificator_Companion {
 			return $value;
 		};
 
-		$lines = array();
+		$lines   = array();
 		$lines[] = implode(
 			',',
 			array_map(
@@ -583,12 +737,12 @@ class Notificator_Companion {
 		);
 
 		foreach ( $log as $entry ) {
-			$api_keys = isset( $entry['api_keys'] ) && is_array( $entry['api_keys'] ) ? $entry['api_keys'] : array();
-			$api_keys = array_filter( array_map( 'strval', $api_keys ), 'strlen' );
+			$api_keys    = isset( $entry['api_keys'] ) && is_array( $entry['api_keys'] ) ? $entry['api_keys'] : array();
+			$api_keys    = array_filter( array_map( 'strval', $api_keys ), 'strlen' );
 			$api_display = '';
 			if ( ! empty( $api_keys ) ) {
-				$api_keys = array_map(
-					static function( $suffix ) {
+				$api_keys    = array_map(
+					static function ( $suffix ) {
 						return '…' . $suffix;
 					},
 					$api_keys
@@ -632,14 +786,14 @@ class Notificator_Companion {
 	public function handle_clear_log() {
 		check_ajax_referer( 'notificator_companion_clear_log', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
 		update_option( 'notificator_companion_notification_log', array(), false );
 		wp_send_json_success(
 			array(
-				'message' => __( 'Log cleared.', 'notificator-companion' ),
+				'message' => __( 'Log cleared.', 'notificator' ),
 			)
 		);
 	}
@@ -650,13 +804,13 @@ class Notificator_Companion {
 	public function handle_delete_log_entry() {
 		check_ajax_referer( 'notificator_companion_delete_log_entry', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
 		$entry_id = isset( $_POST['entry_id'] ) ? sanitize_text_field( wp_unslash( $_POST['entry_id'] ) ) : '';
 		if ( '' === $entry_id ) {
-			wp_send_json_error( array( 'message' => __( 'Missing entry id', 'notificator-companion' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Missing entry id', 'notificator' ) ), 400 );
 			return;
 		}
 
@@ -667,7 +821,7 @@ class Notificator_Companion {
 
 		$filtered = array_filter(
 			$log,
-			static function( $entry ) use ( $entry_id ) {
+			static function ( $entry ) use ( $entry_id ) {
 				return ! ( is_array( $entry ) && isset( $entry['id'] ) && (string) $entry['id'] === $entry_id );
 			}
 		);
@@ -675,7 +829,7 @@ class Notificator_Companion {
 		update_option( 'notificator_companion_notification_log', array_values( $filtered ), false );
 		wp_send_json_success(
 			array(
-				'message' => __( 'Log entry removed.', 'notificator-companion' ),
+				'message' => __( 'Log entry removed.', 'notificator' ),
 			)
 		);
 	}
@@ -685,14 +839,34 @@ class Notificator_Companion {
 	 */
 	public function add_admin_menu() {
 		add_menu_page(
-			__( 'Notificator Companion Settings', 'notificator-companion' ),
-			__( 'Notificator Companion', 'notificator-companion' ),
+			__( 'Notificator Settings', 'notificator' ),
+			__( 'Notificator', 'notificator' ),
 			'manage_options',
-			'notificator-companion',
+			'notificator',
 			array( $this->admin_page, 'render_settings_page' ),
-			'dashicons-megaphone',
+			'dashicons-bell',
 			58
 		);
+
+		$subpages = array(
+			'notificator'               => __( 'Overview', 'notificator' ),
+			'notificator-notifications' => __( 'Notifications', 'notificator' ),
+			'notificator-activity'      => __( 'Activity', 'notificator' ),
+			'notificator-settings'      => __( 'Settings', 'notificator' ),
+			'notificator-developer'     => __( 'Developer', 'notificator' ),
+			'notificator-support'       => __( 'Support', 'notificator' ),
+		);
+
+		foreach ( $subpages as $slug => $label ) {
+			add_submenu_page(
+				'notificator',
+				$label . ' — ' . __( 'Notificator', 'notificator' ),
+				$label,
+				'manage_options',
+				$slug,
+				array( $this->admin_page, 'render_settings_page' )
+			);
+		}
 	}
 
 	/**
@@ -721,17 +895,35 @@ class Notificator_Companion {
 		$sanitized = array();
 
 		// Sanitize API keys and optional nicknames.
-		$api_keys = array();
+		$api_keys          = array();
 		$api_key_nicknames = array();
-		$key_index_map = array();
+		$api_key_enabled   = array();
+		$key_index_map     = array();
 		if ( isset( $input['api_keys'] ) ) {
 			if ( is_array( $input['api_keys'] ) ) {
-				$nickname_input = isset( $input['api_key_nicknames'] ) && is_array( $input['api_key_nicknames'] )
+				$current_options_for_keys = get_option( $this->option_name, array() );
+				$current_api_keys         = is_array( $current_options_for_keys ) && isset( $current_options_for_keys['api_keys'] ) && is_array( $current_options_for_keys['api_keys'] )
+					? array_values( $current_options_for_keys['api_keys'] )
+					: array();
+				$existing_indexes         = isset( $input['api_key_existing_indexes'] ) && is_array( $input['api_key_existing_indexes'] )
+					? array_values( $input['api_key_existing_indexes'] )
+					: array();
+				$nickname_input           = isset( $input['api_key_nicknames'] ) && is_array( $input['api_key_nicknames'] )
 					? array_values( $input['api_key_nicknames'] )
+					: array();
+				$enabled_input            = isset( $input['api_key_enabled'] ) && is_array( $input['api_key_enabled'] )
+					? array_values( $input['api_key_enabled'] )
 					: array();
 				foreach ( $input['api_keys'] as $index => $key ) {
 					$key = is_string( $key ) ? trim( sanitize_text_field( $key ) ) : '';
+					if ( '' === $key && isset( $existing_indexes[ $index ] ) && '' !== (string) $existing_indexes[ $index ] ) {
+						$existing_index = (int) $existing_indexes[ $index ];
+						if ( isset( $current_api_keys[ $existing_index ] ) ) {
+							$key = trim( (string) $current_api_keys[ $existing_index ] );
+						}
+					}
 					if ( '' !== $key ) {
+						$enabled  = ! isset( $enabled_input[ $index ] ) || '0' !== (string) $enabled_input[ $index ];
 						$nickname = '';
 						if ( isset( $nickname_input[ $index ] ) && is_string( $nickname_input[ $index ] ) ) {
 							$nickname = trim( sanitize_text_field( $nickname_input[ $index ] ) );
@@ -739,15 +931,20 @@ class Notificator_Companion {
 
 						if ( ! isset( $key_index_map[ $key ] ) ) {
 							$key_index_map[ $key ] = count( $api_keys );
-							$api_keys[] = $key;
-							$api_key_nicknames[] = $nickname;
-						} elseif ( '' === $api_key_nicknames[ $key_index_map[ $key ] ] && '' !== $nickname ) {
-							$api_key_nicknames[ $key_index_map[ $key ] ] = $nickname;
+							$api_keys[]            = $key;
+							$api_key_nicknames[]   = $nickname;
+							$api_key_enabled[]     = $enabled;
+						} else {
+							$mapped_index = $key_index_map[ $key ];
+							if ( '' === $api_key_nicknames[ $mapped_index ] && '' !== $nickname ) {
+								$api_key_nicknames[ $mapped_index ] = $nickname;
+							}
+							$api_key_enabled[ $mapped_index ] = $api_key_enabled[ $mapped_index ] || $enabled;
 						}
 					}
 				}
 			} elseif ( is_string( $input['api_keys'] ) ) {
-				$raw = sanitize_textarea_field( $input['api_keys'] );
+				$raw   = sanitize_textarea_field( $input['api_keys'] );
 				$parts = preg_split( '/[\r\n,]+/', $raw );
 				if ( is_array( $parts ) ) {
 					foreach ( $parts as $p ) {
@@ -755,8 +952,9 @@ class Notificator_Companion {
 						if ( '' !== $p ) {
 							if ( ! isset( $key_index_map[ $p ] ) ) {
 								$key_index_map[ $p ] = count( $api_keys );
-								$api_keys[] = $p;
+								$api_keys[]          = $p;
 								$api_key_nicknames[] = '';
+								$api_key_enabled[]   = true;
 							}
 						}
 					}
@@ -769,14 +967,16 @@ class Notificator_Companion {
 			$legacy_key = trim( sanitize_text_field( $input['api_key'] ) );
 			if ( '' !== $legacy_key && ! isset( $key_index_map[ $legacy_key ] ) ) {
 				$key_index_map[ $legacy_key ] = count( $api_keys );
-				$api_keys[] = $legacy_key;
-				$api_key_nicknames[] = '';
+				$api_keys[]                   = $legacy_key;
+				$api_key_nicknames[]          = '';
+				$api_key_enabled[]            = true;
 			}
 		}
 
-		$sanitized['api_keys'] = $api_keys;
+		$sanitized['api_keys']          = $api_keys;
 		$sanitized['api_key_nicknames'] = $api_key_nicknames;
-		$sanitized['api_key']  = ! empty( $api_keys ) ? $api_keys[0] : '';
+		$sanitized['api_key_enabled']   = $api_key_enabled;
+		$sanitized['api_key']           = ! empty( $api_keys ) ? $api_keys[0] : '';
 
 		$current_options = get_option( $this->option_name );
 		if ( ! is_array( $current_options ) ) {
@@ -793,18 +993,24 @@ class Notificator_Companion {
 		$sanitized['log_per_page'] = $log_per_page;
 
 		// Log enabled preference.
-		$log_enabled = isset( $input['log_enabled'] )
+		$log_enabled              = isset( $input['log_enabled'] )
 			? (bool) $input['log_enabled']
 			: ( isset( $current_options['log_enabled'] ) ? (bool) $current_options['log_enabled'] : true );
 		$sanitized['log_enabled'] = $log_enabled;
 
 		// Dashboard toasts preference.
-		$admin_toasts_enabled = isset( $input['admin_toasts_enabled'] )
+		$admin_toasts_enabled              = isset( $input['admin_toasts_enabled'] )
 			? (bool) $input['admin_toasts_enabled']
 			: ( isset( $current_options['admin_toasts_enabled'] ) ? (bool) $current_options['admin_toasts_enabled'] : true );
 		$sanitized['admin_toasts_enabled'] = $admin_toasts_enabled;
 
 		// Toast settings.
+		$toast_poll_interval = isset( $input['toast_poll_interval'] ) ? (int) $input['toast_poll_interval'] : 30;
+		if ( $toast_poll_interval < 15 ) {
+			$toast_poll_interval = 15;
+		} elseif ( $toast_poll_interval > 300 ) {
+			$toast_poll_interval = 300;
+		}
 		$toast_duration = isset( $input['toast_duration'] ) ? (int) $input['toast_duration'] : 3;
 		if ( $toast_duration < 1 ) {
 			$toast_duration = 1;
@@ -827,11 +1033,12 @@ class Notificator_Companion {
 		if ( ! in_array( $toast_dismiss_mode, array( 'auto', 'click' ), true ) ) {
 			$toast_dismiss_mode = 'auto';
 		}
-		$sanitized['toast_duration'] = $toast_duration;
-		$sanitized['toast_position_x'] = $toast_position_x;
-		$sanitized['toast_position_y'] = $toast_position_y;
+		$sanitized['toast_duration']      = $toast_duration;
+		$sanitized['toast_poll_interval'] = $toast_poll_interval;
+		$sanitized['toast_position_x']    = $toast_position_x;
+		$sanitized['toast_position_y']    = $toast_position_y;
 		$sanitized['toast_delivery_mode'] = $toast_delivery_mode;
-		$sanitized['toast_dismiss_mode'] = $toast_dismiss_mode;
+		$sanitized['toast_dismiss_mode']  = $toast_dismiss_mode;
 
 		// Throttle setting (seconds).
 		$throttle_seconds = isset( $input['throttle_seconds'] ) ? (int) $input['throttle_seconds'] : 30;
@@ -848,8 +1055,8 @@ class Notificator_Companion {
 			: ( isset( $current_options['scan_hook_limit'] ) ? (int) $current_options['scan_hook_limit'] : 500 );
 		if ( $scan_hook_limit < 50 ) {
 			$scan_hook_limit = 50;
-		} elseif ( $scan_hook_limit > 5000 ) {
-			$scan_hook_limit = 5000;
+		} elseif ( $scan_hook_limit > 10000 ) {
+			$scan_hook_limit = 10000;
 		}
 		$sanitized['scan_hook_limit'] = $scan_hook_limit;
 
@@ -863,7 +1070,7 @@ class Notificator_Companion {
 					continue;
 				}
 
-				$method = isset( $monitor['method'] ) ? $monitor['method'] : 'HEAD';
+				$method                  = isset( $monitor['method'] ) ? $monitor['method'] : 'HEAD';
 				$sanitized['monitors'][] = array(
 					'name'    => isset( $monitor['name'] ) ? sanitize_text_field( $monitor['name'] ) : '',
 					'url'     => esc_url_raw( $monitor['url'] ),
@@ -904,8 +1111,12 @@ class Notificator_Companion {
 				}
 
 				if ( isset( $hook['severity'] ) ) {
-					$severity = sanitize_text_field( $hook['severity'] );
+					$severity                   = sanitize_text_field( $hook['severity'] );
 					$sanitized_hook['severity'] = in_array( $severity, array( 'info', 'warning', 'critical' ), true ) ? $severity : 'info';
+				}
+
+				if ( isset( $hook['send_dashboard'] ) ) {
+					$sanitized_hook['send_dashboard'] = (bool) $hook['send_dashboard'];
 				}
 
 				if ( isset( $hook['send_push'] ) ) {
@@ -992,7 +1203,7 @@ class Notificator_Companion {
 						}
 
 						$field = sanitize_text_field( $condition['field'] );
-						// Allow: field OR field.subfield (e.g. order.total)
+						// Allow: field OR field.subfield (for example, order.total).
 						if ( ! preg_match( '/^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?$/i', $field ) ) {
 							continue;
 						}
@@ -1021,22 +1232,25 @@ class Notificator_Companion {
 	/**
 	 * Normalize API keys from the saved options array.
 	 *
-	 * @param array $options Options array.
+	 * @param array $options      Options array.
+	 * @param bool  $enabled_only Whether to return only enabled keys.
 	 * @return array<int,string>
 	 */
-	private function get_api_keys_from_options( $options ) {
+	private function get_api_keys_from_options( $options, $enabled_only = true ) {
 		$api_keys = array();
 		if ( is_array( $options ) ) {
 			if ( isset( $options['api_keys'] ) && is_array( $options['api_keys'] ) ) {
-				foreach ( $options['api_keys'] as $key ) {
-					$key = is_string( $key ) ? trim( $key ) : '';
-					if ( '' !== $key ) {
+				$enabled_states = isset( $options['api_key_enabled'] ) && is_array( $options['api_key_enabled'] ) ? array_values( $options['api_key_enabled'] ) : array();
+				foreach ( array_values( $options['api_keys'] ) as $index => $key ) {
+					$key        = is_string( $key ) ? trim( $key ) : '';
+					$is_enabled = ! isset( $enabled_states[ $index ] ) || (bool) $enabled_states[ $index ];
+					if ( '' !== $key && ( ! $enabled_only || $is_enabled ) ) {
 						$api_keys[] = $key;
 					}
 				}
 			}
 
-			if ( empty( $api_keys ) && isset( $options['api_key'] ) && is_string( $options['api_key'] ) ) {
+			if ( ( ! isset( $options['api_keys'] ) || ! is_array( $options['api_keys'] ) || empty( $options['api_keys'] ) ) && isset( $options['api_key'] ) && is_string( $options['api_key'] ) ) {
 				$legacy_key = trim( $options['api_key'] );
 				if ( '' !== $legacy_key ) {
 					$api_keys[] = $legacy_key;
@@ -1090,6 +1304,220 @@ class Notificator_Companion {
 		}
 
 		return $labels;
+	}
+
+	/**
+	 * Start temporary, metadata-only hook observation.
+	 */
+	public function handle_observation_start() {
+		check_ajax_referer( 'notificator_companion_observation', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+		}
+		$duration = isset( $_POST['duration'] ) ? (int) $_POST['duration'] : 600;
+		$duration = max( 60, min( 1800, $duration ) );
+		$state    = array(
+			'active'     => true,
+			'started_at' => time(),
+			'ends_at'    => time() + $duration,
+			'sampled'    => true,
+			'counts'     => array(),
+		);
+		delete_option( 'notificator_companion_observation_flush_lock' );
+		update_option( 'notificator_companion_hook_observation', $state, false );
+		wp_send_json_success( array( 'observation' => $state ) );
+	}
+
+	/** Stop hook observation while retaining collected counts. */
+	public function handle_observation_stop() {
+		check_ajax_referer( 'notificator_companion_observation', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+		}
+		$state               = get_option( 'notificator_companion_hook_observation', array() );
+		$state               = is_array( $state ) ? $state : array();
+		$state['active']     = false;
+		$state['stopped_at'] = time();
+		update_option( 'notificator_companion_hook_observation', $state, false );
+		delete_option( 'notificator_companion_observation_flush_lock' );
+		wp_send_json_success( array( 'observation' => $state ) );
+	}
+
+	/** Persist an ignored/restored discovery candidate. */
+	public function handle_discovery_ignore() {
+		check_ajax_referer( 'notificator_companion_discovery', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+		}
+		$candidate_id = isset( $_POST['candidate_id'] ) ? sanitize_text_field( wp_unslash( $_POST['candidate_id'] ) ) : '';
+		$ignored      = get_option( 'notificator_companion_discovery_ignored', array() );
+		$ignored      = is_array( $ignored ) ? array_values( array_filter( array_map( 'strval', $ignored ) ) ) : array();
+		if ( '' === $candidate_id ) {
+			wp_send_json_error( array( 'message' => __( 'Missing discovery candidate.', 'notificator' ) ), 400 );
+		}
+		if ( in_array( $candidate_id, $ignored, true ) ) {
+			$ignored    = array_values( array_diff( $ignored, array( $candidate_id ) ) );
+			$is_ignored = false;
+		} else {
+			$ignored[]  = $candidate_id;
+			$ignored    = array_slice( array_values( array_unique( $ignored ) ), -2000 );
+			$is_ignored = true;
+		}
+		update_option( 'notificator_companion_discovery_ignored', $ignored, false );
+		wp_send_json_success( array( 'ignored' => $is_ignored ) );
+	}
+
+	/** Reset plugin-generated test data while preserving API key connections. */
+	public function handle_reset_test_data() {
+		check_ajax_referer( 'notificator_companion_reset_test_data', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+		}
+
+		$options   = get_option( $this->option_name, array() );
+		$options   = is_array( $options ) ? $options : array();
+		$preserved = array();
+		foreach ( array( 'api_key', 'api_keys', 'api_key_nicknames', 'api_key_enabled' ) as $key ) {
+			if ( array_key_exists( $key, $options ) ) {
+				$preserved[ $key ] = $options[ $key ];
+			}
+		}
+		update_option( $this->option_name, $preserved, false );
+		$this->cancel_background_scan();
+
+		foreach ( array(
+			'notificator_companion_notification_log',
+			'notificator_companion_health',
+			'notificator_companion_delivery_queue',
+			'notificator_companion_scan_fingerprints',
+			'notificator_companion_last_scan',
+			'notificator_companion_scan_state',
+			'notificator_companion_hook_observation',
+			'notificator_companion_observation_flush_lock',
+			'notificator_companion_discovery_ignored',
+			'notificator_companion_admin_toasts',
+			'notificator_companion_admin_toast_seq',
+		) as $option_name ) {
+			delete_option( $option_name );
+		}
+
+		wp_clear_scheduled_hook( 'notificator_companion_process_delivery' );
+		$cache_cleared = $this->plugin_scanner->clear_cache();
+
+		wp_send_json_success(
+			array(
+				'message' => $cache_cleared
+					? __( 'Plugin data reset. API keys were preserved.', 'notificator' )
+					: __( 'Plugin data reset and API keys preserved, but one scan cache file could not be removed.', 'notificator' ),
+			)
+		);
+	}
+
+	/** Attach one bounded observer for discovered emission candidates. */
+	public function setup_hook_observation() {
+		$state = get_option( 'notificator_companion_hook_observation', array() );
+		if ( ! is_array( $state ) || empty( $state['active'] ) || empty( $state['ends_at'] ) || time() >= (int) $state['ends_at'] ) {
+			if ( is_array( $state ) && ! empty( $state['active'] ) ) {
+				$state['active'] = false;
+				update_option( 'notificator_companion_hook_observation', $state, false );
+			}
+			return;
+		}
+		$sample_rate    = (float) apply_filters( 'notificator_companion_observation_sample_rate', 0.25 );
+		$sample_rate    = max( 0.01, min( 1.0, $sample_rate ) );
+		$always_observe = is_admin() || wp_doing_ajax() || wp_doing_cron();
+		if ( ! $always_observe && wp_rand( 1, 1000 ) > (int) round( $sample_rate * 1000 ) ) {
+			return;
+		}
+		$plugins    = $this->get_available_plugins_with_hooks();
+		$candidates = array();
+		foreach ( $plugins as $plugin ) {
+			foreach ( (array) ( $plugin['hooks'] ?? array() ) as $hook_name => $meta ) {
+				if ( is_array( $meta ) && empty( $meta['dynamic'] ) && 'registration' !== ( $meta['discovery'] ?? $meta['arg_mode'] ?? '' ) ) {
+					$candidates[ (string) $hook_name ] = (int) ( $meta['score'] ?? 50 );
+				} elseif ( is_string( $meta ) ) {
+					$candidates[ (string) $hook_name ] = 90;
+				}
+			}
+		}
+		arsort( $candidates, SORT_NUMERIC );
+		$candidate_limit              = (int) apply_filters( 'notificator_companion_observation_candidate_limit', 500 );
+		$candidate_limit              = max( 50, min( 1000, $candidate_limit ) );
+		$this->observation_candidates = array_fill_keys( array_slice( array_keys( $candidates ), 0, $candidate_limit ), true );
+		if ( $this->observation_candidates ) {
+			add_action( 'all', array( $this, 'capture_observed_hook' ), PHP_INT_MAX, 10 );
+		}
+	}
+
+	/** Capture counts and safe type metadata in memory for this request. */
+	public function capture_observed_hook() {
+		$hook_name = current_filter();
+		if ( ! isset( $this->observation_candidates[ $hook_name ] ) ) {
+			return;
+		}
+		$args  = func_get_args();
+		$types = array_map(
+			static function ( $value ) {
+				return is_object( $value ) ? 'object:' . get_class( $value ) : gettype( $value );
+			},
+			$args
+		);
+		if ( ! isset( $this->observation_buffer[ $hook_name ] ) ) {
+			$this->observation_buffer[ $hook_name ] = array(
+				'count'     => 0,
+				'arg_count' => count( $args ),
+				'types'     => $types,
+			);
+		}
+		++$this->observation_buffer[ $hook_name ]['count'];
+	}
+
+	/** Flush request-local observation counts in one option write. */
+	public function flush_hook_observation() {
+		if ( empty( $this->observation_buffer ) ) {
+			return;
+		}
+		if ( ! $this->acquire_observation_flush_lock() ) {
+			return;
+		}
+		$state = get_option( 'notificator_companion_hook_observation', array() );
+		if ( ! is_array( $state ) || empty( $state['active'] ) ) {
+			return;
+		}
+		$counts  = isset( $state['counts'] ) && is_array( $state['counts'] ) ? $state['counts'] : array();
+		$context = wp_doing_cron() ? 'cron' : ( wp_doing_ajax() ? 'ajax' : ( defined( 'REST_REQUEST' ) && REST_REQUEST ? 'rest' : ( is_admin() ? 'admin' : 'frontend' ) ) );
+		foreach ( $this->observation_buffer as $hook_name => $sample ) {
+			$existing             = isset( $counts[ $hook_name ] ) && is_array( $counts[ $hook_name ] ) ? $counts[ $hook_name ] : array();
+			$counts[ $hook_name ] = array(
+				'count'     => (int) ( $existing['count'] ?? 0 ) + (int) $sample['count'],
+				'last_seen' => time(),
+				'arg_count' => (int) $sample['arg_count'],
+				'types'     => array_slice( (array) $sample['types'], 0, 10 ),
+				'context'   => $context,
+			);
+		}
+		$state['counts']        = array_slice( $counts, -1000, null, true );
+		$state['last_flush_at'] = time();
+		update_option( 'notificator_companion_hook_observation', $state, false );
+	}
+
+	/**
+	 * Allow at most one observation database flush per short window.
+	 *
+	 * @param int $ttl Lock lifetime in seconds.
+	 * @return bool True when the lock was acquired.
+	 */
+	private function acquire_observation_flush_lock( $ttl = 15 ) {
+		$option_name = 'notificator_companion_observation_flush_lock';
+		$now         = time();
+		$expires_at  = (int) get_option( $option_name, 0 );
+		if ( $expires_at > $now ) {
+			return false;
+		}
+		if ( $expires_at ) {
+			delete_option( $option_name );
+		}
+		return add_option( $option_name, $now + max( 5, (int) $ttl ), '', false );
 	}
 
 	/**
@@ -1414,36 +1842,39 @@ class Notificator_Companion {
 	}
 
 	/**
-	 * Send notification when a hook is triggered
+	 * Send a notification when a configured hook is triggered.
 	 *
-	 * @param string $hook_name Hook name.
+	 * @param array  $hook_config Saved notification configuration.
+	 * @param string $hook_name   Hook name.
 	 * @param string $description Hook description.
-	 * @param array  $args Hook args.
+	 * @param array  $args        Hook arguments used only for local field resolution.
+	 * @return void
+	 *
 	 * Note: hook arguments are intentionally not collected/transmitted to avoid
 	 * accidental leakage of sensitive data.
 	 */
 	private function send_hook_notification( $hook_config, $hook_name, $description, $args = array() ) {
-		$options = get_option( $this->option_name );
-		$api_keys = $this->get_api_keys_from_options( $options );
-		$api_key_labels_map = $this->get_api_key_labels_map_from_options( $options );
-
-		if ( empty( $api_keys ) ) {
-			return;
-		}
+		$options             = get_option( $this->option_name );
+		$api_keys            = $this->get_api_keys_from_options( $options );
+		$api_key_labels_map  = $this->get_api_key_labels_map_from_options( $options );
+		$has_remote_delivery = ! empty( $api_keys );
 
 		$scenario_name  = is_array( $hook_config ) && isset( $hook_config['scenario_name'] ) ? (string) $hook_config['scenario_name'] : '';
 		$scenario_notes = is_array( $hook_config ) && isset( $hook_config['scenario_notes'] ) ? (string) $hook_config['scenario_notes'] : '';
 		$severity       = is_array( $hook_config ) && isset( $hook_config['severity'] ) ? (string) $hook_config['severity'] : 'info';
 		$hook_meta      = is_array( $hook_config ) && isset( $hook_config['hook_meta'] ) && is_array( $hook_config['hook_meta'] ) ? $hook_config['hook_meta'] : array();
-		$send_push      = ! ( is_array( $hook_config ) && array_key_exists( 'send_push', $hook_config ) ) || (bool) $hook_config['send_push'];
-		$send_mqtt      = ! ( is_array( $hook_config ) && array_key_exists( 'send_mqtt', $hook_config ) ) || (bool) $hook_config['send_mqtt'];
+		$send_dashboard = ! ( is_array( $hook_config ) && array_key_exists( 'send_dashboard', $hook_config ) ) || (bool) $hook_config['send_dashboard'];
+		$push_requested = ! ( is_array( $hook_config ) && array_key_exists( 'send_push', $hook_config ) ) || (bool) $hook_config['send_push'];
+		$mqtt_requested = ! ( is_array( $hook_config ) && array_key_exists( 'send_mqtt', $hook_config ) ) || (bool) $hook_config['send_mqtt'];
+		$send_push      = $has_remote_delivery && $push_requested;
+		$send_mqtt      = $has_remote_delivery && $mqtt_requested;
 
 		$title = $scenario_name ? $scenario_name : ( $description ? $description : $hook_name );
 
 		$site_url  = home_url();
 		$site_name = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
 
-		$api_key_suffixes = array();
+		$api_key_suffixes   = array();
 		$api_display_labels = array();
 		foreach ( $api_keys as $api_key ) {
 			if ( ! is_string( $api_key ) ) {
@@ -1453,13 +1884,13 @@ class Notificator_Companion {
 			if ( '' === $api_key ) {
 				continue;
 			}
-			$suffix = substr( $api_key, -6 );
+			$suffix             = substr( $api_key, -6 );
 			$api_key_suffixes[] = $suffix;
 
-			$label = isset( $api_key_labels_map[ $api_key ] ) ? trim( (string) $api_key_labels_map[ $api_key ] ) : '';
+			$label                = isset( $api_key_labels_map[ $api_key ] ) ? trim( (string) $api_key_labels_map[ $api_key ] ) : '';
 			$api_display_labels[] = '' !== $label ? $label : '…' . $suffix;
 		}
-		$api_key_suffixes = array_values( array_unique( array_filter( $api_key_suffixes, 'strlen' ) ) );
+		$api_key_suffixes   = array_values( array_unique( array_filter( $api_key_suffixes, 'strlen' ) ) );
 		$api_display_labels = array_values( array_unique( array_filter( $api_display_labels, 'strlen' ) ) );
 
 		if ( $this->should_throttle_hook_notification( $hook_config, $hook_name ) ) {
@@ -1481,10 +1912,26 @@ class Notificator_Companion {
 			return;
 		}
 
-		$wp_ver    = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : '';
+		$wp_ver = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : '';
 
-		$rendered_notes = $this->render_note_placeholders( $scenario_notes, $hook_meta, $args );
-		$message_body = $rendered_notes ? $rendered_notes : $title;
+		$rendered_notes      = $this->render_note_placeholders( $scenario_notes, $hook_meta, $args );
+		$message_body        = $rendered_notes ? $rendered_notes : $title;
+		$dashboard_delivered = false;
+		if ( $send_dashboard ) {
+			$dashboard_delivered = $this->queue_admin_toast(
+				array(
+					'title'        => $title,
+					'hook'         => $hook_name,
+					'scenario'     => $scenario_name,
+					'notes'        => $rendered_notes,
+					'severity'     => $severity,
+					'status'       => 'dashboard',
+					'timestamp'    => gmdate( 'c' ),
+					'settings_url' => admin_url( 'admin.php?page=notificator-activity' ),
+					'api_keys'     => $api_key_suffixes,
+				)
+			);
+		}
 
 		$payload = array(
 			'type'        => 'generic_notification',
@@ -1510,6 +1957,13 @@ class Notificator_Companion {
 		);
 
 		if ( ! $send_push && ! $send_mqtt ) {
+			if ( $dashboard_delivered ) {
+				$local_status = 'dashboard_only';
+			} elseif ( ! $has_remote_delivery && ( $push_requested || $mqtt_requested ) ) {
+				$local_status = 'connection_required';
+			} else {
+				$local_status = 'delivery_disabled';
+			}
 			$this->append_notification_log(
 				array(
 					'timestamp'     => gmdate( 'c' ),
@@ -1521,14 +1975,21 @@ class Notificator_Companion {
 					'site_url'      => $site_url,
 					'api_keys'      => $api_key_suffixes,
 					'api_nicknames' => $api_display_labels,
-					'sent'          => false,
-					'status'        => 'delivery_disabled',
+					'sent'          => $dashboard_delivered,
+					'status'        => $local_status,
+				)
+			);
+			$this->health_service->record(
+				array(
+					'last_delivery_at'     => time(),
+					'last_delivery_status' => $local_status,
+					'last_delivery_error'  => '',
 				)
 			);
 			return;
 		}
 
-		$this->append_notification_log(
+		$log_id = $this->append_notification_log(
 			array(
 				'timestamp'     => gmdate( 'c' ),
 				'hook_name'     => $hook_name,
@@ -1539,39 +2000,28 @@ class Notificator_Companion {
 				'site_url'      => $site_url,
 				'api_keys'      => $api_key_suffixes,
 				'api_nicknames' => $api_display_labels,
-				'sent'          => true,
-				'status'        => 'sent',
+				'sent'          => false,
+				'status'        => 'pending',
 			)
 		);
 
-		$this->queue_admin_toast(
+		$body     = wp_json_encode( $payload );
+		$queue_id = $this->delivery_queue->enqueue(
+			$api_keys,
+			$body,
 			array(
-				'title'        => $title,
-				'hook'         => $hook_name,
-				'scenario'     => $scenario_name,
-				'notes'        => $rendered_notes,
-				'severity'     => $severity,
-				'api_keys'     => $api_key_suffixes,
-				'status'       => 'sent',
-				'timestamp'    => gmdate( 'c' ),
-				'settings_url' => admin_url( 'admin.php?page=notificator-companion#notificator-log' ),
+				'log_id'        => $log_id,
+				'title'         => $title,
+				'hook_name'     => $hook_name,
+				'scenario_name' => $scenario_name,
+				'notes'         => $rendered_notes,
+				'severity'      => $severity,
+				'api_keys'      => $api_key_suffixes,
 			)
 		);
 
-		$body = wp_json_encode( $payload );
-
-		// Send async request(s) (don't wait for response).
-		foreach ( $api_keys as $api_key ) {
-			wp_remote_post(
-				notificator_companion_get_api_endpoint(),
-				array(
-					'timeout'  => 1,
-					'blocking' => false,
-					'data_format' => 'body',
-					'headers'  => $this->build_api_request_headers( $api_key, $body ),
-					'body'     => $body,
-				)
-			);
+		if ( false === $queue_id && $log_id ) {
+			$this->update_notification_log_entry( $log_id, 'failed', false, __( 'Unable to queue delivery.', 'notificator' ) );
 		}
 	}
 
@@ -1579,11 +2029,11 @@ class Notificator_Companion {
 	 * Queue an admin toast for the next admin page load.
 	 *
 	 * @param array $payload Notification metadata.
-	 * @return void
+	 * @return bool True when a dashboard notification was stored.
 	 */
 	private function queue_admin_toast( $payload ) {
 		if ( ! is_array( $payload ) ) {
-			return;
+			return false;
 		}
 
 		$options = get_option( $this->option_name );
@@ -1592,22 +2042,22 @@ class Notificator_Companion {
 		}
 		$admin_toasts_enabled = ! isset( $options['admin_toasts_enabled'] ) || (bool) $options['admin_toasts_enabled'];
 		if ( ! $admin_toasts_enabled ) {
-			return;
+			return false;
 		}
 
-		$title    = isset( $payload['title'] ) ? sanitize_text_field( $payload['title'] ) : '';
-		$hook     = isset( $payload['hook'] ) ? sanitize_text_field( $payload['hook'] ) : '';
-		$scenario = isset( $payload['scenario'] ) ? sanitize_text_field( $payload['scenario'] ) : '';
-		$notes    = isset( $payload['notes'] ) ? sanitize_text_field( $payload['notes'] ) : '';
-		$severity = isset( $payload['severity'] ) ? sanitize_text_field( $payload['severity'] ) : 'info';
-		$status   = isset( $payload['status'] ) ? sanitize_text_field( $payload['status'] ) : '';
-		$timestamp = isset( $payload['timestamp'] ) ? sanitize_text_field( $payload['timestamp'] ) : '';
+		$title        = isset( $payload['title'] ) ? sanitize_text_field( $payload['title'] ) : '';
+		$hook         = isset( $payload['hook'] ) ? sanitize_text_field( $payload['hook'] ) : '';
+		$scenario     = isset( $payload['scenario'] ) ? sanitize_text_field( $payload['scenario'] ) : '';
+		$notes        = isset( $payload['notes'] ) ? sanitize_text_field( $payload['notes'] ) : '';
+		$severity     = isset( $payload['severity'] ) ? sanitize_text_field( $payload['severity'] ) : 'info';
+		$status       = isset( $payload['status'] ) ? sanitize_text_field( $payload['status'] ) : '';
+		$timestamp    = isset( $payload['timestamp'] ) ? sanitize_text_field( $payload['timestamp'] ) : '';
 		$settings_url = isset( $payload['settings_url'] ) ? esc_url_raw( $payload['settings_url'] ) : '';
-		$api_keys = isset( $payload['api_keys'] ) && is_array( $payload['api_keys'] ) ? $payload['api_keys'] : array();
-		$api_keys = array_filter( array_map( 'sanitize_text_field', $api_keys ), 'strlen' );
+		$api_keys     = isset( $payload['api_keys'] ) && is_array( $payload['api_keys'] ) ? $payload['api_keys'] : array();
+		$api_keys     = array_filter( array_map( 'sanitize_text_field', $api_keys ), 'strlen' );
 
 		if ( '' === $title && '' === $hook ) {
-			return;
+			return false;
 		}
 
 		$type = 'info';
@@ -1617,8 +2067,8 @@ class Notificator_Companion {
 			$type = 'warn';
 		}
 
-		$title_text = $title ? $title : __( 'Notification sent', 'notificator-companion' );
-		$message = $title_text;
+		$title_text = $title ? $title : __( 'Notification sent', 'notificator' );
+		$message    = $title_text;
 
 		$toasts = get_option( 'notificator_companion_admin_toasts', array() );
 		if ( ! is_array( $toasts ) ) {
@@ -1626,7 +2076,7 @@ class Notificator_Companion {
 		}
 
 		$seq = (int) get_option( 'notificator_companion_admin_toast_seq', 0 );
-		$seq++;
+		++$seq;
 		update_option( 'notificator_companion_admin_toast_seq', $seq, false );
 
 		$toasts[] = array(
@@ -1642,8 +2092,8 @@ class Notificator_Companion {
 		);
 
 		$max_age = 120;
-		$now = time();
-		$toasts = array_values(
+		$now     = time();
+		$toasts  = array_values(
 			array_filter(
 				$toasts,
 				function ( $toast ) use ( $now, $max_age ) {
@@ -1652,8 +2102,9 @@ class Notificator_Companion {
 				}
 			)
 		);
-		$toasts = array_slice( $toasts, -20 );
+		$toasts  = array_slice( $toasts, -20 );
 		update_option( 'notificator_companion_admin_toasts', $toasts, false );
+		return true;
 	}
 
 	/**
@@ -1670,48 +2121,23 @@ class Notificator_Companion {
 		}
 
 		$last_seen = (int) get_user_meta( $user_id, 'notificator_companion_last_toast_seq', true );
-		$clean = array();
-		$max_seq = $last_seen;
-		$now = time();
-		$max_age = 120;
+		$clean     = array();
+		$max_seq   = $last_seen;
 		foreach ( $toasts as $toast ) {
 			if ( ! is_array( $toast ) ) {
 				continue;
 			}
 			$seq = isset( $toast['seq'] ) ? (int) $toast['seq'] : 0;
-			$time = isset( $toast['time'] ) ? (int) $toast['time'] : 0;
 			if ( $seq > $max_seq ) {
 				$max_seq = $seq;
 			}
 			if ( $seq <= $last_seen ) {
 				continue;
 			}
-			if ( $time <= 0 || ( $now - $time ) > $max_age ) {
-				continue;
+			$normalized = $this->normalize_admin_toast( $toast, $settings_url );
+			if ( $normalized ) {
+				$clean[] = $normalized;
 			}
-			$message = isset( $toast['message'] ) ? sanitize_text_field( $toast['message'] ) : '';
-			$title   = isset( $toast['title'] ) ? sanitize_text_field( $toast['title'] ) : '';
-			$notes   = isset( $toast['notes'] ) ? sanitize_text_field( $toast['notes'] ) : '';
-			$type    = isset( $toast['type'] ) ? sanitize_text_field( $toast['type'] ) : 'info';
-			$url     = isset( $toast['url'] ) ? esc_url_raw( $toast['url'] ) : '';
-			if ( '' === $url && $settings_url ) {
-				$url = $settings_url;
-			}
-			if ( '' === $message && '' !== $title ) {
-				$message = $title;
-			}
-			if ( '' === $message && '' === $title && '' === $notes ) {
-				continue;
-			}
-			$clean[] = array(
-				'seq'     => $seq,
-				'message' => $message,
-				'title'   => $title,
-				'notes'   => $notes,
-				'type'    => in_array( $type, array( 'info', 'success', 'warn', 'error' ), true ) ? $type : 'info',
-				'url'     => $url,
-				'time'    => $time,
-			);
 		}
 
 		if ( $max_seq > $last_seen ) {
@@ -1730,43 +2156,51 @@ class Notificator_Companion {
 	 */
 	private function get_recent_admin_toasts( $toasts, $settings_url ) {
 		$clean = array();
-		$now = time();
-		$max_age = 120;
 		foreach ( $toasts as $toast ) {
-			if ( ! is_array( $toast ) ) {
-				continue;
+			$normalized = $this->normalize_admin_toast( $toast, $settings_url );
+			if ( $normalized ) {
+				$clean[] = $normalized;
 			}
-			$seq = isset( $toast['seq'] ) ? (int) $toast['seq'] : 0;
-			$time = isset( $toast['time'] ) ? (int) $toast['time'] : 0;
-			if ( $seq <= 0 || $time <= 0 || ( $now - $time ) > $max_age ) {
-				continue;
-			}
-			$message = isset( $toast['message'] ) ? sanitize_text_field( $toast['message'] ) : '';
-			$title   = isset( $toast['title'] ) ? sanitize_text_field( $toast['title'] ) : '';
-			$notes   = isset( $toast['notes'] ) ? sanitize_text_field( $toast['notes'] ) : '';
-			$type    = isset( $toast['type'] ) ? sanitize_text_field( $toast['type'] ) : 'info';
-			$url     = isset( $toast['url'] ) ? esc_url_raw( $toast['url'] ) : '';
-			if ( '' === $url && $settings_url ) {
-				$url = $settings_url;
-			}
-			if ( '' === $message && '' !== $title ) {
-				$message = $title;
-			}
-			if ( '' === $message && '' === $title && '' === $notes ) {
-				continue;
-			}
-			$clean[] = array(
-				'seq'     => $seq,
-				'message' => $message,
-				'title'   => $title,
-				'notes'   => $notes,
-				'type'    => in_array( $type, array( 'info', 'success', 'warn', 'error' ), true ) ? $type : 'info',
-				'url'     => $url,
-				'time'    => $time,
-			);
 		}
 
 		return $clean;
+	}
+
+	/**
+	 * Validate and sanitize one short-lived dashboard alert.
+	 *
+	 * @param mixed  $toast        Stored toast value.
+	 * @param string $settings_url Default settings URL.
+	 * @return array|null Normalized toast, or null when invalid or expired.
+	 */
+	private function normalize_admin_toast( $toast, $settings_url ) {
+		if ( ! is_array( $toast ) ) {
+			return null;
+		}
+		$seq  = isset( $toast['seq'] ) ? (int) $toast['seq'] : 0;
+		$time = isset( $toast['time'] ) ? (int) $toast['time'] : 0;
+		if ( $seq <= 0 || $time <= 0 || ( time() - $time ) > 120 ) {
+			return null;
+		}
+		$message = isset( $toast['message'] ) ? sanitize_text_field( $toast['message'] ) : '';
+		$title   = isset( $toast['title'] ) ? sanitize_text_field( $toast['title'] ) : '';
+		$notes   = isset( $toast['notes'] ) ? sanitize_text_field( $toast['notes'] ) : '';
+		$type    = isset( $toast['type'] ) ? sanitize_text_field( $toast['type'] ) : 'info';
+		$url     = isset( $toast['url'] ) ? esc_url_raw( $toast['url'] ) : '';
+		$url     = '' === $url ? $settings_url : $url;
+		$message = '' === $message ? $title : $message;
+		if ( '' === $message && '' === $title && '' === $notes ) {
+			return null;
+		}
+		return array(
+			'seq'     => $seq,
+			'message' => $message,
+			'title'   => $title,
+			'notes'   => $notes,
+			'type'    => in_array( $type, array( 'info', 'success', 'warn', 'error' ), true ) ? $type : 'info',
+			'url'     => $url,
+			'time'    => $time,
+		);
 	}
 
 	/**
@@ -1776,7 +2210,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_fetch_admin_toasts', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
 			return;
 		}
 
@@ -1800,8 +2234,8 @@ class Notificator_Companion {
 			return;
 		}
 
-		$settings_url = admin_url( 'admin.php?page=notificator-companion#notificator-log' );
-		$clean = ( 'tab' === $toast_delivery_mode )
+		$settings_url = admin_url( 'admin.php?page=notificator#notificator-log' );
+		$clean        = ( 'tab' === $toast_delivery_mode )
 			? $this->get_recent_admin_toasts( $toasts, $settings_url )
 			: $this->get_unseen_admin_toasts( $toasts, $settings_url );
 
@@ -1812,16 +2246,16 @@ class Notificator_Companion {
 	 * Append a notification entry to the local log.
 	 *
 	 * @param array $entry Log entry data.
-	 * @return void
+	 * @return string|false Log entry id, or false when logging is disabled.
 	 */
 	private function append_notification_log( $entry ) {
 		if ( ! is_array( $entry ) ) {
-			return;
+			return false;
 		}
 
 		$options = get_option( $this->option_name );
 		if ( is_array( $options ) && isset( $options['log_enabled'] ) && ! $options['log_enabled'] ) {
-			return;
+			return false;
 		}
 
 		$log = get_option( 'notificator_companion_notification_log', array() );
@@ -1829,8 +2263,9 @@ class Notificator_Companion {
 			$log = array();
 		}
 
-		$log[] = array(
-			'id'            => isset( $entry['id'] ) ? (string) $entry['id'] : ( function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : uniqid( 'log_', true ) ),
+		$entry_id = isset( $entry['id'] ) ? (string) $entry['id'] : ( function_exists( 'wp_generate_uuid4' ) ? wp_generate_uuid4() : uniqid( 'log_', true ) );
+		$log[]    = array(
+			'id'            => $entry_id,
 			'timestamp'     => isset( $entry['timestamp'] ) ? (string) $entry['timestamp'] : gmdate( 'c' ),
 			'hook_name'     => isset( $entry['hook_name'] ) ? (string) $entry['hook_name'] : '',
 			'scenario_name' => isset( $entry['scenario_name'] ) ? (string) $entry['scenario_name'] : '',
@@ -1842,6 +2277,7 @@ class Notificator_Companion {
 			'api_nicknames' => isset( $entry['api_nicknames'] ) && is_array( $entry['api_nicknames'] ) ? array_values( $entry['api_nicknames'] ) : array(),
 			'sent'          => isset( $entry['sent'] ) ? (bool) $entry['sent'] : true,
 			'status'        => isset( $entry['status'] ) ? (string) $entry['status'] : 'sent',
+			'error'         => isset( $entry['error'] ) ? (string) $entry['error'] : '',
 		);
 
 		$max_entries = (int) apply_filters( 'notificator_companion_notification_log_max_entries', 200 );
@@ -1850,6 +2286,58 @@ class Notificator_Companion {
 		}
 
 		update_option( 'notificator_companion_notification_log', $log, false );
+		return $entry_id;
+	}
+
+	/**
+	 * Update delivery state for an existing log entry.
+	 *
+	 * @param string $entry_id Log entry id.
+	 * @param string $status Delivery status.
+	 * @param bool   $sent Whether delivery completed successfully.
+	 * @param string $error Optional failure reason.
+	 * @return void
+	 */
+	private function update_notification_log_entry( $entry_id, $status, $sent, $error = '' ) {
+		$log = get_option( 'notificator_companion_notification_log', array() );
+		if ( ! is_array( $log ) ) {
+			return;
+		}
+		foreach ( $log as $index => $entry ) {
+			if ( ! is_array( $entry ) || ! isset( $entry['id'] ) || (string) $entry['id'] !== (string) $entry_id ) {
+				continue;
+			}
+			$log[ $index ]['status'] = sanitize_text_field( $status );
+			$log[ $index ]['sent']   = (bool) $sent;
+			$log[ $index ]['error']  = sanitize_text_field( $error );
+			break;
+		}
+		update_option( 'notificator_companion_notification_log', $log, false );
+	}
+
+	/**
+	 * Handle a completed or retried queued delivery.
+	 *
+	 * @param array  $job Queue job.
+	 * @param string $status Result status.
+	 * @param string $error Optional error.
+	 * @return void
+	 */
+	public function handle_delivery_result( $job, $status, $error = '' ) {
+		$meta   = is_array( $job ) && isset( $job['meta'] ) && is_array( $job['meta'] ) ? $job['meta'] : array();
+		$log_id = isset( $meta['log_id'] ) ? (string) $meta['log_id'] : '';
+		$sent   = in_array( $status, array( 'delivered', 'partial' ), true );
+		if ( $log_id ) {
+			$this->update_notification_log_entry( $log_id, $status, $sent, $error );
+		}
+
+		$this->health_service->record(
+			array(
+				'last_delivery_at'     => time(),
+				'last_delivery_status' => $status,
+				'last_delivery_error'  => $error,
+			)
+		);
 	}
 
 	/**
@@ -1900,11 +2388,11 @@ class Notificator_Companion {
 	 */
 	private function get_scan_hook_limit() {
 		$options = get_option( $this->option_name );
-		$limit = is_array( $options ) && isset( $options['scan_hook_limit'] ) ? (int) $options['scan_hook_limit'] : 500;
+		$limit   = is_array( $options ) && isset( $options['scan_hook_limit'] ) ? (int) $options['scan_hook_limit'] : 500;
 		if ( $limit < 50 ) {
 			$limit = 50;
-		} elseif ( $limit > 5000 ) {
-			$limit = 5000;
+		} elseif ( $limit > 10000 ) {
+			$limit = 10000;
 		}
 
 		return (int) apply_filters( 'notificator_companion_scan_hook_limit', $limit );
@@ -1951,27 +2439,168 @@ class Notificator_Companion {
 	 * @return bool
 	 */
 	private function queue_background_scan( $include_inactive = false ) {
-		$args = array( (bool) $include_inactive );
-		if ( wp_next_scheduled( 'notificator_companion_run_background_scan', $args ) ) {
+		$state = get_option( 'notificator_companion_scan_state', array() );
+		if ( is_array( $state ) && 'running' === ( $state['status'] ?? '' ) && time() - (int) ( $state['updated_at'] ?? 0 ) < 1800 ) {
 			return false;
 		}
+		if ( is_array( $state ) && ! empty( $state['scan_id'] ) ) {
+			$this->plugin_scanner->delete_incremental_scan( (string) $state['scan_id'] );
+		}
 
-		return (bool) wp_schedule_single_event( time() + 5, 'notificator_companion_run_background_scan', $args );
+		$scan_id = str_replace( '-', '', wp_generate_uuid4() );
+		$targets = $this->plugin_scanner->get_incremental_scan_targets( (bool) $include_inactive );
+		if ( ! $this->plugin_scanner->begin_incremental_scan( $scan_id ) ) {
+			return false;
+		}
+		$state = array(
+			'scan_id'          => $scan_id,
+			'status'           => 'running',
+			'include_inactive' => (bool) $include_inactive,
+			'hook_limit'       => $this->get_scan_hook_limit(),
+			'targets'          => array_values( $targets ),
+			'next_index'       => 0,
+			'plugins_found'    => 0,
+			'plugins_reused'   => 0,
+			'hooks_found'      => 26,
+			'fingerprints'     => array(),
+			'started_at'       => time(),
+			'updated_at'       => time(),
+		);
+		update_option( 'notificator_companion_scan_state', $state, false );
+		$this->health_service->record(
+			array(
+				'last_scan_status'    => 'running',
+				'scan_current_plugin' => '',
+				'scan_processed'      => 0,
+				'scan_total'          => count( $targets ),
+				'last_scan_hooks'     => 26,
+			)
+		);
+
+		$scheduled = wp_schedule_single_event( time() + 1, 'notificator_companion_run_background_scan', array( $scan_id ) );
+		if ( ! $scheduled ) {
+			delete_option( 'notificator_companion_scan_state' );
+			$this->plugin_scanner->delete_incremental_scan( $scan_id );
+			return false;
+		}
+		return true;
+	}
+
+	/** Cancel queued scan batches and remove their unpublished working file. */
+	public function cancel_background_scan() {
+		$state = get_option( 'notificator_companion_scan_state', array() );
+		if ( is_array( $state ) && ! empty( $state['scan_id'] ) ) {
+			$this->plugin_scanner->delete_incremental_scan( (string) $state['scan_id'] );
+		}
+		delete_option( 'notificator_companion_scan_state' );
+		delete_transient( $this->get_scan_lock_key() );
+		if ( function_exists( 'wp_unschedule_hook' ) ) {
+			wp_unschedule_hook( 'notificator_companion_run_background_scan' );
+		} else {
+			wp_clear_scheduled_hook( 'notificator_companion_run_background_scan' );
+		}
 	}
 
 	/**
 	 * WP-Cron background scan callback.
 	 *
-	 * @param bool $include_inactive Whether to include inactive plugins.
+	 * @param string $scan_id Resumable scan identifier.
 	 * @return void
 	 */
-	public function handle_background_scan_event( $include_inactive = false ) {
-		if ( ! $this->acquire_scan_lock( 300 ) ) {
+	public function handle_background_scan_event( $scan_id = '' ) {
+		$state = get_option( 'notificator_companion_scan_state', array() );
+		if ( ! is_array( $state ) || 'running' !== ( $state['status'] ?? '' ) || (string) ( $state['scan_id'] ?? '' ) !== (string) $scan_id ) {
+			return;
+		}
+		if ( ! $this->acquire_scan_lock( 90 ) ) {
+			wp_schedule_single_event( time() + 10, 'notificator_companion_run_background_scan', array( $scan_id ) );
 			return;
 		}
 
-		$this->plugin_scanner->scan_plugins_for_hooks( (bool) $include_inactive, $this->get_scan_hook_limit() );
+		$targets = isset( $state['targets'] ) && is_array( $state['targets'] ) ? array_values( $state['targets'] ) : array();
+		$index   = max( 0, (int) ( $state['next_index'] ?? 0 ) );
+		if ( $index < count( $targets ) ) {
+			$result = $this->plugin_scanner->scan_incremental_target( (string) $targets[ $index ], (int) ( $state['hook_limit'] ?? 500 ) );
+			if ( empty( $result['success'] ) || ! $this->plugin_scanner->append_incremental_scan_result( $scan_id, $result ) ) {
+				$state['status']     = 'failed';
+				$state['updated_at'] = time();
+				update_option( 'notificator_companion_scan_state', $state, false );
+				$this->record_scan_health( array( 'success' => false ) );
+				$this->release_scan_lock();
+				return;
+			}
+			$state['next_index']                                      = $index + 1;
+			$state['plugins_found']                                   = (int) ( $state['plugins_found'] ?? 0 ) + ( ! empty( $result['plugin'] ) ? 1 : 0 );
+			$state['plugins_reused']                                  = (int) ( $state['plugins_reused'] ?? 0 ) + ( ! empty( $result['reused'] ) ? 1 : 0 );
+			$state['hooks_found']                                     = (int) ( $state['hooks_found'] ?? 26 ) + (int) ( $result['hooks_found'] ?? 0 );
+			$state['fingerprints'][ (string) $result['plugin_slug'] ] = (string) $result['fingerprint'];
+			$state['updated_at']                                      = time();
+			$this->handle_scan_progress(
+				array(
+					'current_plugin' => (string) ( $result['plugin_name'] ?? '' ),
+					'processed'      => (int) $state['next_index'],
+					'total'          => count( $targets ),
+					'hooks_found'    => (int) $state['hooks_found'],
+				)
+			);
+		}
+
+		if ( (int) $state['next_index'] >= count( $targets ) ) {
+			$result = $this->plugin_scanner->finalize_incremental_scan( $scan_id, $state['fingerprints'] ?? array() );
+			if ( ! empty( $result['success'] ) ) {
+				$result['plugins_reused'] = (int) ( $state['plugins_reused'] ?? 0 );
+			}
+			delete_option( 'notificator_companion_scan_state' );
+			$this->record_scan_health( $result );
+			$this->release_scan_lock();
+			return;
+		}
+
+		update_option( 'notificator_companion_scan_state', $state, false );
+		wp_schedule_single_event( time() + 1, 'notificator_companion_run_background_scan', array( $scan_id ) );
 		$this->release_scan_lock();
+	}
+
+	/**
+	 * Store the latest plugin scan summary.
+	 *
+	 * @param array $result Scanner result.
+	 * @return void
+	 */
+	private function record_scan_health( $result ) {
+		$success = is_array( $result ) && ! empty( $result['success'] );
+		$this->health_service->record(
+			array(
+				'last_scan_at'        => time(),
+				'last_scan_status'    => $success ? 'complete' : 'failed',
+				'last_scan_plugins'   => $success && isset( $result['plugins_found'] ) ? (int) $result['plugins_found'] : 0,
+				'last_scan_hooks'     => $success && isset( $result['hooks_found'] ) ? (int) $result['hooks_found'] : 0,
+				'scan_current_plugin' => '',
+				'scan_processed'      => 0,
+				'scan_total'          => 0,
+			)
+		);
+	}
+
+	/**
+	 * Store background scan progress for the polling UI.
+	 *
+	 * @param array $progress Current scan progress data.
+	 * @return void
+	 */
+	public function handle_scan_progress( $progress ) {
+		if ( ! is_array( $progress ) ) {
+			return;
+		}
+		$this->health_service->record(
+			array(
+				'last_scan_status'    => 'running',
+				'scan_current_plugin' => isset( $progress['current_plugin'] ) ? (string) $progress['current_plugin'] : '',
+				'scan_processed'      => isset( $progress['processed'] ) ? (int) $progress['processed'] : 0,
+				'scan_total'          => isset( $progress['total'] ) ? (int) $progress['total'] : 0,
+				'last_scan_hooks'     => isset( $progress['hooks_found'] ) ? (int) $progress['hooks_found'] : 0,
+			)
+		);
 	}
 
 	/**
@@ -1985,7 +2614,7 @@ class Notificator_Companion {
 		$scenario_name = is_array( $hook_config ) && isset( $hook_config['scenario_name'] )
 			? (string) $hook_config['scenario_name']
 			: '';
-		$payload = $hook_name . '|' . $scenario_name;
+		$payload       = $hook_name . '|' . $scenario_name;
 		return 'notificator_hook_rl_' . md5( $payload );
 	}
 
@@ -1999,11 +2628,11 @@ class Notificator_Companion {
 	 * @return array
 	 */
 	private function build_api_request_headers( $api_key, $body ) {
-		$api_key = trim( (string) $api_key );
-		$body = (string) $body;
+		$api_key   = trim( (string) $api_key );
+		$body      = (string) $body;
 		$timestamp = (string) (int) round( microtime( true ) * 1000 );
-		$nonce = wp_generate_uuid4();
-		$message = $timestamp . '.' . $nonce . '.' . $body;
+		$nonce     = wp_generate_uuid4();
+		$message   = $timestamp . '.' . $nonce . '.' . $body;
 		$signature = hash_hmac( 'sha256', $message, $api_key );
 
 		// Netlify validates allowed domains based on Origin/Referer headers.
@@ -2024,83 +2653,92 @@ class Notificator_Companion {
 	}
 
 	/**
+	 * Public compatibility wrapper used by the delivery queue.
+	 *
+	 * @param string $api_key API key.
+	 * @param string $body JSON request body.
+	 * @return array
+	 */
+	public function get_delivery_request_headers( $api_key, $body ) {
+		return $this->build_api_request_headers( $api_key, $body );
+	}
+
+	/**
+	 * Return operational health for admin rendering.
+	 *
+	 * @return array
+	 */
+	public function get_admin_health() {
+		$status          = $this->health_service->get_status();
+		$status['queue'] = $this->delivery_queue->get_summary();
+		return $status;
+	}
+
+	/**
 	 * Handle AJAX request to scan plugins for hooks
 	 */
 	public function handle_refresh_hooks() {
 		check_ajax_referer( 'notificator_companion_refresh_hooks', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Unauthorized', 'notificator-companion' ) );
+			wp_send_json_error( __( 'Unauthorized', 'notificator' ) );
 			return;
 		}
 
 		$include_inactive = ! empty( $_POST['include_inactive'] );
-		$background = ! empty( $_POST['background'] );
+		$queued           = $this->queue_background_scan( $include_inactive );
+		wp_send_json_success(
+			array(
+				'message' => $queued
+					? __( 'Scan queued in safe background batches.', 'notificator' )
+					: __( 'A background scan is already running.', 'notificator' ),
+			)
+		);
+	}
 
-		if ( $background ) {
-			$queued = $this->queue_background_scan( $include_inactive );
+	/**
+	 * Return current health and freshly cached scanner state for admin polling.
+	 *
+	 * @return void
+	 */
+	public function handle_get_health() {
+		check_ajax_referer( 'notificator_companion_get_health', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			return;
+		}
+
+		$scan_state = get_option( 'notificator_companion_scan_state', array() );
+		if ( is_array( $scan_state ) && 'running' === ( $scan_state['status'] ?? '' ) && ! empty( $scan_state['scan_id'] ) ) {
+			$args = array( (string) $scan_state['scan_id'] );
+			if ( ! wp_next_scheduled( 'notificator_companion_run_background_scan', $args ) && time() - (int) ( $scan_state['updated_at'] ?? 0 ) > 90 ) {
+				wp_schedule_single_event( time() + 1, 'notificator_companion_run_background_scan', $args );
+			}
+		}
+
+		$health = $this->get_admin_health();
+		if ( 'running' === ( $health['last_scan_status'] ?? '' ) ) {
 			wp_send_json_success(
 				array(
-					'message' => $queued
-						? __( 'Scan queued in background.', 'notificator-companion' )
-						: __( 'Background scan is already queued.', 'notificator-companion' ),
+					'health' => $health,
 				)
 			);
 			return;
 		}
 
-		if ( ! $this->acquire_scan_lock( 300 ) ) {
-			$this->queue_background_scan( $include_inactive );
-			wp_send_json_error(
-				array(
-					'message' => __( 'A scan is already in progress. Please wait a moment.', 'notificator-companion' ),
-				),
-				429
-			);
-			return;
+		$available_plugins    = $this->get_available_plugins_with_hooks();
+		$plugin_active_status = array();
+		foreach ( $available_plugins as $key => $plugin ) {
+			$plugin_active_status[ $key ] = isset( $plugin['file'] ) ? $this->is_plugin_active_check( $plugin['file'] ) : true;
 		}
 
-		// Scan plugins.
-		$result = $this->plugin_scanner->scan_plugins_for_hooks( $include_inactive, $this->get_scan_hook_limit() );
-
-		if ( $result['success'] ) {
-			$available_plugins = $this->get_available_plugins_with_hooks();
-
-			// Build active status for plugins.
-			$plugin_active_status = array();
-			foreach ( $available_plugins as $key => $plugin ) {
-				$plugin_active_status[ $key ] = isset( $plugin['file'] ) ? $this->is_plugin_active_check( $plugin['file'] ) : true;
-			}
-
-			// Build active status for configured hooks.
-			$options = get_option( $this->option_name );
-			$hooks   = isset( $options['hooks'] ) && is_array( $options['hooks'] ) ? array_values( $options['hooks'] ) : array();
-			$hook_active_status = array();
-			foreach ( $hooks as $index => $hook ) {
-				$hook_name = is_array( $hook ) && isset( $hook['hook_name'] ) ? (string) $hook['hook_name'] : '';
-				$hook_active_status[ $index ] = $hook_name ? $this->is_hook_active( $hook_name ) : false;
-			}
-
-			$this->release_scan_lock();
-			wp_send_json_success(
-				array(
-					'message'        => sprintf(
-						/* translators: %1$d is plugins count, %2$d is hooks count */
-						__( 'Scanned %1$d plugins and found %2$d hooks', 'notificator-companion' ),
-						$result['plugins_found'],
-						$result['hooks_found']
-					),
-					'plugins_scanned' => $result['plugins_found'],
-					'hooks_found'    => $result['hooks_found'],
-					'available_plugins' => $available_plugins,
-					'plugin_active_status' => $plugin_active_status,
-					'hook_active_status' => $hook_active_status,
-				)
-			);
-		} else {
-			$this->release_scan_lock();
-			wp_send_json_error( __( 'Failed to scan plugins', 'notificator-companion' ) );
-		}
+		wp_send_json_success(
+			array(
+				'health'               => $health,
+				'available_plugins'    => $available_plugins,
+				'plugin_active_status' => $plugin_active_status,
+			)
+		);
 	}
 
 	/**
@@ -2110,13 +2748,21 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_test', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-companion' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ) );
 		}
 
-		$requested_key = isset( $_POST['api_key'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) ) : '';
+		$requested_key       = isset( $_POST['api_key'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) ) : '';
+		$requested_index_raw = isset( $_POST['api_key_index'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key_index'] ) ) : '';
+		$requested_index     = '' !== $requested_index_raw ? absint( $requested_index_raw ) : null;
 		if ( '' !== $requested_key ) {
 			// Test only the key requested by the clicked row button.
 			$api_keys = array( $requested_key );
+		} elseif ( null !== $requested_index ) {
+			$options        = get_option( $this->option_name );
+			$saved_keys     = $this->get_api_keys_from_options( $options, false );
+			$enabled_states = is_array( $options ) && isset( $options['api_key_enabled'] ) && is_array( $options['api_key_enabled'] ) ? array_values( $options['api_key_enabled'] ) : array();
+			$is_enabled     = ! isset( $enabled_states[ $requested_index ] ) || (bool) $enabled_states[ $requested_index ];
+			$api_keys       = $is_enabled && isset( $saved_keys[ $requested_index ] ) ? array( $saved_keys[ $requested_index ] ) : array();
 		} else {
 			$options  = get_option( $this->option_name );
 			$api_keys = $this->get_api_keys_from_options( $options );
@@ -2125,7 +2771,7 @@ class Notificator_Companion {
 		if ( empty( $api_keys ) ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Please configure your API key first.', 'notificator-companion' ),
+					'message' => __( 'Please configure your API key first.', 'notificator' ),
 				)
 			);
 		}
@@ -2163,13 +2809,13 @@ class Notificator_Companion {
 			$response = wp_remote_post(
 				notificator_companion_get_api_endpoint(),
 				array(
-					'timeout' => 30,
+					'timeout'     => 30,
 					'data_format' => 'body',
-					'headers' => array(
+					'headers'     => array(
 						// Keep headers explicit here to avoid breaking older sites if helper is removed.
 						// build_api_request_headers() also adds signature headers + Origin/Referer.
 					) + $this->build_api_request_headers( $api_key, $body ),
-					'body'    => $body,
+					'body'        => $body,
 				)
 			);
 
@@ -2185,16 +2831,22 @@ class Notificator_Companion {
 			$last_code   = $status_code;
 
 			if ( 200 === $status_code || 201 === $status_code ) {
-				$sent++;
+				++$sent;
 			}
 		}
 
 		if ( $sent > 0 ) {
+			$this->health_service->record(
+				array(
+					'last_test_at'     => time(),
+					'last_test_status' => $sent === $total ? 'connected' : 'partial',
+				)
+			);
 			$message = ( 1 === $total )
-				? __( 'Test notification sent successfully! Check your mobile app for the alert.', 'notificator-companion' )
+				? __( 'Test notification sent successfully! Check your mobile app for the alert.', 'notificator' )
 				: sprintf(
 					/* translators: %1$d is number sent, %2$d is total API keys */
-					__( 'Test notification sent to %1$d of %2$d configured API keys.', 'notificator-companion' ),
+					__( 'Test notification sent to %1$d of %2$d configured API keys.', 'notificator' ),
 					$sent,
 					$total
 				);
@@ -2207,11 +2859,18 @@ class Notificator_Companion {
 			);
 		}
 
+		$this->health_service->record(
+			array(
+				'last_test_at'     => time(),
+				'last_test_status' => 'failed',
+			)
+		);
+
 		wp_send_json_error(
 			array(
 				'message'  => sprintf(
 					/* translators: %d is the HTTP status code */
-					__( 'Failed to send notification. Status: %d. Please check your API key.', 'notificator-companion' ),
+					__( 'Failed to send notification. Status: %d. Please check your API key.', 'notificator' ),
 					(int) $last_code
 				),
 				'response' => $last_body,
@@ -2228,8 +2887,8 @@ class Notificator_Companion {
 	public function add_settings_link( $links ) {
 		$settings_link = sprintf(
 			'<a href="%s">%s</a>',
-			admin_url( 'admin.php?page=notificator-companion' ),
-			__( 'Settings', 'notificator-companion' )
+			admin_url( 'admin.php?page=notificator' ),
+			__( 'Settings', 'notificator' )
 		);
 		array_unshift( $links, $settings_link );
 		return $links;
@@ -2241,7 +2900,50 @@ class Notificator_Companion {
 	 * @return array Array of plugins with their hooks.
 	 */
 	public function get_available_plugins_with_hooks() {
-		return $this->plugin_scanner->get_available_plugins_with_hooks();
+		$plugins = $this->plugin_scanner->get_available_plugins_with_hooks();
+		$events  = function_exists( 'notificator_companion_get_registered_events' ) ? notificator_companion_get_registered_events() : array();
+
+		foreach ( $events as $event ) {
+			$plugin_slug = isset( $event['plugin_slug'] ) ? (string) $event['plugin_slug'] : 'custom-integrations';
+			$hook_name   = isset( $event['hook_name'] ) ? (string) $event['hook_name'] : '';
+			if ( '' === $hook_name ) {
+				continue;
+			}
+
+			if ( ! isset( $plugins[ $plugin_slug ] ) || ! is_array( $plugins[ $plugin_slug ] ) ) {
+				$plugins[ $plugin_slug ] = array(
+					'name'   => isset( $event['plugin_name'] ) ? (string) $event['plugin_name'] : $plugin_slug,
+					'file'   => isset( $event['plugin_file'] ) ? (string) $event['plugin_file'] : '',
+					'slug'   => $plugin_slug,
+					'icon'   => 'dashicons-admin-plugins',
+					'color'  => 'blue',
+					'active' => true,
+					'hooks'  => array(),
+				);
+			}
+
+			$existing_meta                                  = isset( $plugins[ $plugin_slug ]['hooks'][ $hook_name ] ) && is_array( $plugins[ $plugin_slug ]['hooks'][ $hook_name ] )
+				? $plugins[ $plugin_slug ]['hooks'][ $hook_name ]
+				: array();
+			$registered_meta                                = array(
+				'label'         => isset( $event['label'] ) ? (string) $event['label'] : $hook_name,
+				'description'   => isset( $event['description'] ) && '' !== $event['description'] ? (string) $event['description'] : __( 'An event explicitly registered by another plugin.', 'notificator' ),
+				'type'          => 'action',
+				'arg_names'     => isset( $event['arg_names'] ) ? array_values( (array) $event['arg_names'] ) : array(),
+				'payload_arity' => isset( $event['arg_names'] ) ? count( (array) $event['arg_names'] ) : 0,
+				'properties'    => isset( $event['properties'] ) ? (array) $event['properties'] : array(),
+				'score'         => 100,
+				'confidence'    => 'high',
+				'risk'          => 'normal',
+				'recommended'   => true,
+				'selectable'    => true,
+				'discovery'     => 'registered_integration',
+				'reason'        => __( 'Registered directly by the integration.', 'notificator' ),
+			);
+			$plugins[ $plugin_slug ]['hooks'][ $hook_name ] = array_merge( $existing_meta, $registered_meta );
+		}
+
+		return $plugins;
 	}
 
 	/**
@@ -2296,17 +2998,17 @@ class Notificator_Companion {
 			return false;
 		}
 
-		$body = wp_json_encode( array( 'monitors' => array_values( $enabled_monitors ) ) );
+		$body   = wp_json_encode( array( 'monitors' => array_values( $enabled_monitors ) ) );
 		$any_ok = false;
 
 		foreach ( $api_keys as $api_key ) {
 			$response = wp_remote_post(
 				notificator_companion_get_api_endpoint(),
 				array(
-					'timeout' => 30,
+					'timeout'     => 30,
 					'data_format' => 'body',
-					'headers' => $this->build_api_request_headers( $api_key, $body ),
-					'body'    => $body,
+					'headers'     => $this->build_api_request_headers( $api_key, $body ),
+					'body'        => $body,
 				)
 			);
 
@@ -2342,15 +3044,16 @@ register_activation_hook(
 	function () {
 		// Set default options on activation.
 		$default_options = array(
-			'api_key'  => '',
-			'api_keys' => array(),
+			'api_key'           => '',
+			'api_keys'          => array(),
 			'api_key_nicknames' => array(),
-			'monitors' => array(),
-			'hooks'    => array(),
-			'log_per_page' => 20,
-			'throttle_seconds' => 30,
-			'scan_hook_limit' => 500,
-			'log_enabled' => true,
+			'api_key_enabled'   => array(),
+			'monitors'          => array(),
+			'hooks'             => array(),
+			'log_per_page'      => 20,
+			'throttle_seconds'  => 30,
+			'scan_hook_limit'   => 500,
+			'log_enabled'       => true,
 		);
 
 		// Migrate older option keys if present.
@@ -2371,8 +3074,8 @@ register_activation_hook(
 register_deactivation_hook(
 	__FILE__,
 	function () {
-		delete_transient( 'notificator_companion_scan_lock' );
-		wp_clear_scheduled_hook( 'notificator_companion_run_background_scan', array( true ) );
-		wp_clear_scheduled_hook( 'notificator_companion_run_background_scan', array( false ) );
+		Notificator_Companion::get_instance()->cancel_background_scan();
+		delete_option( 'notificator_companion_observation_flush_lock' );
+		wp_clear_scheduled_hook( 'notificator_companion_process_delivery' );
 	}
 );
