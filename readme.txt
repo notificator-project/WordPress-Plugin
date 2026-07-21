@@ -1,4 +1,4 @@
-=== Notificator – Alerts & Notifications ===
+=== Notificator ===
 Contributors: eboxnet
 Donate link: https://buymeacoffee.com/vagelis
 Tags: notifications, alerts, hooks, monitoring, mqtt
@@ -141,6 +141,12 @@ The plugin stores configuration, discovery metadata, activity, dashboard-toast d
 Remote delivery is opt-in per notification and requires an enabled API key. Administrators control the notification text and placeholders and are responsible for avoiding unnecessary personal or sensitive information.
 
 Deleting the plugin through WordPress removes plugin data as described in the FAQ.
+
+== Development ==
+
+Human-readable TypeScript, SCSS, and PHP source code, along with build scripts and development instructions, is available in the [Notificator GitHub repository](https://github.com/notificator-project/WordPress-Plugin).
+
+The minified files in `assets/dist` are generated from `assets/js` and `assets/src`. Run `npm ci` followed by `npm run build` to reproduce them.
 
 == Screenshots ==
 

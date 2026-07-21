@@ -27,6 +27,7 @@ mkdir -p "$PACKAGE_DIR"
 cp "$ROOT_DIR/notificator.php" "$PACKAGE_DIR/"
 cp "$ROOT_DIR/readme.txt" "$PACKAGE_DIR/"
 cp "$ROOT_DIR/uninstall.php" "$PACKAGE_DIR/"
+cp "$ROOT_DIR/THIRD-PARTY-NOTICES.txt" "$PACKAGE_DIR/"
 
 cp -R "$ROOT_DIR/admin" "$PACKAGE_DIR/"
 mkdir -p "$PACKAGE_DIR/assets"
@@ -39,7 +40,7 @@ find "$PACKAGE_DIR" -name '.DS_Store' -delete
 find "$PACKAGE_DIR" -name '*.backup' -delete
 find "$PACKAGE_DIR" -name 'methods_insert.txt' -delete
 
-for required_file in notificator.php readme.txt uninstall.php assets/dist/admin.js assets/dist/admin.css assets/dist/admin-toast.js assets/dist/admin-toast.css; do
+for required_file in notificator.php readme.txt uninstall.php THIRD-PARTY-NOTICES.txt assets/dist/admin.js assets/dist/admin.css assets/dist/admin-toast.js assets/dist/admin-toast.css; do
 	if [[ ! -f "$PACKAGE_DIR/$required_file" ]]; then
 		echo "Missing required release file: $required_file" >&2
 		exit 1

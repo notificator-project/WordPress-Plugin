@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: Notificator – Alerts & Notifications
- * Plugin URI: https://github.com/vagelisp/netlify-uptime-monitor/tree/main/plugin
+ * Plugin Name: Notificator
+ * Plugin URI: https://github.com/notificator-project/WordPress-Plugin
  * Description: Turn WordPress events into dashboard alerts, with optional mobile push and MQTT delivery.
  * Version: 1.1
  * Author: Vagelis Papaioannou
