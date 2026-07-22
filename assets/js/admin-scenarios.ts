@@ -1560,6 +1560,14 @@ type AnyFn = (...args: any[]) => any;
 					overviewIcon.classList.remove('dashicons-marker');
 					overviewIcon.classList.add('dashicons-yes-alt');
 				}
+				const overviewTitle = overviewStep.querySelector<HTMLElement>('[data-notificator-scan-step-title]');
+				const overviewDescription = overviewStep.querySelector<HTMLElement>('[data-notificator-scan-step-description]');
+				if (overviewTitle && overviewStep.dataset.scanCompleteTitle) {
+					overviewTitle.textContent = overviewStep.dataset.scanCompleteTitle;
+				}
+				if (overviewDescription && overviewStep.dataset.scanCompleteDescription) {
+					overviewDescription.textContent = overviewStep.dataset.scanCompleteDescription;
+				}
 			}
 
 			const overviewStatus = document.getElementById('notificator-overview-scan-status');

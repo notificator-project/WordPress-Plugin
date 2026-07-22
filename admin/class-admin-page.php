@@ -778,6 +778,7 @@ class Notificator_Companion_Admin_Page {
 		$pending                  = isset( $queue['pending'] ) ? (int) $queue['pending'] : 0;
 		$last_scan                = isset( $health['last_scan_at'] ) ? (int) $health['last_scan_at'] : 0;
 		$unscanned_active_plugins = $this->plugin->get_unscanned_active_plugins();
+		$unscanned_plugin_count   = count( $unscanned_active_plugins );
 		$scan_complete            = $last_scan && empty( $unscanned_active_plugins );
 		$last_test                = isset( $health['last_test_status'] ) ? (string) $health['last_test_status'] : '';
 		$delivery                 = isset( $health['last_delivery_status'] ) ? (string) $health['last_delivery_status'] : '';
@@ -800,6 +801,20 @@ class Notificator_Companion_Admin_Page {
 			$scan_label = sprintf( __( '%s ago', 'notificator-project' ), human_time_diff( $last_scan, time() ) );
 		} else {
 			$scan_label = __( 'Not scanned yet', 'notificator-project' );
+		}
+		$scan_step_title       = __( 'Discover site events', 'notificator-project' );
+		$scan_step_description = __( 'Scan active plugins for events and ready-made templates.', 'notificator-project' );
+		if ( 1 === $unscanned_plugin_count ) {
+			/* translators: %s: Name of a newly activated plugin. */
+			$scan_step_title       = sprintf( __( 'Discover events from %s', 'notificator-project' ), (string) $unscanned_active_plugins[0]['name'] );
+			$scan_step_description = __( 'This plugin was activated after your last scan. Scan it to add its events and templates.', 'notificator-project' );
+		} elseif ( 1 < $unscanned_plugin_count ) {
+			$scan_step_title       = __( 'Discover events from new plugins', 'notificator-project' );
+			$scan_step_description = sprintf(
+				/* translators: %d: Number of newly activated plugins. */
+				__( '%d plugins were activated after your last scan. Scan them to add their events and templates.', 'notificator-project' ),
+				$unscanned_plugin_count
+			);
 		}
 		$disabled_key_message = sprintf(
 			/* translators: %d: Number of disabled API keys. */
@@ -855,7 +870,7 @@ class Notificator_Companion_Admin_Page {
 						<div><h3><?php esc_html_e( 'Getting started', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'Complete these steps once, then this becomes your health dashboard.', 'notificator-project' ); ?></p></div>
 					</div>
 					<ol class="notificator-checklist">
-						<li id="notificator-overview-scan-step" class="<?php echo $scan_complete ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo $scan_complete ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Discover site events', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Scan active plugins for events and ready-made templates.', 'notificator-project' ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator-project' ); ?></button></li>
+						<li id="notificator-overview-scan-step" class="<?php echo $scan_complete ? 'is-complete' : ''; ?>" data-scan-complete-title="<?php esc_attr_e( 'Discover site events', 'notificator-project' ); ?>" data-scan-complete-description="<?php esc_attr_e( 'Scan active plugins for events and ready-made templates.', 'notificator-project' ); ?>"><span class="dashicons <?php echo $scan_complete ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong data-notificator-scan-step-title><?php echo esc_html( $scan_step_title ); ?></strong><small data-notificator-scan-step-description><?php echo esc_html( $scan_step_description ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator-project' ); ?></button></li>
 						<li class="<?php echo ! empty( $hooks ) ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo ! empty( $hooks ) ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Create a notification', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Choose a template or build one from a WordPress event.', 'notificator-project' ); ?></small></div><a href="#notifications" data-notificator-workspace-tab="notifications"><?php esc_html_e( 'Open', 'notificator-project' ); ?></a></li>
 					</ol>
 				</div>

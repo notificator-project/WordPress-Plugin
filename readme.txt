@@ -161,6 +161,7 @@ The minified files in `assets/dist` are generated from `assets/js` and `assets/s
 = 1.1.5 =
 
 * Prompts for a new discovery scan when a plugin is activated after the last successful scan.
+* Identifies newly activated plugins directly in the Overview scan step.
 * Hides the first-time scan prompt immediately after event discovery completes, without requiring a page reload.
 * Marks the Overview discovery step complete and refreshes its scan summary immediately after a successful scan.
 * Refreshes the Discovery inbox, event cards, filters, and totals in place when a scan finishes.
