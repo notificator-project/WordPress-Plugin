@@ -89,12 +89,24 @@ jobs:
           echo "version=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
           echo "stage_label=${STAGE_LABEL}" >> "$GITHUB_OUTPUT"
 
+      - name: Check whether the release already exists
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create GitHub pre-release and upload zip
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: Notificator v${{ steps.package.outputs.version }} (${{ steps.package.outputs.stage_label }})
-          generate_release_notes: true
+          generate_release_notes: ${{ steps.release.outputs.exists != 'true' }}
           prerelease: true
           files: |
             ${{ steps.package.outputs.zip_path }}
