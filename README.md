@@ -51,7 +51,7 @@ An API key is optional. Event discovery, notification configuration, dashboard a
 3. Select the downloaded ZIP, choose **Install Now**, and activate Notificator.
 4. Open **Notificator → Overview** to begin setup.
 
-For a manual installation, extract the archive into `wp-content/plugins/`. The resulting plugin entry file should be `wp-content/plugins/notificator/notificator.php`.
+For a manual installation, extract the archive into `wp-content/plugins/`. The resulting plugin entry file should be `wp-content/plugins/notificator-project/notificator-project.php`.
 
 ### Events, templates, and notifications
 
@@ -88,9 +88,9 @@ Dashboard alerts do not require an account. To use mobile push or MQTT:
 4. Add and enable the key under **Notificator → Settings**.
 5. Enable Mobile push or MQTT on the relevant notifications.
 
-The optional remote service endpoint is `https://wpnotif.notificator-project.com`. It is contacted only when an administrator tests a key or an enabled notification requests remote delivery.
+The optional remote service endpoint is `https://wpnotif.notificator-project.com`. It is contacted only when an administrator tests a key, an enabled notification requests remote delivery, or a previously configured website monitor is sent to the service. The plugin does not load executable code or visual assets from a remote service.
 
-Requests can include the enabled API key, site origin, timestamp, nonce, HMAC signature, notification content and metadata, selected channels, site and version information, and administrator-configured placeholder values. Raw hook arguments, database contents, and exported configurations are not sent wholesale.
+Requests can include the enabled API key, site origin, timestamp, nonce, HMAC signature, notification content and metadata, selected channels, site and version information, administrator-configured placeholder values, and the name, URL, method, and enabled state of a configured website monitor. Raw hook arguments, database contents, and exported configurations are not sent wholesale.
 
 The service validates API keys and allowed domains. Notification content may be encrypted with the account's public key and stored in Supabase for use by the Notificator app. Depending on the enabled channels and account settings, delivery can use Expo for mobile push, HiveMQ for MQTT, and Resend for email. See the [Notificator documentation](https://docs.notificator-project.com/) for current service and privacy information.
 
@@ -122,7 +122,7 @@ Deactivation preserves configuration. Deleting the plugin through WordPress remo
 
 ```text
 plugin/
-├── notificator.php                 Plugin bootstrap and runtime orchestration
+├── notificator-project.php         Plugin bootstrap and runtime orchestration
 ├── admin/class-admin-page.php      Admin rendering and asset setup
 ├── includes/
 │   ├── class-plugin-scanner.php    Static discovery and scan persistence
@@ -142,7 +142,7 @@ plugin/
 
 ### Runtime ownership
 
-1. `notificator.php` defines public registration functions, loads runtime classes, and creates the singleton plugin instance.
+1. `notificator-project.php` defines public registration functions, loads runtime classes, and creates the singleton plugin instance.
 2. `Notificator_Companion` registers hooks, sanitizes settings, attaches configured listeners, evaluates conditions, and coordinates delivery.
 3. `Notificator_Companion_Admin_Page` renders the six admin workspaces and supplies server-owned state and nonces to compiled assets.
 4. `Notificator_Companion_Plugin_Scanner` discovers hook emitters and persists a bounded, versioned snapshot.
@@ -268,7 +268,7 @@ Build the installable plugin and sample-integration archives:
 npm run build:release
 ```
 
-The primary artifact is `dist/notificator.zip`. The release process formats sources, runs the full preflight, rebuilds assets, copies only runtime files, verifies required bundles, excludes development artifacts, and validates the ZIP.
+The primary artifact is `dist/notificator-project.zip`. The release process formats sources, runs the full preflight, rebuilds assets, copies only runtime files, verifies required bundles, excludes development artifacts, and validates the ZIP.
 
 A release is acceptable only when:
 

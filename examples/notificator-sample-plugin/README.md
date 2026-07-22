@@ -1,4 +1,4 @@
-# Notificator Sample Plugin
+# Notificator – Integration Example
 
 This small plugin demonstrates the recommended third-party integration:
 
@@ -11,7 +11,7 @@ This small plugin demonstrates the recommended third-party integration:
 
 1. Install and activate Notificator 1.1 or newer.
 2. Install and activate this sample plugin.
-3. Open **Notificator → Support** and confirm one registered event and template are detected.
+3. Open **Notificator → Developer Integrations** and confirm one registered event and template are detected.
 4. Open **Notificator → Notifications → Templates** and apply **Sample message notification**.
 5. Save the notification with Dashboard enabled.
 6. Open **Notificator → Sample Integration** and trigger the sample event.

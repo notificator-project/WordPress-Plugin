@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: Notificator Sample Plugin
- * Description: Demonstrates a registered custom event and ready-made Notificator template.
+ * Plugin Name: Notificator – Integration Example
+ * Description: Demonstrates a registered custom event and ready-made template for Notificator.
  * Version: 1.1.0
  * Author: Vagelis Papaioannou
  * Requires PHP: 7.2
  * Text Domain: notificator-sample-plugin
  *
- * @package NotificatorCompanionSample
+ * @package NotificatorProjectIntegrationExample
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -25,8 +25,8 @@ function notificator_sample_register_event() {
 			'hook_name'   => 'notificator_sample_message_sent',
 			'label'       => 'Sample message sent',
 			'description' => 'Runs when the sample plugin sends its demonstration message.',
-			'plugin_slug' => 'notificator-sample',
-			'plugin_name' => 'Notificator Sample Plugin',
+			'plugin_slug' => 'notificator-sample-plugin',
+			'plugin_name' => 'Notificator – Integration Example',
 			'plugin_file' => plugin_basename( __FILE__ ),
 			'arg_names'   => array( 'message', 'suffix' ),
 		)
@@ -48,7 +48,7 @@ function notificator_sample_register_template() {
 			'description'     => 'Receive an alert when the sample message is sent.',
 			'scenario_name'   => 'Sample Message Sent',
 			'default_notes'   => 'Sample message: {{message}}{{suffix}}',
-			'required_plugin' => 'notificator-sample',
+			'required_plugin' => 'notificator-sample-plugin',
 			'severity'        => 'info',
 			'hook_meta'       => array(
 				'label'         => 'Sample message sent',
@@ -84,7 +84,7 @@ function notificator_sample_render_admin_page() {
 	$triggered = isset( $_GET['notificator_sample_sent'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['notificator_sample_sent'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'Notificator sample integration', 'notificator-sample-plugin' ); ?></h1>
+		<h1><?php esc_html_e( 'Notificator integration example', 'notificator-sample-plugin' ); ?></h1>
 		<p><?php esc_html_e( 'Use this button to emit the registered sample event and test your notification.', 'notificator-sample-plugin' ); ?></p>
 		<?php if ( $triggered ) : ?>
 			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'The sample event was emitted.', 'notificator-sample-plugin' ); ?></p></div>

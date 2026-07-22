@@ -400,18 +400,18 @@ class Notificator_Companion_Admin_Page {
 			$toast_poll_interval = 300;
 		}
 		/* translators: %d: Dashboard alert polling interval in seconds. */
-		$toast_poll_summary_format = __( 'Every %d seconds', 'notificator' );
+		$toast_poll_summary_format = __( 'Every %d seconds', 'notificator-project' );
 		$toast_poll_summary        = sprintf( $toast_poll_summary_format, $toast_poll_interval );
 		$poll_intervals            = array(
-			15  => __( 'Every 15 seconds — fastest', 'notificator' ),
-			30  => __( 'Every 30 seconds — recommended', 'notificator' ),
-			60  => __( 'Every minute', 'notificator' ),
-			120 => __( 'Every 2 minutes', 'notificator' ),
-			300 => __( 'Every 5 minutes — lightest', 'notificator' ),
+			15  => __( 'Every 15 seconds — fastest', 'notificator-project' ),
+			30  => __( 'Every 30 seconds — recommended', 'notificator-project' ),
+			60  => __( 'Every minute', 'notificator-project' ),
+			120 => __( 'Every 2 minutes', 'notificator-project' ),
+			300 => __( 'Every 5 minutes — lightest', 'notificator-project' ),
 		);
 		if ( ! isset( $poll_intervals[ $toast_poll_interval ] ) ) {
 			/* translators: %d: Custom dashboard alert polling interval in seconds. */
-			$custom_poll_interval_format            = __( 'Every %d seconds — custom', 'notificator' );
+			$custom_poll_interval_format            = __( 'Every %d seconds — custom', 'notificator-project' );
 			$poll_intervals[ $toast_poll_interval ] = sprintf( $custom_poll_interval_format, $toast_poll_interval );
 			ksort( $poll_intervals );
 		}
@@ -431,7 +431,7 @@ class Notificator_Companion_Admin_Page {
 		if ( ! in_array( $toast_dismiss_mode, array( 'auto', 'click' ), true ) ) {
 			$toast_dismiss_mode = 'auto';
 		}
-		$save_label        = __( 'Save Settings', 'notificator' );
+		$save_label        = __( 'Save Settings', 'notificator-project' );
 		$current_page      = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : 'notificator'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$workspace_routes  = array(
 			'notificator'               => 'overview',
@@ -447,29 +447,29 @@ class Notificator_Companion_Admin_Page {
 		<div class="wrap notificator-companion-wrap" data-notificator-initial-workspace="<?php echo esc_attr( $initial_workspace ); ?>" data-notificator-current-workspace="<?php echo esc_attr( $initial_workspace ); ?>">
 			<header class="notificator-overview-hero notificator-page-hero">
 				<div>
-					<p class="notificator-eyebrow"><?php esc_html_e( 'WordPress notifications', 'notificator' ); ?></p>
-					<h1><?php esc_html_e( 'Notificator', 'notificator' ); ?></h1>
-					<p><?php esc_html_e( 'Turn important WordPress events into useful notifications—without touching code.', 'notificator' ); ?></p>
+					<p class="notificator-eyebrow"><?php esc_html_e( 'WordPress notifications', 'notificator-project' ); ?></p>
+					<h1><?php esc_html_e( 'Notificator', 'notificator-project' ); ?></h1>
+					<p><?php esc_html_e( 'Turn important WordPress events into useful notifications—without touching code.', 'notificator-project' ); ?></p>
 				</div>
 				<div class="notificator-overview-actions">
 					<button type="button" class="btn-primary notificator-header-create" data-notificator-create>
 						<span class="dashicons dashicons-plus-alt2"></span>
-						<?php esc_html_e( 'Create notification', 'notificator' ); ?>
+						<?php esc_html_e( 'Create notification', 'notificator-project' ); ?>
 					</button>
 					<button type="submit" form="notificator-settings-form" id="notificator-save-settings" class="btn-primary notificator-header-save"><span class="dashicons dashicons-yes-alt"></span><?php echo esc_html( $save_label ); ?></button>
-					<button type="button" id="notificator-header-tools" class="btn-secondary"><span class="dashicons dashicons-admin-tools"></span><?php esc_html_e( 'Tools', 'notificator' ); ?></button>
-					<button type="button" id="notificator-theme-toggle" class="btn-icon notificator-header-icon-button" aria-label="<?php echo esc_attr__( 'Switch to dark theme', 'notificator' ); ?>" title="<?php echo esc_attr__( 'Switch to dark theme', 'notificator' ); ?>" aria-pressed="false"><span class="notificator-theme-icon" data-theme-icon aria-hidden="true">🌙</span></button>
+					<button type="button" id="notificator-header-tools" class="btn-secondary"><span class="dashicons dashicons-admin-tools"></span><?php esc_html_e( 'Tools', 'notificator-project' ); ?></button>
+					<button type="button" id="notificator-theme-toggle" class="btn-icon notificator-header-icon-button" aria-label="<?php echo esc_attr__( 'Switch to dark theme', 'notificator-project' ); ?>" title="<?php echo esc_attr__( 'Switch to dark theme', 'notificator-project' ); ?>" aria-pressed="false"><span class="notificator-theme-icon" data-theme-icon aria-hidden="true">🌙</span></button>
 				</div>
 			</header>
 
 			<div id="notificator-admin-notices" hidden></div>
-			<nav class="notificator-workspace-tabs" aria-label="<?php esc_attr_e( 'Notificator sections', 'notificator' ); ?>">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator' ) ); ?>" data-notificator-workspace-tab="overview"><span class="dashicons dashicons-dashboard"></span><?php esc_html_e( 'Overview', 'notificator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-notifications' ) ); ?>" data-notificator-workspace-tab="notifications"><span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'builder' ) ); ?>"></span><?php esc_html_e( 'Notifications', 'notificator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-activity' ) ); ?>" data-notificator-workspace-tab="activity"><span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'log' ) ); ?>"></span><?php esc_html_e( 'Activity', 'notificator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-settings' ) ); ?>" data-notificator-workspace-tab="settings"><span class="dashicons dashicons-admin-settings"></span><?php esc_html_e( 'Settings', 'notificator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-developer' ) ); ?>" data-notificator-workspace-tab="developer"><span class="dashicons dashicons-editor-code"></span><?php esc_html_e( 'Developer', 'notificator' ); ?></a>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-support' ) ); ?>" data-notificator-workspace-tab="support"><span class="dashicons dashicons-sos"></span><?php esc_html_e( 'Support', 'notificator' ); ?></a>
+			<nav class="notificator-workspace-tabs" aria-label="<?php esc_attr_e( 'Notificator sections', 'notificator-project' ); ?>">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator' ) ); ?>" data-notificator-workspace-tab="overview"><span class="dashicons dashicons-dashboard"></span><?php esc_html_e( 'Overview', 'notificator-project' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-notifications' ) ); ?>" data-notificator-workspace-tab="notifications"><span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'builder' ) ); ?>"></span><?php esc_html_e( 'Notifications', 'notificator-project' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-activity' ) ); ?>" data-notificator-workspace-tab="activity"><span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'log' ) ); ?>"></span><?php esc_html_e( 'Activity', 'notificator-project' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-settings' ) ); ?>" data-notificator-workspace-tab="settings"><span class="dashicons dashicons-admin-settings"></span><?php esc_html_e( 'Settings', 'notificator-project' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-developer' ) ); ?>" data-notificator-workspace-tab="developer"><span class="dashicons dashicons-editor-code"></span><?php esc_html_e( 'Developer', 'notificator-project' ); ?></a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-support' ) ); ?>" data-notificator-workspace-tab="support"><span class="dashicons dashicons-sos"></span><?php esc_html_e( 'Support', 'notificator-project' ); ?></a>
 			</nav>
 
 			<form id="notificator-settings-form" action="options.php" method="post" class="notificator-settings-form">
@@ -485,10 +485,10 @@ class Notificator_Companion_Admin_Page {
 							$throttle_seconds = 3600;
 						}
 						/* translators: %d: Notification throttle duration in seconds. */
-						$throttle_duration_format = __( '%ds', 'notificator' );
+						$throttle_duration_format = __( '%ds', 'notificator-project' );
 						$throttle_status          = $throttle_seconds > 0
 							? sprintf( $throttle_duration_format, $throttle_seconds )
-							: __( 'Off', 'notificator' );
+							: __( 'Off', 'notificator-project' );
 						$scan_hook_limit          = isset( $options['scan_hook_limit'] ) ? (int) $options['scan_hook_limit'] : 500;
 						if ( $scan_hook_limit < 50 ) {
 							$scan_hook_limit = 50;
@@ -498,9 +498,9 @@ class Notificator_Companion_Admin_Page {
 						?>
 						<div class="notificator-tools-host">
 							<div class="notificator-action-left">
-								<span class="notificator-action-title" id="notificator-workspace-title"><?php esc_html_e( 'Overview', 'notificator' ); ?></span>
+								<span class="notificator-action-title" id="notificator-workspace-title"><?php esc_html_e( 'Overview', 'notificator-project' ); ?></span>
 								<div class="notificator-save-status" id="notificator-save-status-inline" hidden data-state="idle">
-									<span class="notificator-save-status-text"><?php esc_html_e( 'Saved', 'notificator' ); ?></span>
+									<span class="notificator-save-status-text"><?php esc_html_e( 'Saved', 'notificator-project' ); ?></span>
 								</div>
 							</div>
 
@@ -508,37 +508,37 @@ class Notificator_Companion_Admin_Page {
 								<div class="notificator-action-group">
 									<button type="button" id="notificator-add-scenario-top" class="btn-secondary" data-notificator-create>
 										<span class="dashicons dashicons-plus-alt2"></span>
-										<?php esc_html_e( 'Create notification', 'notificator' ); ?>
+										<?php esc_html_e( 'Create notification', 'notificator-project' ); ?>
 									</button>
 
 									<details class="notificator-action-menu" id="notificator-scenarios-menu">
 									<summary class="btn-secondary notificator-action-menu-trigger" aria-haspopup="menu">
 											<span class="dashicons dashicons-admin-tools"></span>
-											<?php esc_html_e( 'Tools', 'notificator' ); ?>
+											<?php esc_html_e( 'Tools', 'notificator-project' ); ?>
 											<span class="dashicons dashicons-arrow-down-alt2 notificator-action-menu-caret" aria-hidden="true"></span>
 									</summary>
-									<button type="button" class="notificator-tools-backdrop" data-notificator-tools-close aria-label="<?php esc_attr_e( 'Close tools', 'notificator' ); ?>"></button>
+									<button type="button" class="notificator-tools-backdrop" data-notificator-tools-close aria-label="<?php esc_attr_e( 'Close tools', 'notificator-project' ); ?>"></button>
 									<div class="notificator-action-menu-panel notificator-tools-modal notificator-tools-modal--transfer" role="dialog" aria-modal="true" aria-labelledby="notificator-tools-title">
-										<div class="notificator-tools-heading"><div><span class="dashicons dashicons-migrate"></span><div><h2 id="notificator-tools-title"><?php esc_html_e( 'Import & export', 'notificator' ); ?></h2><p><?php esc_html_e( 'Move notification setups between WordPress sites.', 'notificator' ); ?></p></div></div><button type="button" class="btn-icon" data-notificator-tools-close aria-label="<?php esc_attr_e( 'Close tools', 'notificator' ); ?>"><span class="dashicons dashicons-no-alt"></span></button></div>
+										<div class="notificator-tools-heading"><div><span class="dashicons dashicons-migrate"></span><div><h2 id="notificator-tools-title"><?php esc_html_e( 'Import & export', 'notificator-project' ); ?></h2><p><?php esc_html_e( 'Move notification setups between WordPress sites.', 'notificator-project' ); ?></p></div></div><button type="button" class="btn-icon" data-notificator-tools-close aria-label="<?php esc_attr_e( 'Close tools', 'notificator-project' ); ?>"><span class="dashicons dashicons-no-alt"></span></button></div>
 										<div class="notificator-tools-grid">
 											<div class="notificator-action-menu-section">
 												<div class="notificator-action-menu-section-title">
-													<?php esc_html_e( 'Notification setups', 'notificator' ); ?>
+													<?php esc_html_e( 'Notification setups', 'notificator-project' ); ?>
 												</div>
 												<button type="button" id="notificator-export-scenarios" class="notificator-action-menu-item" role="menuitem">
 													<span class="dashicons dashicons-download"></span>
-													<?php esc_html_e( 'Export notifications', 'notificator' ); ?>
+													<?php esc_html_e( 'Export notifications', 'notificator-project' ); ?>
 												</button>
 												<button type="button" id="notificator-import-scenarios" class="notificator-action-menu-item" role="menuitem">
 													<span class="dashicons dashicons-upload"></span>
-													<?php esc_html_e( 'Import notifications', 'notificator' ); ?>
+													<?php esc_html_e( 'Import notifications', 'notificator-project' ); ?>
 												</button>
 											</div>
 										</div>
 									</div>
 								</details>
 
-									<button type="button" class="btn-icon" aria-label="<?php echo esc_attr__( 'Switch to dark theme', 'notificator' ); ?>" title="<?php echo esc_attr__( 'Switch to dark theme', 'notificator' ); ?>" aria-pressed="false">
+									<button type="button" class="btn-icon" aria-label="<?php echo esc_attr__( 'Switch to dark theme', 'notificator-project' ); ?>" title="<?php echo esc_attr__( 'Switch to dark theme', 'notificator-project' ); ?>" aria-pressed="false">
 										<span class="notificator-theme-icon" data-theme-icon aria-hidden="true">🌙</span>
 									</button>
 								</div>
@@ -558,11 +558,11 @@ class Notificator_Companion_Admin_Page {
 						<?php $this->render_import_hooks_modal(); ?>
 						<?php $this->render_overview_section( $options, $has_api_key ); ?>
 						<section class="notificator-settings-intro" data-notificator-workspace="settings" aria-labelledby="notificator-settings-title">
-							<div><p class="notificator-eyebrow"><?php esc_html_e( 'Configuration', 'notificator' ); ?></p><h2 id="notificator-settings-title"><?php esc_html_e( 'Connections & preferences', 'notificator' ); ?></h2><p><?php esc_html_e( 'See what is active, then fine-tune how notifications behave.', 'notificator' ); ?></p></div>
+							<div><p class="notificator-eyebrow"><?php esc_html_e( 'Configuration', 'notificator-project' ); ?></p><h2 id="notificator-settings-title"><?php esc_html_e( 'Connections & preferences', 'notificator-project' ); ?></h2><p><?php esc_html_e( 'See what is active, then fine-tune how notifications behave.', 'notificator-project' ); ?></p></div>
 							<div class="notificator-settings-summary">
-								<span id="notificator-remote-summary" class="<?php echo $active_api_key_count ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Remote delivery', 'notificator' ); ?></small><strong><b id="notificator-active-key-count"><?php echo esc_html( $active_api_key_count ); ?></b>/<b id="notificator-configured-key-count"><?php echo esc_html( count( $api_keys ) ); ?></b></strong><em><?php esc_html_e( 'keys active', 'notificator' ); ?></em></span>
-								<span id="notificator-dashboard-summary" class="<?php echo $admin_toasts_enabled ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Dashboard alerts', 'notificator' ); ?></small><strong><?php echo esc_html( $admin_toasts_enabled ? __( 'On', 'notificator' ) : __( 'Off', 'notificator' ) ); ?></strong><em><?php echo esc_html( $toast_poll_summary ); ?></em></span>
-								<span id="notificator-log-summary" class="<?php echo $log_enabled ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Activity log', 'notificator' ); ?></small><strong><?php echo esc_html( $log_enabled ? __( 'On', 'notificator' ) : __( 'Off', 'notificator' ) ); ?></strong><em><?php esc_html_e( 'Delivery history', 'notificator' ); ?></em></span>
+								<span id="notificator-remote-summary" class="<?php echo $active_api_key_count ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Remote delivery', 'notificator-project' ); ?></small><strong><b id="notificator-active-key-count"><?php echo esc_html( $active_api_key_count ); ?></b>/<b id="notificator-configured-key-count"><?php echo esc_html( count( $api_keys ) ); ?></b></strong><em><?php esc_html_e( 'keys active', 'notificator-project' ); ?></em></span>
+								<span id="notificator-dashboard-summary" class="<?php echo $admin_toasts_enabled ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Dashboard alerts', 'notificator-project' ); ?></small><strong><?php echo esc_html( $admin_toasts_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></strong><em><?php echo esc_html( $toast_poll_summary ); ?></em></span>
+								<span id="notificator-log-summary" class="<?php echo $log_enabled ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Activity log', 'notificator-project' ); ?></small><strong><?php echo esc_html( $log_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></strong><em><?php esc_html_e( 'Delivery history', 'notificator-project' ); ?></em></span>
 							</div>
 						</section>
 
@@ -575,22 +575,22 @@ class Notificator_Companion_Admin_Page {
 											<span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'api' ) ); ?> text-white"></span>
 										</div>
 										<div class="min-w-0">
-											<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Remote delivery', 'notificator' ); ?></h3>
-											<p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Optional API keys for mobile push and MQTT.', 'notificator' ); ?></p>
+											<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Remote delivery', 'notificator-project' ); ?></h3>
+											<p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Optional API keys for mobile push and MQTT.', 'notificator-project' ); ?></p>
 										</div>
 										</div>
-										<span id="notificator-remote-section-status" class="notificator-section-status <?php echo $active_api_key_count ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $active_api_key_count ? __( 'Connected', 'notificator' ) : __( 'Optional', 'notificator' ) ); ?></span>
+										<span id="notificator-remote-section-status" class="notificator-section-status <?php echo $active_api_key_count ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $active_api_key_count ? __( 'Connected', 'notificator-project' ) : __( 'Optional', 'notificator-project' ) ); ?></span>
 									</div>
 								</div>
 							<div class="card-body space-y-4">
 								<div class="notificator-remote-guide">
 									<span class="dashicons dashicons-smartphone"></span>
-									<div><strong><?php esc_html_e( 'Connect the Notificator mobile app', 'notificator' ); ?></strong><p><?php esc_html_e( 'Add an API key when you want mobile push or MQTT. Dashboard-only notifications work without one.', 'notificator' ); ?></p></div>
-									<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-support' ) ); ?>"><?php esc_html_e( 'Account guide', 'notificator' ); ?></a>
+									<div><strong><?php esc_html_e( 'Connect the Notificator mobile app', 'notificator-project' ); ?></strong><p><?php esc_html_e( 'Add an API key when you want mobile push or MQTT. Dashboard-only notifications work without one.', 'notificator-project' ); ?></p></div>
+									<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-support' ) ); ?>"><?php esc_html_e( 'Account guide', 'notificator-project' ); ?></a>
 								</div>
 								<div>
 									<label class="block text-sm font-semibold text-gray-700 mb-2" for="api_key_0">
-										<?php esc_html_e( 'Connected accounts', 'notificator' ); ?>
+										<?php esc_html_e( 'Connected accounts', 'notificator-project' ); ?>
 									</label>
 									<div id="notificator-api-keys" class="space-y-2" data-has-api-key="<?php echo esc_attr( $has_api_key ? '1' : '0' ); ?>">
 										<?php
@@ -603,10 +603,10 @@ class Notificator_Companion_Admin_Page {
 											$hide_remove = ! $has_api_key && 0 === $i && 1 === count( $api_keys_for_render );
 											$key_suffix  = $key ? substr( $key, -6 ) : '';
 											/* translators: %s: Last characters of a saved API key. */
-											$key_placeholder = $key_suffix ? sprintf( __( 'Saved key ending in %s', 'notificator' ), $key_suffix ) : 'wpnotif_...';
+											$key_placeholder = $key_suffix ? sprintf( __( 'Saved key ending in %s', 'notificator-project' ), $key_suffix ) : 'wpnotif_...';
 											?>
 											<div class="notificator-api-key-row <?php echo $key_enabled ? 'is-enabled' : 'is-disabled'; ?>">
-												<div class="notificator-api-key-state"><label class="notificator-switch"><input type="checkbox" class="notificator-api-key-toggle" <?php checked( $key_enabled ); ?> aria-label="<?php echo esc_attr( $key_enabled ? __( 'Disable API key', 'notificator' ) : __( 'Enable API key', 'notificator' ) ); ?>"><span></span></label><strong><?php echo esc_html( $key_enabled ? __( 'On', 'notificator' ) : __( 'Off', 'notificator' ) ); ?></strong><input type="hidden" class="notificator-api-key-enabled-value" name="<?php echo esc_attr( $this->option_name ); ?>[api_key_enabled][]" value="<?php echo esc_attr( $key_enabled ? '1' : '0' ); ?>"></div>
+												<div class="notificator-api-key-state"><label class="notificator-switch"><input type="checkbox" class="notificator-api-key-toggle" <?php checked( $key_enabled ); ?> aria-label="<?php echo esc_attr( $key_enabled ? __( 'Disable API key', 'notificator-project' ) : __( 'Enable API key', 'notificator-project' ) ); ?>"><span></span></label><strong><?php echo esc_html( $key_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></strong><input type="hidden" class="notificator-api-key-enabled-value" name="<?php echo esc_attr( $this->option_name ); ?>[api_key_enabled][]" value="<?php echo esc_attr( $key_enabled ? '1' : '0' ); ?>"></div>
 												<input type="password"
 													id="<?php echo esc_attr( $input_id ); ?>"
 													name="<?php echo esc_attr( $this->option_name ); ?>[api_keys][]"
@@ -620,14 +620,14 @@ class Notificator_Companion_Admin_Page {
 													name="<?php echo esc_attr( $this->option_name ); ?>[api_key_nicknames][]"
 													value="<?php echo esc_attr( $nickname ); ?>"
 													class="px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-w-[140px]"
-																placeholder="<?php echo esc_attr__( 'Device or account label', 'notificator' ); ?>">
-													<button type="button" class="btn-secondary notificator-test-api-key" aria-label="<?php echo esc_attr( wp_json_encode( __( 'Send test notification', 'notificator' ) ) ); ?>" data-notificator-unlock="test-connection" <?php echo $key_enabled ? '' : 'disabled'; ?>>
+																placeholder="<?php echo esc_attr__( 'Device or account label', 'notificator-project' ); ?>">
+													<button type="button" class="btn-secondary notificator-test-api-key" aria-label="<?php echo esc_attr( wp_json_encode( __( 'Send test notification', 'notificator-project' ) ) ); ?>" data-notificator-unlock="test-connection" <?php echo $key_enabled ? '' : 'disabled'; ?>>
 														<span class="dashicons dashicons-yes-alt"></span>
-														<?php esc_html_e( 'Test', 'notificator' ); ?>
+														<?php esc_html_e( 'Test', 'notificator-project' ); ?>
 													</button>
-													<button type="button" class="btn-secondary btn-secondary--danger notificator-remove-api-key" aria-label="<?php echo esc_attr( wp_json_encode( __( 'Remove API key', 'notificator' ) ) ); ?>" <?php echo $hide_remove ? 'hidden' : ''; ?> data-notificator-unlock="remove-api-key">
+													<button type="button" class="btn-secondary btn-secondary--danger notificator-remove-api-key" aria-label="<?php echo esc_attr( wp_json_encode( __( 'Remove API key', 'notificator-project' ) ) ); ?>" <?php echo $hide_remove ? 'hidden' : ''; ?> data-notificator-unlock="remove-api-key">
 														<span class="dashicons dashicons-trash"></span>
-														<?php esc_html_e( 'Remove', 'notificator' ); ?>
+														<?php esc_html_e( 'Remove', 'notificator-project' ); ?>
 													</button>
 											</div>
 										<?php endforeach; ?>
@@ -637,15 +637,15 @@ class Notificator_Companion_Admin_Page {
 										<div class="notificator-api-actions-left">
 											<button type="button" id="notificator-add-api-key" class="btn-secondary" data-notificator-unlock="add-api-key" <?php echo $has_api_key ? '' : 'hidden'; ?>>
 												<span class="dashicons dashicons-plus-alt2"></span>
-												<?php esc_html_e( 'Add another key', 'notificator' ); ?>
+												<?php esc_html_e( 'Add another key', 'notificator-project' ); ?>
 											</button>
 											<button type="submit" id="notificator-save-api-keys" class="btn-primary btn-primary--compact">
 												<span class="dashicons dashicons-yes-alt"></span>
-												<?php esc_html_e( 'Save connections', 'notificator' ); ?>
+												<?php esc_html_e( 'Save connections', 'notificator-project' ); ?>
 											</button>
 										</div>
 										<p class="text-xs text-gray-500">
-											<?php esc_html_e( 'One key can represent one person, device, or destination.', 'notificator' ); ?>
+											<?php esc_html_e( 'One key can represent one person, device, or destination.', 'notificator-project' ); ?>
 										</p>
 									</div>
 								</div>
@@ -653,8 +653,8 @@ class Notificator_Companion_Admin_Page {
 								<div class="notificator-connection-note" data-notificator-lock="api-warning" <?php echo $has_api_key ? 'hidden style="display:none;"' : ''; ?>>
 									<span class="dashicons dashicons-dashboard" aria-hidden="true"></span>
 									<div>
-										<strong><?php esc_html_e( 'Dashboard mode is ready', 'notificator' ); ?></strong>
-										<p><?php esc_html_e( 'No API key is needed for WordPress dashboard alerts. Add a key only when you want mobile push or MQTT delivery.', 'notificator' ); ?></p>
+										<strong><?php esc_html_e( 'Dashboard mode is ready', 'notificator-project' ); ?></strong>
+										<p><?php esc_html_e( 'No API key is needed for WordPress dashboard alerts. Add a key only when you want mobile push or MQTT delivery.', 'notificator-project' ); ?></p>
 									</div>
 								</div>
 							</div>
@@ -665,74 +665,74 @@ class Notificator_Companion_Admin_Page {
 								<div class="flex items-center gap-3">
 									<div class="notificator-section-icon"><span class="dashicons dashicons-admin-settings"></span></div>
 									<div>
-										<h3 id="notificator-preferences-title"><?php esc_html_e( 'Plugin preferences', 'notificator' ); ?></h3>
-										<p><?php esc_html_e( 'Control discovery, delivery safeguards, dashboard alerts, logging, and test data.', 'notificator' ); ?></p>
+										<h3 id="notificator-preferences-title"><?php esc_html_e( 'Plugin preferences', 'notificator-project' ); ?></h3>
+										<p><?php esc_html_e( 'Control discovery, delivery safeguards, dashboard alerts, logging, and test data.', 'notificator-project' ); ?></p>
 									</div>
 								</div>
 							</div>
 							<div class="card-body">
 								<div class="notificator-preferences-grid">
 									<section class="notificator-preference-card">
-										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-search"></span><div><h4><?php esc_html_e( 'Event discovery', 'notificator' ); ?></h4><p><?php esc_html_e( 'Refresh events after installing or updating plugins.', 'notificator' ); ?></p></div><span class="notificator-card-status is-neutral"><?php esc_html_e( 'On demand', 'notificator' ); ?></span></div>
-										<button type="button" id="notificator-scan-plugins-tool" class="btn-secondary"><span class="dashicons dashicons-update"></span><?php esc_html_e( 'Scan active plugins', 'notificator' ); ?></button>
-										<label class="notificator-preference-field" for="notificator-scan-hook-limit"><span><?php esc_html_e( 'Per-plugin event limit', 'notificator' ); ?></span><input type="number" id="notificator-scan-hook-limit" name="<?php echo esc_attr( $this->option_name ); ?>[scan_hook_limit]" min="50" max="10000" value="<?php echo esc_attr( $scan_hook_limit ); ?>" title="<?php esc_attr_e( 'Applied separately to each plugin; the total scan can be higher.', 'notificator' ); ?>" /></label>
-										<small><?php esc_html_e( 'The overall result may be higher because this limit applies to each plugin separately.', 'notificator' ); ?></small>
+										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-search"></span><div><h4><?php esc_html_e( 'Event discovery', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Refresh events after installing or updating plugins.', 'notificator-project' ); ?></p></div><span class="notificator-card-status is-neutral"><?php esc_html_e( 'On demand', 'notificator-project' ); ?></span></div>
+										<button type="button" id="notificator-scan-plugins-tool" class="btn-secondary"><span class="dashicons dashicons-update"></span><?php esc_html_e( 'Scan active plugins', 'notificator-project' ); ?></button>
+										<label class="notificator-preference-field" for="notificator-scan-hook-limit"><span><?php esc_html_e( 'Per-plugin event limit', 'notificator-project' ); ?></span><input type="number" id="notificator-scan-hook-limit" name="<?php echo esc_attr( $this->option_name ); ?>[scan_hook_limit]" min="50" max="10000" value="<?php echo esc_attr( $scan_hook_limit ); ?>" title="<?php esc_attr_e( 'Applied separately to each plugin; the total scan can be higher.', 'notificator-project' ); ?>" /></label>
+										<small><?php esc_html_e( 'The overall result may be higher because this limit applies to each plugin separately.', 'notificator-project' ); ?></small>
 									</section>
 
 									<section class="notificator-preference-card">
-										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-controls-repeat"></span><div><h4><?php esc_html_e( 'Notification safeguards', 'notificator' ); ?></h4><p><?php esc_html_e( 'Prevent the same event from sending too frequently.', 'notificator' ); ?></p></div><span class="notificator-card-status is-active" data-notificator-throttle-status data-disabled-label="<?php esc_attr_e( 'Off', 'notificator' ); ?>" data-current-template="<?php echo esc_attr( $throttle_duration_format ); ?>"><?php echo esc_html( $throttle_status ); ?></span></div>
-										<label class="notificator-preference-field" for="notificator-throttle-seconds"><span><?php esc_html_e( 'Throttle window', 'notificator' ); ?></span><span class="notificator-preference-input-suffix"><input type="number" id="notificator-throttle-seconds" name="<?php echo esc_attr( $this->option_name ); ?>[throttle_seconds]" min="0" max="3600" value="<?php echo esc_attr( $throttle_seconds ); ?>" /><em><?php esc_html_e( 'seconds', 'notificator' ); ?></em></span></label>
-										<small><?php esc_html_e( 'Use 0 to allow every matching event.', 'notificator' ); ?></small>
+										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-controls-repeat"></span><div><h4><?php esc_html_e( 'Notification safeguards', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Prevent the same event from sending too frequently.', 'notificator-project' ); ?></p></div><span class="notificator-card-status is-active" data-notificator-throttle-status data-disabled-label="<?php esc_attr_e( 'Off', 'notificator-project' ); ?>" data-current-template="<?php echo esc_attr( $throttle_duration_format ); ?>"><?php echo esc_html( $throttle_status ); ?></span></div>
+										<label class="notificator-preference-field" for="notificator-throttle-seconds"><span><?php esc_html_e( 'Throttle window', 'notificator-project' ); ?></span><span class="notificator-preference-input-suffix"><input type="number" id="notificator-throttle-seconds" name="<?php echo esc_attr( $this->option_name ); ?>[throttle_seconds]" min="0" max="3600" value="<?php echo esc_attr( $throttle_seconds ); ?>" /><em><?php esc_html_e( 'seconds', 'notificator-project' ); ?></em></span></label>
+										<small><?php esc_html_e( 'Use 0 to allow every matching event.', 'notificator-project' ); ?></small>
 									</section>
 
 									<section class="notificator-preference-card notificator-preference-card--wide notificator-preference-card--dashboard">
-										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-dashboard"></span><div><h4><?php esc_html_e( 'Dashboard alerts', 'notificator' ); ?></h4><p><?php esc_html_e( 'Choose how alerts appear inside WordPress.', 'notificator' ); ?></p></div><span id="notificator-dashboard-card-status" class="notificator-card-status <?php echo $admin_toasts_enabled ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $admin_toasts_enabled ? __( 'On', 'notificator' ) : __( 'Off', 'notificator' ) ); ?></span></div>
+										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-dashboard"></span><div><h4><?php esc_html_e( 'Dashboard alerts', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Choose how alerts appear inside WordPress.', 'notificator-project' ); ?></p></div><span id="notificator-dashboard-card-status" class="notificator-card-status <?php echo $admin_toasts_enabled ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $admin_toasts_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></span></div>
 										<div id="notificator-dashboard-alert-settings" class="notificator-dashboard-alert-settings <?php echo $admin_toasts_enabled ? 'is-enabled' : 'is-disabled'; ?>">
 											<div class="notificator-dashboard-alert-toggle">
-												<div><span class="notificator-live-dot" aria-hidden="true"></span><div><strong><?php esc_html_e( 'Show alerts in WordPress', 'notificator' ); ?></strong><p><?php esc_html_e( 'Display new event notifications while an administrator is using the dashboard.', 'notificator' ); ?></p></div></div>
-												<button type="button" id="notificator-toggle-admin-toasts" class="btn-secondary notificator-preference-toggle" data-toasts-enabled="<?php echo esc_attr( $admin_toasts_enabled ? '1' : '0' ); ?>" aria-pressed="<?php echo esc_attr( $admin_toasts_enabled ? 'true' : 'false' ); ?>"><span class="dashicons <?php echo esc_attr( $admin_toasts_enabled ? 'dashicons-no' : 'dashicons-yes' ); ?>"></span><?php echo esc_html( $admin_toasts_enabled ? __( 'Turn off', 'notificator' ) : __( 'Turn on', 'notificator' ) ); ?></button>
+												<div><span class="notificator-live-dot" aria-hidden="true"></span><div><strong><?php esc_html_e( 'Show alerts in WordPress', 'notificator-project' ); ?></strong><p><?php esc_html_e( 'Display new event notifications while an administrator is using the dashboard.', 'notificator-project' ); ?></p></div></div>
+												<button type="button" id="notificator-toggle-admin-toasts" class="btn-secondary notificator-preference-toggle" data-toasts-enabled="<?php echo esc_attr( $admin_toasts_enabled ? '1' : '0' ); ?>" aria-pressed="<?php echo esc_attr( $admin_toasts_enabled ? 'true' : 'false' ); ?>"><span class="dashicons <?php echo esc_attr( $admin_toasts_enabled ? 'dashicons-no' : 'dashicons-yes' ); ?>"></span><?php echo esc_html( $admin_toasts_enabled ? __( 'Turn off', 'notificator-project' ) : __( 'Turn on', 'notificator-project' ) ); ?></button>
 											</div>
 											<div class="notificator-dashboard-alert-groups">
 												<section class="notificator-dashboard-alert-group">
-													<div class="notificator-dashboard-alert-group__heading"><span class="dashicons dashicons-clock"></span><div><h5><?php esc_html_e( 'Delivery timing', 'notificator' ); ?></h5><p><?php esc_html_e( 'Balance responsiveness with admin requests.', 'notificator' ); ?></p></div></div>
+													<div class="notificator-dashboard-alert-group__heading"><span class="dashicons dashicons-clock"></span><div><h5><?php esc_html_e( 'Delivery timing', 'notificator-project' ); ?></h5><p><?php esc_html_e( 'Balance responsiveness with admin requests.', 'notificator-project' ); ?></p></div></div>
 													<div class="notificator-preference-fields">
-												<label class="notificator-preference-field" for="notificator-toast-poll-interval"><span><?php esc_html_e( 'Check for alerts', 'notificator' ); ?></span><select id="notificator-toast-poll-interval" name="<?php echo esc_attr( $this->option_name ); ?>[toast_poll_interval]">
+												<label class="notificator-preference-field" for="notificator-toast-poll-interval"><span><?php esc_html_e( 'Check for alerts', 'notificator-project' ); ?></span><select id="notificator-toast-poll-interval" name="<?php echo esc_attr( $this->option_name ); ?>[toast_poll_interval]">
 												<?php
 												foreach ( $poll_intervals as $interval => $interval_label ) :
 													?>
 													<option value="<?php echo esc_attr( $interval ); ?>" <?php selected( $toast_poll_interval, $interval ); ?>><?php echo esc_html( $interval_label ); ?></option><?php endforeach; ?></select></label>
-														<label class="notificator-preference-field" for="notificator-toast-duration"><span><?php esc_html_e( 'Keep visible for', 'notificator' ); ?></span><span class="notificator-preference-input-suffix"><input type="number" min="1" max="15" id="notificator-toast-duration" name="<?php echo esc_attr( $this->option_name ); ?>[toast_duration]" value="<?php echo esc_attr( $toast_duration ); ?>" /><em><?php esc_html_e( 'seconds', 'notificator' ); ?></em></span></label>
+														<label class="notificator-preference-field" for="notificator-toast-duration"><span><?php esc_html_e( 'Keep visible for', 'notificator-project' ); ?></span><span class="notificator-preference-input-suffix"><input type="number" min="1" max="15" id="notificator-toast-duration" name="<?php echo esc_attr( $this->option_name ); ?>[toast_duration]" value="<?php echo esc_attr( $toast_duration ); ?>" /><em><?php esc_html_e( 'seconds', 'notificator-project' ); ?></em></span></label>
 													</div>
 												</section>
 												<section class="notificator-dashboard-alert-group">
-													<div class="notificator-dashboard-alert-group__heading"><span class="dashicons dashicons-visibility"></span><div><h5><?php esc_html_e( 'Appearance & behavior', 'notificator' ); ?></h5><p><?php esc_html_e( 'Control where alerts appear and when they disappear.', 'notificator' ); ?></p></div></div>
+													<div class="notificator-dashboard-alert-group__heading"><span class="dashicons dashicons-visibility"></span><div><h5><?php esc_html_e( 'Appearance & behavior', 'notificator-project' ); ?></h5><p><?php esc_html_e( 'Control where alerts appear and when they disappear.', 'notificator-project' ); ?></p></div></div>
 													<div class="notificator-preference-fields">
-														<div class="notificator-preference-field"><span><?php esc_html_e( 'Position', 'notificator' ); ?></span><span class="notificator-preference-select-pair"><label><small><?php esc_html_e( 'Vertical', 'notificator' ); ?></small><select id="notificator-toast-position-y" name="<?php echo esc_attr( $this->option_name ); ?>[toast_position_y]">
+														<div class="notificator-preference-field"><span><?php esc_html_e( 'Position', 'notificator-project' ); ?></span><span class="notificator-preference-select-pair"><label><small><?php esc_html_e( 'Vertical', 'notificator-project' ); ?></small><select id="notificator-toast-position-y" name="<?php echo esc_attr( $this->option_name ); ?>[toast_position_y]">
 														<?php
 														foreach ( array( 'top', 'bottom' ) as $pos_y ) :
 															?>
-															<option value="<?php echo esc_attr( $pos_y ); ?>" <?php selected( $toast_position_y, $pos_y ); ?>><?php echo esc_html( ucfirst( $pos_y ) ); ?></option><?php endforeach; ?></select></label><label><small><?php esc_html_e( 'Horizontal', 'notificator' ); ?></small><select id="notificator-toast-position-x" name="<?php echo esc_attr( $this->option_name ); ?>[toast_position_x]">
+															<option value="<?php echo esc_attr( $pos_y ); ?>" <?php selected( $toast_position_y, $pos_y ); ?>><?php echo esc_html( ucfirst( $pos_y ) ); ?></option><?php endforeach; ?></select></label><label><small><?php esc_html_e( 'Horizontal', 'notificator-project' ); ?></small><select id="notificator-toast-position-x" name="<?php echo esc_attr( $this->option_name ); ?>[toast_position_x]">
 															<?php
 															foreach ( array( 'left', 'center', 'right' ) as $pos_x ) :
 																?>
 															<option value="<?php echo esc_attr( $pos_x ); ?>" <?php selected( $toast_position_x, $pos_x ); ?>><?php echo esc_html( ucfirst( $pos_x ) ); ?></option><?php endforeach; ?></select></label></span></div>
-														<label class="notificator-preference-field" for="notificator-toast-delivery"><span><?php esc_html_e( 'Avoid duplicates', 'notificator' ); ?></span><select id="notificator-toast-delivery" name="<?php echo esc_attr( $this->option_name ); ?>[toast_delivery_mode]"><option value="account" <?php selected( $toast_delivery_mode, 'account' ); ?>><?php esc_html_e( 'Once per WordPress account', 'notificator' ); ?></option><option value="tab" <?php selected( $toast_delivery_mode, 'tab' ); ?>><?php esc_html_e( 'Once in each browser tab', 'notificator' ); ?></option></select></label>
-														<label class="notificator-preference-field" for="notificator-toast-dismiss"><span><?php esc_html_e( 'Dismiss alert', 'notificator' ); ?></span><select id="notificator-toast-dismiss" name="<?php echo esc_attr( $this->option_name ); ?>[toast_dismiss_mode]"><option value="auto" <?php selected( $toast_dismiss_mode, 'auto' ); ?>><?php esc_html_e( 'Automatically after the duration', 'notificator' ); ?></option><option value="click" <?php selected( $toast_dismiss_mode, 'click' ); ?>><?php esc_html_e( 'Only when clicked', 'notificator' ); ?></option></select></label>
+														<label class="notificator-preference-field" for="notificator-toast-delivery"><span><?php esc_html_e( 'Avoid duplicates', 'notificator-project' ); ?></span><select id="notificator-toast-delivery" name="<?php echo esc_attr( $this->option_name ); ?>[toast_delivery_mode]"><option value="account" <?php selected( $toast_delivery_mode, 'account' ); ?>><?php esc_html_e( 'Once per WordPress account', 'notificator-project' ); ?></option><option value="tab" <?php selected( $toast_delivery_mode, 'tab' ); ?>><?php esc_html_e( 'Once in each browser tab', 'notificator-project' ); ?></option></select></label>
+														<label class="notificator-preference-field" for="notificator-toast-dismiss"><span><?php esc_html_e( 'Dismiss alert', 'notificator-project' ); ?></span><select id="notificator-toast-dismiss" name="<?php echo esc_attr( $this->option_name ); ?>[toast_dismiss_mode]"><option value="auto" <?php selected( $toast_dismiss_mode, 'auto' ); ?>><?php esc_html_e( 'Automatically after the duration', 'notificator-project' ); ?></option><option value="click" <?php selected( $toast_dismiss_mode, 'click' ); ?>><?php esc_html_e( 'Only when clicked', 'notificator-project' ); ?></option></select></label>
 													</div>
 												</section>
 											</div>
-											<p class="notificator-dashboard-alert-note"><span class="dashicons dashicons-info-outline"></span><?php esc_html_e( 'Checking pauses automatically when the browser tab is hidden, so inactive tabs do not keep polling.', 'notificator' ); ?></p>
+											<p class="notificator-dashboard-alert-note"><span class="dashicons dashicons-info-outline"></span><?php esc_html_e( 'Checking pauses automatically when the browser tab is hidden, so inactive tabs do not keep polling.', 'notificator-project' ); ?></p>
 										</div>
 									</section>
 
 									<section class="notificator-preference-card">
-										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-list-view"></span><div><h4><?php esc_html_e( 'Activity log', 'notificator' ); ?></h4><p><?php esc_html_e( 'Store delivery results for troubleshooting and reporting.', 'notificator' ); ?></p></div><span id="notificator-log-card-status" class="notificator-card-status <?php echo $log_enabled ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $log_enabled ? __( 'On', 'notificator' ) : __( 'Off', 'notificator' ) ); ?></span></div>
-										<div class="notificator-preference-actions"><button type="button" id="notificator-toggle-log" class="btn-secondary" data-log-enabled="<?php echo esc_attr( $log_enabled ? '1' : '0' ); ?>"><span class="dashicons <?php echo esc_attr( $log_enabled ? 'dashicons-no' : 'dashicons-yes' ); ?>"></span><?php echo esc_html( $log_enabled ? __( 'Disable activity log', 'notificator' ) : __( 'Enable activity log', 'notificator' ) ); ?></button><button type="button" id="notificator-export-log" class="btn-secondary"><span class="dashicons dashicons-media-spreadsheet"></span><?php esc_html_e( 'Export log CSV', 'notificator' ); ?></button></div>
+										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-list-view"></span><div><h4><?php esc_html_e( 'Activity log', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Store delivery results for troubleshooting and reporting.', 'notificator-project' ); ?></p></div><span id="notificator-log-card-status" class="notificator-card-status <?php echo $log_enabled ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $log_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></span></div>
+										<div class="notificator-preference-actions"><button type="button" id="notificator-toggle-log" class="btn-secondary" data-log-enabled="<?php echo esc_attr( $log_enabled ? '1' : '0' ); ?>"><span class="dashicons <?php echo esc_attr( $log_enabled ? 'dashicons-no' : 'dashicons-yes' ); ?>"></span><?php echo esc_html( $log_enabled ? __( 'Disable activity log', 'notificator-project' ) : __( 'Enable activity log', 'notificator-project' ) ); ?></button><button type="button" id="notificator-export-log" class="btn-secondary"><span class="dashicons dashicons-media-spreadsheet"></span><?php esc_html_e( 'Export log CSV', 'notificator-project' ); ?></button></div>
 									</section>
 
 									<section class="notificator-preference-card notificator-preference-card--danger">
-										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-image-rotate"></span><div><h4><?php esc_html_e( 'Reset test data', 'notificator' ); ?></h4><p><?php esc_html_e( 'Remove notifications, activity, scan results, observation data, and preferences. API keys are always kept.', 'notificator' ); ?></p></div></div>
-										<button type="button" id="notificator-reset-test-data" class="btn-secondary btn-secondary--danger"><span class="dashicons dashicons-image-rotate"></span><?php esc_html_e( 'Reset plugin data', 'notificator' ); ?></button>
+										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-image-rotate"></span><div><h4><?php esc_html_e( 'Reset test data', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Remove notifications, activity, scan results, observation data, and preferences. API keys are always kept.', 'notificator-project' ); ?></p></div></div>
+										<button type="button" id="notificator-reset-test-data" class="btn-secondary btn-secondary--danger"><span class="dashicons dashicons-image-rotate"></span><?php esc_html_e( 'Reset plugin data', 'notificator-project' ); ?></button>
 									</section>
 								</div>
 							</div>
@@ -792,9 +792,9 @@ class Notificator_Companion_Admin_Page {
 		$disabled_key_count = max( 0, count( $saved_keys ) - $enabled_key_count );
 		if ( $last_scan ) {
 			/* translators: %s: Human-readable elapsed time, such as "5 minutes". */
-			$scan_label = sprintf( __( '%s ago', 'notificator' ), human_time_diff( $last_scan, time() ) );
+			$scan_label = sprintf( __( '%s ago', 'notificator-project' ), human_time_diff( $last_scan, time() ) );
 		} else {
-			$scan_label = __( 'Not scanned yet', 'notificator' );
+			$scan_label = __( 'Not scanned yet', 'notificator-project' );
 		}
 		$disabled_key_message = sprintf(
 			/* translators: %d: Number of disabled API keys. */
@@ -802,13 +802,13 @@ class Notificator_Companion_Admin_Page {
 				'%d API key is turned off. Events for that destination will not be delivered.',
 				'%d API keys are turned off. Events for those destinations will not be delivered.',
 				$disabled_key_count,
-				'notificator'
+				'notificator-project'
 			),
 			$disabled_key_count
 		);
 		$connection_label      = $has_api_key
-			? ( 0 === $enabled_key_count ? __( 'Delivery paused', 'notificator' ) : ( $disabled_key_count ? __( 'Partially active', 'notificator' ) : ( 'failed' === $last_test ? __( 'Needs attention', 'notificator' ) : __( 'Connected', 'notificator' ) ) ) )
-			: __( 'Dashboard only', 'notificator' );
+			? ( 0 === $enabled_key_count ? __( 'Delivery paused', 'notificator-project' ) : ( $disabled_key_count ? __( 'Partially active', 'notificator-project' ) : ( 'failed' === $last_test ? __( 'Needs attention', 'notificator-project' ) : __( 'Connected', 'notificator-project' ) ) ) )
+			: __( 'Dashboard only', 'notificator-project' );
 		$recent_log            = get_option( 'notificator_companion_notification_log', array() );
 		$recent_log            = is_array( $recent_log ) ? array_slice( array_reverse( array_values( $recent_log ) ), 0, 5 ) : array();
 		$delivery_sample       = is_array( $recent_log ) ? $recent_log : array();
@@ -823,51 +823,51 @@ class Notificator_Companion_Admin_Page {
 		);
 		$delivery_rate         = count( $delivery_sample ) ? (int) round( ( $successful_deliveries / count( $delivery_sample ) ) * 100 ) : 0;
 		?>
-		<section class="notificator-overview" id="overview" data-notificator-workspace="overview" aria-label="<?php esc_attr_e( 'System overview', 'notificator' ); ?>">
+		<section class="notificator-overview" id="overview" data-notificator-workspace="overview" aria-label="<?php esc_attr_e( 'System overview', 'notificator-project' ); ?>">
 			<div class="notificator-health-grid">
 				<div class="notificator-health-card">
 					<span class="notificator-health-icon dashicons dashicons-admin-network" aria-hidden="true"></span>
-					<div><span><?php esc_html_e( 'Connection', 'notificator' ); ?></span><strong id="notificator-overview-connection-status"><?php echo esc_html( $connection_label ); ?></strong></div>
+					<div><span><?php esc_html_e( 'Connection', 'notificator-project' ); ?></span><strong id="notificator-overview-connection-status"><?php echo esc_html( $connection_label ); ?></strong></div>
 				</div>
 				<div class="notificator-health-card">
 					<span class="notificator-health-icon dashicons dashicons-megaphone" aria-hidden="true"></span>
-					<div><span><?php esc_html_e( 'Active notifications', 'notificator' ); ?></span><strong><?php echo esc_html( count( $active_hooks ) ); ?></strong></div>
+					<div><span><?php esc_html_e( 'Active notifications', 'notificator-project' ); ?></span><strong><?php echo esc_html( count( $active_hooks ) ); ?></strong></div>
 				</div>
 				<div class="notificator-health-card">
 					<span class="notificator-health-icon dashicons dashicons-update" aria-hidden="true"></span>
-					<div><span><?php esc_html_e( 'Plugin scan', 'notificator' ); ?></span><strong><?php echo esc_html( $scan_label ); ?></strong></div>
+					<div><span><?php esc_html_e( 'Plugin scan', 'notificator-project' ); ?></span><strong><?php echo esc_html( $scan_label ); ?></strong></div>
 				</div>
 				<div class="notificator-health-card">
 					<span class="notificator-health-icon dashicons dashicons-clock" aria-hidden="true"></span>
-					<div><span><?php esc_html_e( 'Delivery queue', 'notificator' ); ?></span><strong><?php echo esc_html( $pending ); ?> <?php esc_html_e( 'pending', 'notificator' ); ?></strong></div>
+					<div><span><?php esc_html_e( 'Delivery queue', 'notificator-project' ); ?></span><strong><?php echo esc_html( $pending ); ?> <?php esc_html_e( 'pending', 'notificator-project' ); ?></strong></div>
 				</div>
 			</div>
-			<div id="notificator-overview-key-alert" class="notificator-overview-alert <?php echo 0 === $enabled_key_count ? 'is-danger' : 'is-warning'; ?>" <?php echo 0 === $disabled_key_count ? 'hidden' : ''; ?>><span class="dashicons dashicons-warning"></span><div><strong data-key-alert-title><?php echo 0 === $enabled_key_count ? esc_html__( 'Notification delivery is paused', 'notificator' ) : esc_html__( 'Some destinations are paused', 'notificator' ); ?></strong><p data-key-alert-message><?php echo esc_html( $disabled_key_message ); ?></p></div></div>
+			<div id="notificator-overview-key-alert" class="notificator-overview-alert <?php echo 0 === $enabled_key_count ? 'is-danger' : 'is-warning'; ?>" <?php echo 0 === $disabled_key_count ? 'hidden' : ''; ?>><span class="dashicons dashicons-warning"></span><div><strong data-key-alert-title><?php echo 0 === $enabled_key_count ? esc_html__( 'Notification delivery is paused', 'notificator-project' ) : esc_html__( 'Some destinations are paused', 'notificator-project' ); ?></strong><p data-key-alert-message><?php echo esc_html( $disabled_key_message ); ?></p></div></div>
 
 			<div class="notificator-overview-grid">
 				<div class="notificator-overview-panel">
 					<div class="notificator-panel-heading">
-						<div><h3><?php esc_html_e( 'Getting started', 'notificator' ); ?></h3><p><?php esc_html_e( 'Complete these steps once, then this becomes your health dashboard.', 'notificator' ); ?></p></div>
+						<div><h3><?php esc_html_e( 'Getting started', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'Complete these steps once, then this becomes your health dashboard.', 'notificator-project' ); ?></p></div>
 					</div>
 					<ol class="notificator-checklist">
-						<li class="<?php echo $last_scan ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo $last_scan ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Discover site events', 'notificator' ); ?></strong><small><?php esc_html_e( 'Scan active plugins for events and ready-made templates.', 'notificator' ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator' ); ?></button></li>
-						<li class="<?php echo ! empty( $hooks ) ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo ! empty( $hooks ) ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Create a notification', 'notificator' ); ?></strong><small><?php esc_html_e( 'Choose a template or build one from a WordPress event.', 'notificator' ); ?></small></div><a href="#notifications" data-notificator-workspace-tab="notifications"><?php esc_html_e( 'Open', 'notificator' ); ?></a></li>
+						<li class="<?php echo $last_scan ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo $last_scan ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Discover site events', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Scan active plugins for events and ready-made templates.', 'notificator-project' ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator-project' ); ?></button></li>
+						<li class="<?php echo ! empty( $hooks ) ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo ! empty( $hooks ) ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Create a notification', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Choose a template or build one from a WordPress event.', 'notificator-project' ); ?></small></div><a href="#notifications" data-notificator-workspace-tab="notifications"><?php esc_html_e( 'Open', 'notificator-project' ); ?></a></li>
 					</ol>
 				</div>
 				<div class="notificator-overview-panel notificator-overview-panel--status">
-					<div class="notificator-panel-heading"><div><h3><?php esc_html_e( 'Latest status', 'notificator' ); ?></h3><p><?php esc_html_e( 'Live operational signals from this site.', 'notificator' ); ?></p></div></div>
+					<div class="notificator-panel-heading"><div><h3><?php esc_html_e( 'Latest status', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'Live operational signals from this site.', 'notificator-project' ); ?></p></div></div>
 					<dl class="notificator-status-list">
-						<div><dt><?php esc_html_e( 'Last delivery', 'notificator' ); ?></dt><dd><span class="badge <?php echo in_array( $delivery, array( 'delivered', 'partial' ), true ) ? 'badge-success' : 'badge-info'; ?>"><?php echo esc_html( $delivery ? ucfirst( $delivery ) : __( 'No activity', 'notificator' ) ); ?></span></dd></div>
-						<div><dt><?php esc_html_e( 'Events discovered', 'notificator' ); ?></dt><dd><?php echo esc_html( isset( $health['last_scan_hooks'] ) ? (int) $health['last_scan_hooks'] : 0 ); ?></dd></div>
-						<div><dt><?php esc_html_e( 'Configured notifications', 'notificator' ); ?></dt><dd><?php echo esc_html( count( $hooks ) ); ?></dd></div>
+						<div><dt><?php esc_html_e( 'Last delivery', 'notificator-project' ); ?></dt><dd><span class="badge <?php echo in_array( $delivery, array( 'delivered', 'partial' ), true ) ? 'badge-success' : 'badge-info'; ?>"><?php echo esc_html( $delivery ? ucfirst( $delivery ) : __( 'No activity', 'notificator-project' ) ); ?></span></dd></div>
+						<div><dt><?php esc_html_e( 'Events discovered', 'notificator-project' ); ?></dt><dd><?php echo esc_html( isset( $health['last_scan_hooks'] ) ? (int) $health['last_scan_hooks'] : 0 ); ?></dd></div>
+						<div><dt><?php esc_html_e( 'Configured notifications', 'notificator-project' ); ?></dt><dd><?php echo esc_html( count( $hooks ) ); ?></dd></div>
 					</dl>
-					<a class="btn-secondary btn-secondary--compact" href="#activity" data-notificator-workspace-tab="activity"><?php esc_html_e( 'View activity', 'notificator' ); ?></a>
+					<a class="btn-secondary btn-secondary--compact" href="#activity" data-notificator-workspace-tab="activity"><?php esc_html_e( 'View activity', 'notificator-project' ); ?></a>
 				</div>
 			</div>
 
 			<div class="notificator-overview-grid notificator-overview-grid--operations">
 				<div class="notificator-overview-panel">
-					<div class="notificator-panel-heading"><div><h3><?php esc_html_e( 'Recent events', 'notificator' ); ?></h3><p><?php esc_html_e( 'The latest notification activity from this site.', 'notificator' ); ?></p></div><a href="#activity" data-notificator-workspace-tab="activity"><?php esc_html_e( 'View all', 'notificator' ); ?></a></div>
+					<div class="notificator-panel-heading"><div><h3><?php esc_html_e( 'Recent events', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'The latest notification activity from this site.', 'notificator-project' ); ?></p></div><a href="#activity" data-notificator-workspace-tab="activity"><?php esc_html_e( 'View all', 'notificator-project' ); ?></a></div>
 					<?php if ( $recent_log ) : ?>
 						<ul class="notificator-recent-events">
 							<?php foreach ( $recent_log as $recent_entry ) : ?>
@@ -876,22 +876,22 @@ class Notificator_Companion_Admin_Page {
 								$recent_success = in_array( $recent_status, array( 'delivered', 'sent', 'dashboard_only' ), true );
 								if ( ! empty( $recent_entry['timestamp'] ) ) {
 									/* translators: %s: Human-readable elapsed time, such as "5 minutes". */
-									$recent_time = sprintf( __( '%s ago', 'notificator' ), human_time_diff( strtotime( (string) $recent_entry['timestamp'] ), time() ) );
+									$recent_time = sprintf( __( '%s ago', 'notificator-project' ), human_time_diff( strtotime( (string) $recent_entry['timestamp'] ), time() ) );
 								} else {
-									$recent_time = __( 'Unknown time', 'notificator' );
+									$recent_time = __( 'Unknown time', 'notificator-project' );
 								}
 								?>
-								<li><span class="notificator-event-dot <?php echo $recent_success ? 'is-success' : 'is-warning'; ?>"></span><div><strong><?php echo esc_html( ! empty( $recent_entry['title'] ) ? (string) $recent_entry['title'] : (string) ( $recent_entry['hook_name'] ?? __( 'WordPress event', 'notificator' ) ) ); ?></strong><small><?php echo esc_html( $recent_time ); ?> · <?php echo esc_html( ucfirst( str_replace( '_', ' ', $recent_status ) ) ); ?></small></div></li>
+								<li><span class="notificator-event-dot <?php echo $recent_success ? 'is-success' : 'is-warning'; ?>"></span><div><strong><?php echo esc_html( ! empty( $recent_entry['title'] ) ? (string) $recent_entry['title'] : (string) ( $recent_entry['hook_name'] ?? __( 'WordPress event', 'notificator-project' ) ) ); ?></strong><small><?php echo esc_html( $recent_time ); ?> · <?php echo esc_html( ucfirst( str_replace( '_', ' ', $recent_status ) ) ); ?></small></div></li>
 							<?php endforeach; ?>
 						</ul>
 					<?php else : ?>
-						<div class="notificator-overview-empty"><span class="dashicons dashicons-bell"></span><p><?php esc_html_e( 'No events yet. Your latest deliveries will appear here.', 'notificator' ); ?></p></div>
+						<div class="notificator-overview-empty"><span class="dashicons dashicons-bell"></span><p><?php esc_html_e( 'No events yet. Your latest deliveries will appear here.', 'notificator-project' ); ?></p></div>
 					<?php endif; ?>
 				</div>
 				<div class="notificator-overview-panel">
-					<div class="notificator-panel-heading"><div><h3><?php esc_html_e( 'Delivery snapshot', 'notificator' ); ?></h3><p><?php esc_html_e( 'A quick signal based on your five latest events.', 'notificator' ); ?></p></div></div>
-					<div class="notificator-delivery-snapshot"><strong><?php echo esc_html( $delivery_rate ); ?>%</strong><span><?php esc_html_e( 'delivered successfully', 'notificator' ); ?></span><div><i style="width: <?php echo esc_attr( $delivery_rate ); ?>%"></i></div></div>
-					<div class="notificator-quick-actions"><button type="button" data-notificator-create><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'New notification', 'notificator' ); ?></button><button type="button" id="notificator-overview-tools"><span class="dashicons dashicons-admin-tools"></span><?php esc_html_e( 'Open tools', 'notificator' ); ?></button><a href="#support" data-notificator-workspace-tab="support"><span class="dashicons dashicons-sos"></span><?php esc_html_e( 'Get support', 'notificator' ); ?></a></div>
+					<div class="notificator-panel-heading"><div><h3><?php esc_html_e( 'Delivery snapshot', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'A quick signal based on your five latest events.', 'notificator-project' ); ?></p></div></div>
+					<div class="notificator-delivery-snapshot"><strong><?php echo esc_html( $delivery_rate ); ?>%</strong><span><?php esc_html_e( 'delivered successfully', 'notificator-project' ); ?></span><div><i style="width: <?php echo esc_attr( $delivery_rate ); ?>%"></i></div></div>
+					<div class="notificator-quick-actions"><button type="button" data-notificator-create><span class="dashicons dashicons-plus-alt2"></span><?php esc_html_e( 'New notification', 'notificator-project' ); ?></button><button type="button" id="notificator-overview-tools"><span class="dashicons dashicons-admin-tools"></span><?php esc_html_e( 'Open tools', 'notificator-project' ); ?></button><a href="#support" data-notificator-workspace-tab="support"><span class="dashicons dashicons-sos"></span><?php esc_html_e( 'Get support', 'notificator-project' ); ?></a></div>
 				</div>
 			</div>
 		</section>
@@ -930,7 +930,7 @@ class Notificator_Companion_Admin_Page {
 		<div class="notificator-scan-controls">
 			<button type="button" id="scan-plugins-btn" class="btn-secondary notificator-scan-btn" <?php echo $disabled ? 'disabled' : ''; ?>>
 				<span class="dashicons dashicons-update"></span>
-				<?php esc_html_e( 'Scan Plugins', 'notificator' ); ?>
+				<?php esc_html_e( 'Scan Plugins', 'notificator-project' ); ?>
 			</button>
 		</div>
 		<?php
@@ -950,16 +950,16 @@ class Notificator_Companion_Admin_Page {
 		<div id="scan-modal" class="hidden fixed inset-0 z-50 overflow-y-auto scan-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="notificator-scan-modal-title">
 			<div class="flex items-center justify-center min-h-screen px-4">
 				<div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative">
-					<button type="button" id="notificator-scan-modal-close" class="btn-icon notificator-scan-modal-close" aria-label="<?php esc_attr_e( 'Close scan', 'notificator' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
+					<button type="button" id="notificator-scan-modal-close" class="btn-icon notificator-scan-modal-close" aria-label="<?php esc_attr_e( 'Close scan', 'notificator-project' ); ?>"><span class="dashicons dashicons-no-alt"></span></button>
 					<div id="scan-progress">
 						<div class="text-center notificator-scan-progress-content">
 							<div class="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
 								<div class="loading-spinner"></div>
 							</div>
-							<h3 id="notificator-scan-modal-title" class="text-lg font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Discovering events…', 'notificator' ); ?></h3>
-							<p id="scan-current-plugin" class="text-sm text-gray-600"><?php esc_html_e( 'Preparing the plugin scan…', 'notificator' ); ?></p>
+							<h3 id="notificator-scan-modal-title" class="text-lg font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Discovering events…', 'notificator-project' ); ?></h3>
+							<p id="scan-current-plugin" class="text-sm text-gray-600"><?php esc_html_e( 'Preparing the plugin scan…', 'notificator-project' ); ?></p>
 							<div class="notificator-scan-progress-track" aria-hidden="true"><span id="scan-progress-bar"></span></div>
-							<p class="notificator-scan-progress-help"><?php esc_html_e( 'You can close this window—the scan will continue in the background.', 'notificator' ); ?></p>
+							<p class="notificator-scan-progress-help"><?php esc_html_e( 'You can close this window—the scan will continue in the background.', 'notificator-project' ); ?></p>
 						</div>
 					</div>
 
@@ -970,9 +970,9 @@ class Notificator_Companion_Admin_Page {
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
 								</svg>
 							</div>
-							<h3 class="text-lg font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Scan Complete!', 'notificator' ); ?></h3>
+							<h3 class="text-lg font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Scan Complete!', 'notificator-project' ); ?></h3>
 							<p class="text-sm text-gray-600">
-								<?php esc_html_e( 'Found', 'notificator' ); ?> <span id="total-hooks" class="font-semibold">0</span> <?php esc_html_e( 'events from', 'notificator' ); ?> <span id="total-plugins" class="font-semibold">0</span> <?php esc_html_e( 'plugins', 'notificator' ); ?>
+								<?php esc_html_e( 'Found', 'notificator-project' ); ?> <span id="total-hooks" class="font-semibold">0</span> <?php esc_html_e( 'events from', 'notificator-project' ); ?> <span id="total-plugins" class="font-semibold">0</span> <?php esc_html_e( 'plugins', 'notificator-project' ); ?>
 							</p>
 						</div>
 
@@ -982,12 +982,12 @@ class Notificator_Companion_Admin_Page {
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
 								</svg>
 							</div>
-							<h3 class="text-lg font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Scan Failed', 'notificator' ); ?></h3>
+							<h3 class="text-lg font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Scan Failed', 'notificator-project' ); ?></h3>
 							<p id="scan-error-detail" class="text-sm"></p>
 						</div>
 						<div class="notificator-scan-result-actions">
-							<button type="button" id="notificator-scan-modal-done" class="btn-secondary"><?php esc_html_e( 'Close', 'notificator' ); ?></button>
-							<a id="notificator-scan-review" class="btn-primary hidden" href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-notifications#notificator-discovery' ) ); ?>"><?php esc_html_e( 'Review discoveries', 'notificator' ); ?></a>
+							<button type="button" id="notificator-scan-modal-done" class="btn-secondary"><?php esc_html_e( 'Close', 'notificator-project' ); ?></button>
+							<a id="notificator-scan-review" class="btn-primary hidden" href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-notifications#notificator-discovery' ) ); ?>"><?php esc_html_e( 'Review discoveries', 'notificator-project' ); ?></a>
 						</div>
 					</div>
 				</div>
@@ -1009,38 +1009,38 @@ class Notificator_Companion_Admin_Page {
 				<div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
 					<div class="flex items-start justify-between gap-4">
 						<div class="min-w-0">
-							<h3 class="text-lg font-semibold text-gray-900 mb-1"><?php esc_html_e( 'Import Scenarios', 'notificator' ); ?></h3>
-							<p class="text-sm text-gray-600"><?php esc_html_e( 'Upload a JSON export from another site to migrate your scenario builder rules. API keys are not imported.', 'notificator' ); ?></p>
+							<h3 class="text-lg font-semibold text-gray-900 mb-1"><?php esc_html_e( 'Import Scenarios', 'notificator-project' ); ?></h3>
+							<p class="text-sm text-gray-600"><?php esc_html_e( 'Upload a JSON export from another site to migrate your scenario builder rules. API keys are not imported.', 'notificator-project' ); ?></p>
 						</div>
-						<button type="button" id="notificator-import-modal-close" class="btn-secondary" aria-label="<?php echo esc_attr( __( 'Close', 'notificator' ) ); ?>">
+						<button type="button" id="notificator-import-modal-close" class="btn-secondary" aria-label="<?php echo esc_attr( __( 'Close', 'notificator-project' ) ); ?>">
 							<span class="dashicons dashicons-no-alt"></span>
 						</button>
 					</div>
 
 					<div class="mt-4 space-y-4">
 						<div>
-							<label class="block text-sm font-semibold text-gray-700 mb-2" for="notificator-import-file"><?php esc_html_e( 'Scenario JSON file', 'notificator' ); ?></label>
+							<label class="block text-sm font-semibold text-gray-700 mb-2" for="notificator-import-file"><?php esc_html_e( 'Scenario JSON file', 'notificator-project' ); ?></label>
 							<input type="file" id="notificator-import-file" accept="application/json,.json" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-							<p class="text-xs text-gray-500 mt-2" id="notificator-import-file-hint"><?php esc_html_e( 'Choose a file exported with “Export Scenarios”.', 'notificator' ); ?></p>
+							<p class="text-xs text-gray-500 mt-2" id="notificator-import-file-hint"><?php esc_html_e( 'Choose a file exported with “Export Scenarios”.', 'notificator-project' ); ?></p>
 						</div>
 
 						<div class="border border-gray-200 rounded-xl p-4">
-							<div class="text-sm font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Import mode', 'notificator' ); ?></div>
+							<div class="text-sm font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Import mode', 'notificator-project' ); ?></div>
 							<label class="flex items-center gap-2 mb-2">
 								<input type="radio" name="notificator-import-mode" value="merge" checked />
-								<span class="text-sm text-gray-700"><?php esc_html_e( 'Merge (recommended): keep existing scenarios and append imported ones.', 'notificator' ); ?></span>
+								<span class="text-sm text-gray-700"><?php esc_html_e( 'Merge (recommended): keep existing scenarios and append imported ones.', 'notificator-project' ); ?></span>
 							</label>
 							<label class="flex items-center gap-2">
 								<input type="radio" name="notificator-import-mode" value="replace" />
-								<span class="text-sm text-gray-700"><?php esc_html_e( 'Replace: delete all existing scenarios and use the imported file.', 'notificator' ); ?></span>
+								<span class="text-sm text-gray-700"><?php esc_html_e( 'Replace: delete all existing scenarios and use the imported file.', 'notificator-project' ); ?></span>
 							</label>
 							<div class="mt-3 hidden" id="notificator-import-replace-warning">
 								<div class="notice notice-warning inline notice-inline-warning">
-									<p><?php esc_html_e( 'Replace will remove all existing scenarios on this site.', 'notificator' ); ?></p>
+									<p><?php esc_html_e( 'Replace will remove all existing scenarios on this site.', 'notificator-project' ); ?></p>
 								</div>
 								<label class="flex items-start gap-2 mt-3 cursor-pointer">
 									<input type="checkbox" id="notificator-import-confirm-replace" value="1" class="mt-0.5" />
-									<span class="text-sm text-gray-700"><?php esc_html_e( 'I understand, replace my scenarios.', 'notificator' ); ?></span>
+									<span class="text-sm text-gray-700"><?php esc_html_e( 'I understand, replace my scenarios.', 'notificator-project' ); ?></span>
 								</label>
 							</div>
 						</div>
@@ -1048,10 +1048,10 @@ class Notificator_Companion_Admin_Page {
 						<div id="notificator-import-status" class="text-sm text-gray-700" aria-live="polite" hidden></div>
 
 						<div class="flex items-center justify-end gap-2">
-							<button type="button" id="notificator-import-cancel" class="btn-secondary"><?php esc_html_e( 'Cancel', 'notificator' ); ?></button>
+							<button type="button" id="notificator-import-cancel" class="btn-secondary"><?php esc_html_e( 'Cancel', 'notificator-project' ); ?></button>
 							<button type="button" id="notificator-import-confirm" class="btn-primary btn-primary--compact">
 								<span class="dashicons dashicons-upload"></span>
-								<?php esc_html_e( 'Import', 'notificator' ); ?>
+								<?php esc_html_e( 'Import', 'notificator-project' ); ?>
 							</button>
 						</div>
 					</div>
@@ -1113,15 +1113,15 @@ class Notificator_Companion_Admin_Page {
 			<?php echo esc_attr( wp_json_encode( $this->option_name ) ); ?>,
 			<?php echo $has_remote_delivery ? 'true' : 'false'; ?>
 		)" @notificator:add-scenario.window="openAddModal()" class="space-y-5 mt-6">
-			<nav class="notificator-notification-tabs" aria-label="<?php esc_attr_e( 'Notification views', 'notificator' ); ?>">
+			<nav class="notificator-notification-tabs" aria-label="<?php esc_attr_e( 'Notification views', 'notificator-project' ); ?>">
 				<button type="button" @click="setNotificationView('created')" :class="notificationView === 'created' ? 'is-active' : ''" :aria-current="notificationView === 'created' ? 'page' : null">
-					<span class="dashicons dashicons-bell"></span><span><strong><?php esc_html_e( 'Created notifications', 'notificator' ); ?></strong><small x-text="hooks.length + ' configured'"></small></span>
+					<span class="dashicons dashicons-bell"></span><span><strong><?php esc_html_e( 'Created notifications', 'notificator-project' ); ?></strong><small x-text="hooks.length + ' configured'"></small></span>
 				</button>
 				<button type="button" @click="setNotificationView('templates')" :class="notificationView === 'templates' ? 'is-active' : ''" :aria-current="notificationView === 'templates' ? 'page' : null">
-					<span class="dashicons dashicons-layout"></span><span><strong><?php esc_html_e( 'Templates', 'notificator' ); ?></strong><small><?php esc_html_e( 'Ready-made starting points', 'notificator' ); ?></small></span>
+					<span class="dashicons dashicons-layout"></span><span><strong><?php esc_html_e( 'Templates', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Ready-made starting points', 'notificator-project' ); ?></small></span>
 				</button>
 				<button type="button" @click="setNotificationView('discover')" :class="notificationView === 'discover' ? 'is-active' : ''" :aria-current="notificationView === 'discover' ? 'page' : null">
-					<span class="dashicons dashicons-search"></span><span><strong><?php esc_html_e( 'Discover events', 'notificator' ); ?></strong><small><?php esc_html_e( 'Review scanned possibilities', 'notificator' ); ?></small></span>
+					<span class="dashicons dashicons-search"></span><span><strong><?php esc_html_e( 'Discover events', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Review scanned possibilities', 'notificator-project' ); ?></small></span>
 				</button>
 			</nav>
 
@@ -1179,7 +1179,7 @@ class Notificator_Companion_Admin_Page {
 										<span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'templates' ) ); ?> text-white"></span>
 									</div>
 									<div class="min-w-0">
-									<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Start with a template', 'notificator' ); ?></h3>
+									<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Start with a template', 'notificator-project' ); ?></h3>
 									<p class="text-xs text-white text-opacity-70" x-text="getFilteredTemplates().length + ' curated option' + (getFilteredTemplates().length === 1 ? '' : 's') + ' for your active plugins'"></p>
 									</div>
 								</div>
@@ -1187,7 +1187,7 @@ class Notificator_Companion_Admin_Page {
 								<div class="flex items-center gap-3 flex-wrap justify-end notificator-templates-controls">
 									<?php $this->render_scan_controls(); ?>
 									<div>
-										<label for="notificator-template-category-filter" class="screen-reader-text"><?php esc_html_e( 'Filter templates by category', 'notificator' ); ?></label>
+										<label for="notificator-template-category-filter" class="screen-reader-text"><?php esc_html_e( 'Filter templates by category', 'notificator-project' ); ?></label>
 										<select id="notificator-template-category-filter" x-model="templateCategoryFilter" @change="onTemplateFacetChange()" class="notificator-section-control notificator-section-control--select notificator-templates-filter-select">
 											<template x-for="category in getTemplateCategoryFilterOptions()" :key="'template-category-' + category.value">
 												<option :value="category.value" x-text="category.label"></option>
@@ -1195,15 +1195,15 @@ class Notificator_Companion_Admin_Page {
 										</select>
 									</div>
 									<div>
-										<label for="notificator-template-readiness-filter" class="screen-reader-text"><?php esc_html_e( 'Filter templates by setup required', 'notificator' ); ?></label>
+										<label for="notificator-template-readiness-filter" class="screen-reader-text"><?php esc_html_e( 'Filter templates by setup required', 'notificator-project' ); ?></label>
 										<select id="notificator-template-readiness-filter" x-model="templateReadinessFilter" @change="onTemplateFacetChange()" class="notificator-section-control notificator-section-control--select notificator-templates-filter-select">
-											<option value="__all__"><?php esc_html_e( 'Any setup', 'notificator' ); ?></option>
-											<option value="instant"><?php esc_html_e( 'Ready now', 'notificator' ); ?></option>
-											<option value="configure"><?php esc_html_e( 'Needs a setting', 'notificator' ); ?></option>
+											<option value="__all__"><?php esc_html_e( 'Any setup', 'notificator-project' ); ?></option>
+											<option value="instant"><?php esc_html_e( 'Ready now', 'notificator-project' ); ?></option>
+											<option value="configure"><?php esc_html_e( 'Needs a setting', 'notificator-project' ); ?></option>
 										</select>
 									</div>
 									<div>
-										<label for="notificator-template-plugin-filter" class="screen-reader-text"><?php esc_html_e( 'Filter templates by active plugin', 'notificator' ); ?></label>
+										<label for="notificator-template-plugin-filter" class="screen-reader-text"><?php esc_html_e( 'Filter templates by active plugin', 'notificator-project' ); ?></label>
 										<select
 											id="notificator-template-plugin-filter"
 											x-model="templatePluginFilter"
@@ -1215,7 +1215,7 @@ class Notificator_Companion_Admin_Page {
 										</select>
 									</div>
 									<div>
-										<label for="notificator-template-per-page" class="screen-reader-text"><?php esc_html_e( 'Templates shown per page', 'notificator' ); ?></label>
+										<label for="notificator-template-per-page" class="screen-reader-text"><?php esc_html_e( 'Templates shown per page', 'notificator-project' ); ?></label>
 										<select
 											id="notificator-template-per-page"
 											x-model="templatesPerPage"
@@ -1230,7 +1230,7 @@ class Notificator_Companion_Admin_Page {
 										<input type="text"
 											x-model="templateSearchQuery"
 											@input="onTemplateSearchChange()"
-											placeholder="<?php esc_attr_e( 'Search templates...', 'notificator' ); ?>"
+											placeholder="<?php esc_attr_e( 'Search templates...', 'notificator-project' ); ?>"
 											class="notificator-section-control notificator-section-control--search notificator-templates-search-input">
 										<svg class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 notificator-search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1248,8 +1248,8 @@ class Notificator_Companion_Admin_Page {
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 										</svg>
 									</div>
-									<p class="text-gray-900 font-medium mb-1"><?php esc_html_e( 'No templates found', 'notificator' ); ?></p>
-									<p class="text-xs text-gray-500"><?php esc_html_e( 'Try a different search term or clear one of the filters.', 'notificator' ); ?></p>
+									<p class="text-gray-900 font-medium mb-1"><?php esc_html_e( 'No templates found', 'notificator-project' ); ?></p>
+									<p class="text-xs text-gray-500"><?php esc_html_e( 'Try a different search term or clear one of the filters.', 'notificator-project' ); ?></p>
 								</div>
 							</template>
 
@@ -1260,20 +1260,12 @@ class Notificator_Companion_Admin_Page {
 													<button @click="useTemplate(template)" type="button" class="notificator-template-card cursor-pointer text-left p-4 rounded-xl bg-white border-2 border-gray-200 hover:border-indigo-400 transition-all group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
 														<div class="flex items-start gap-3 mb-3">
 															<div class="w-12 h-12 rounded-lg bg-linear-to-br from-indigo-50 to-purple-50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-																<template x-if="template.plugin_icon_url">
-																	<img :src="template.plugin_icon_url" alt="" class="w-8 h-8 object-contain rounded" @error="template.plugin_icon_url = ''" />
-																</template>
-																<template x-if="!template.plugin_icon_url && template.icon_class">
-																	<span class="dashicons text-2xl" :class="template.icon_class"></span>
-																</template>
-																<template x-if="!template.plugin_icon_url && !template.icon_class">
-																	<span class="text-2xl" x-text="template.icon"></span>
-																</template>
+																<span class="text-2xl" x-text="template.icon"></span>
 															</div>
 															<div class="flex-1 min-w-0">
 																<div class="flex items-start justify-between gap-2 mb-1">
 																	<div class="text-sm font-semibold text-gray-900 line-clamp-2" x-text="template.title"></div>
-																	<span x-show="template.featured" class="notificator-template-badge notificator-template-badge--featured"><?php esc_html_e( 'Recommended', 'notificator' ); ?></span>
+																	<span x-show="template.featured" class="notificator-template-badge notificator-template-badge--featured"><?php esc_html_e( 'Recommended', 'notificator-project' ); ?></span>
 																</div>
 																<p class="notificator-template-description" x-text="template.description"></p>
 																<div class="mt-2 flex flex-wrap gap-1.5">
@@ -1285,7 +1277,7 @@ class Notificator_Companion_Admin_Page {
 													<div class="notificator-template-card__footer">
 														<span class="notificator-template-readiness" :class="'notificator-template-readiness--' + template.readiness" x-text="template.readiness_label"></span>
 														<span class="notificator-template-severity" :class="'notificator-template-severity--' + template.severity" x-text="template.severity"></span>
-														<span class="notificator-template-use"><?php esc_html_e( 'Use template', 'notificator' ); ?> →</span>
+														<span class="notificator-template-use"><?php esc_html_e( 'Use template', 'notificator-project' ); ?> →</span>
 													</div>
 													<code class="notificator-template-hook" x-text="template.hook_name"></code>
 											</button>
@@ -1294,11 +1286,11 @@ class Notificator_Companion_Admin_Page {
 
 									<div class="flex items-center justify-between pt-3 border-t border-gray-200">
 										<div class="text-xs text-gray-500">
-											<?php esc_html_e( 'Page', 'notificator' ); ?>
+											<?php esc_html_e( 'Page', 'notificator-project' ); ?>
 											<span x-text="templatePage"></span>
-											<?php esc_html_e( 'of', 'notificator' ); ?>
+											<?php esc_html_e( 'of', 'notificator-project' ); ?>
 											<span x-text="getTemplateTotalPages()"></span>
-											<span class="ml-2">(<span x-text="getFilteredTemplates().length"></span> <?php esc_html_e( 'total', 'notificator' ); ?>)</span>
+											<span class="ml-2">(<span x-text="getFilteredTemplates().length"></span> <?php esc_html_e( 'total', 'notificator-project' ); ?>)</span>
 										</div>
 
 										<div class="flex items-center gap-2">
@@ -1306,10 +1298,10 @@ class Notificator_Companion_Admin_Page {
 												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 												</svg>
-												<?php esc_html_e( 'Previous', 'notificator' ); ?>
+												<?php esc_html_e( 'Previous', 'notificator-project' ); ?>
 											</button>
 											<button @click="nextTemplatePage()" type="button" :disabled="templatePage >= getTemplateTotalPages()" class="btn-secondary btn-secondary--compact">
-												<?php esc_html_e( 'Next', 'notificator' ); ?>
+												<?php esc_html_e( 'Next', 'notificator-project' ); ?>
 												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 												</svg>
@@ -1330,20 +1322,20 @@ class Notificator_Companion_Admin_Page {
 										<span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'builder' ) ); ?> text-white"></span>
 									</div>
 									<div class="min-w-0">
-									<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Your notifications', 'notificator' ); ?></h3>
+									<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Your notifications', 'notificator-project' ); ?></h3>
 									<p class="text-xs text-white text-opacity-70" x-text="hooks.length + ' notification' + (hooks.length === 1 ? '' : 's')"></p>
 									</div>
 								</div>
 
 								<div class="flex items-center gap-3 flex-wrap justify-end">
 									<div class="relative notificator-search notificator-search--on-dark notificator-notification-search">
-										<label class="screen-reader-text" for="notificator-notification-search"><?php esc_html_e( 'Search notifications', 'notificator' ); ?></label>
-										<input id="notificator-notification-search" type="search" x-model="searchQuery" placeholder="<?php esc_attr_e( 'Search notifications…', 'notificator' ); ?>" class="notificator-section-control notificator-section-control--search" />
+										<label class="screen-reader-text" for="notificator-notification-search"><?php esc_html_e( 'Search notifications', 'notificator-project' ); ?></label>
+										<input id="notificator-notification-search" type="search" x-model="searchQuery" placeholder="<?php esc_attr_e( 'Search notifications…', 'notificator-project' ); ?>" class="notificator-section-control notificator-section-control--search" />
 										<span class="dashicons dashicons-search notificator-search-icon" aria-hidden="true"></span>
 									</div>
 									<button @click="openAddModal()" type="button" class="btn-secondary">
 										<span class="dashicons dashicons-plus-alt2"></span>
-										<?php esc_html_e( 'Create notification', 'notificator' ); ?>
+										<?php esc_html_e( 'Create notification', 'notificator-project' ); ?>
 									</button>
 								</div>
 							</div>
@@ -1357,9 +1349,9 @@ class Notificator_Companion_Admin_Page {
 											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
 										</svg>
 									</div>
-									<p class="empty-state-title"><?php esc_html_e( 'No notifications yet', 'notificator' ); ?></p>
-									<p class="empty-state-description mb-4"><?php esc_html_e( 'Create your first notification from a template or WordPress event.', 'notificator' ); ?></p>
-									<button @click="openAddModal()" type="button" class="btn-primary"><?php esc_html_e( 'Create Your First Notification', 'notificator' ); ?></button>
+									<p class="empty-state-title"><?php esc_html_e( 'No notifications yet', 'notificator-project' ); ?></p>
+									<p class="empty-state-description mb-4"><?php esc_html_e( 'Create your first notification from a template or WordPress event.', 'notificator-project' ); ?></p>
+									<button @click="openAddModal()" type="button" class="btn-primary"><?php esc_html_e( 'Create Your First Notification', 'notificator-project' ); ?></button>
 								</div>
 							</template>
 
@@ -1373,21 +1365,21 @@ class Notificator_Companion_Admin_Page {
 													<code class="text-xs font-mono bg-purple-100 text-purple-700 px-2 py-0.5 rounded" x-text="hook.hook_name"></code>
 													<span class="badge text-xs" :class="hook.enabled ? 'badge-success' : 'badge-warning'">
 														<span class="w-1.5 h-1.5 rounded-full mr-1" :class="hook.enabled ? 'bg-green-500' : 'bg-gray-400'"></span>
-														<span x-text="hook.enabled ? <?php echo esc_attr( wp_json_encode( __( 'Active', 'notificator' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Paused', 'notificator' ) ) ); ?>"></span>
+														<span x-text="hook.enabled ? <?php echo esc_attr( wp_json_encode( __( 'Active', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Paused', 'notificator-project' ) ) ); ?>"></span>
 													</span>
 											<span class="badge text-xs" :class="(hook.severity || 'info') === 'critical' ? 'badge-danger' : ((hook.severity || 'info') === 'warning' ? 'badge-warning' : 'badge-info')">
 												<span x-text="(hook.severity || 'info').charAt(0).toUpperCase() + (hook.severity || 'info').slice(1)"></span>
 											</span>
-											<span class="badge badge-info text-xs" x-show="hook.send_dashboard"><?php esc_html_e( 'Dashboard', 'notificator' ); ?></span>
-											<span class="badge badge-info text-xs" x-show="hook.send_push"><?php esc_html_e( 'Push', 'notificator' ); ?></span>
-											<span class="badge badge-info text-xs" x-show="hook.send_mqtt"><?php esc_html_e( 'MQTT', 'notificator' ); ?></span>
+											<span class="badge badge-info text-xs" x-show="hook.send_dashboard"><?php esc_html_e( 'Dashboard', 'notificator-project' ); ?></span>
+											<span class="badge badge-info text-xs" x-show="hook.send_push"><?php esc_html_e( 'Push', 'notificator-project' ); ?></span>
+											<span class="badge badge-info text-xs" x-show="hook.send_mqtt"><?php esc_html_e( 'MQTT', 'notificator-project' ); ?></span>
 													<template x-if="getScenarioPluginStatus(hook) === 'inactive'">
-														<span class="badge text-xs badge-warning" :title="getScenarioPluginName(hook) ? (<?php echo esc_attr( wp_json_encode( __( 'Plugin:', 'notificator' ) ) ); ?> + ' ' + getScenarioPluginName(hook)) : ''">
+														<span class="badge text-xs badge-warning" :title="getScenarioPluginName(hook) ? (<?php echo esc_attr( wp_json_encode( __( 'Plugin:', 'notificator-project' ) ) ); ?> + ' ' + getScenarioPluginName(hook)) : ''">
 															<span x-text="getScenarioPluginBadgeLabel(hook)"></span>
 														</span>
 													</template>
 													<template x-if="getScenarioPluginStatus(hook) === 'missing'">
-														<span class="badge text-xs badge-warning" :title="getScenarioPluginName(hook) ? (<?php echo esc_attr( wp_json_encode( __( 'Plugin:', 'notificator' ) ) ); ?> + ' ' + getScenarioPluginName(hook)) : ''">
+														<span class="badge text-xs badge-warning" :title="getScenarioPluginName(hook) ? (<?php echo esc_attr( wp_json_encode( __( 'Plugin:', 'notificator-project' ) ) ); ?> + ' ' + getScenarioPluginName(hook)) : ''">
 															<span x-text="getScenarioPluginBadgeLabel(hook)"></span>
 														</span>
 													</template>
@@ -1398,16 +1390,16 @@ class Notificator_Companion_Admin_Page {
 												</div>
 											</div>
 											<div class="ml-3 flex items-center gap-1 notificator-scenario-actions">
-												<button @click="toggleScenario(index)" type="button" class="btn-secondary btn-secondary--compact" :aria-label="hook.enabled ? <?php echo esc_attr( wp_json_encode( __( 'Pause notification', 'notificator' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Enable notification', 'notificator' ) ) ); ?>">
+												<button @click="toggleScenario(index)" type="button" class="btn-secondary btn-secondary--compact" :aria-label="hook.enabled ? <?php echo esc_attr( wp_json_encode( __( 'Pause notification', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Enable notification', 'notificator-project' ) ) ); ?>">
 													<span class="dashicons" :class="hook.enabled ? 'dashicons-controls-pause' : 'dashicons-controls-play'"></span>
-													<span x-text="hook.enabled ? <?php echo esc_attr( wp_json_encode( __( 'Pause', 'notificator' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Enable', 'notificator' ) ) ); ?>"></span>
+													<span x-text="hook.enabled ? <?php echo esc_attr( wp_json_encode( __( 'Pause', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Enable', 'notificator-project' ) ) ); ?>"></span>
 												</button>
-											<button @click="openEditModal(index)" type="button" class="cursor-pointer inline-flex items-center justify-center h-9 w-9 bg-slate-50 border border-slate-200/70 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40" :title="<?php echo esc_attr( wp_json_encode( __( 'Edit notification', 'notificator' ) ) ); ?>">
+											<button @click="openEditModal(index)" type="button" class="cursor-pointer inline-flex items-center justify-center h-9 w-9 bg-slate-50 border border-slate-200/70 text-slate-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40" :title="<?php echo esc_attr( wp_json_encode( __( 'Edit notification', 'notificator-project' ) ) ); ?>">
 													<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
 													</svg>
 												</button>
-											<button @click="removeHook(index)" type="button" class="cursor-pointer inline-flex items-center justify-center h-9 w-9 bg-slate-50 border border-slate-200/70 text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40" :title="<?php echo esc_attr( wp_json_encode( __( 'Delete notification', 'notificator' ) ) ); ?>">
+											<button @click="removeHook(index)" type="button" class="cursor-pointer inline-flex items-center justify-center h-9 w-9 bg-slate-50 border border-slate-200/70 text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40" :title="<?php echo esc_attr( wp_json_encode( __( 'Delete notification', 'notificator-project' ) ) ); ?>">
 													<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
 													</svg>
@@ -1456,7 +1448,7 @@ class Notificator_Companion_Admin_Page {
 			foreach ( (array) ( $plugin['hooks'] ?? array() ) as $hook_name => $hook_meta ) {
 				if ( is_string( $hook_meta ) ) {
 					/* translators: %s: Human-readable event name. */
-					$hook_description = sprintf( __( 'Triggered when “%s” happens. Use it to receive a notification when this event occurs.', 'notificator' ), $hook_meta );
+					$hook_description = sprintf( __( 'Triggered when “%s” happens. Use it to receive a notification when this event occurs.', 'notificator-project' ), $hook_meta );
 					$hook_meta        = array(
 						'label'       => $hook_meta,
 						'description' => $hook_description,
@@ -1466,7 +1458,7 @@ class Notificator_Companion_Admin_Page {
 						'risk'        => 'normal',
 						'recommended' => true,
 						'selectable'  => true,
-						'reason'      => __( 'Curated WordPress event.', 'notificator' ),
+						'reason'      => __( 'Curated WordPress event.', 'notificator-project' ),
 					);
 				}
 				if ( ! is_array( $hook_meta ) ) {
@@ -1582,7 +1574,7 @@ class Notificator_Companion_Admin_Page {
 		}
 		$recommended_count = count( $recommended_ids );
 		/* translators: %s: Formatted total number of discovered events. */
-		$show_all_events_format = __( 'Show all %s events', 'notificator' );
+		$show_all_events_format = __( 'Show all %s events', 'notificator-project' );
 		$show_all_events_label  = sprintf( $show_all_events_format, number_format_i18n( $total_scanned_events ) );
 		$filter_counts          = array(
 			'all'          => 0,
@@ -1620,21 +1612,21 @@ class Notificator_Companion_Admin_Page {
 		?>
 		<section class="scenario-section notificator-section notificator-discovery" id="notificator-discovery" data-notificator-section="discovery">
 			<div class="notificator-scenario-head">
-				<div class="notificator-discovery-heading"><div class="flex items-center gap-3"><div class="notificator-section-icon"><span class="dashicons dashicons-search"></span></div><div><h3><?php esc_html_e( 'Discovery inbox', 'notificator' ); ?></h3><p><?php esc_html_e( 'Review ranked events before turning them into notifications.', 'notificator' ); ?></p></div></div><div class="notificator-discovery-observe"><span id="notificator-observation-status" class="badge <?php echo $observation_active ? 'badge-success' : 'badge-info'; ?>"><?php echo $observation_active ? esc_html__( 'Observing', 'notificator' ) : esc_html__( 'Observation off', 'notificator' ); ?></span><button type="button" id="notificator-observation-toggle" class="btn-secondary btn-secondary--compact" data-observing="<?php echo esc_attr( $observation_active ? '1' : '0' ); ?>" title="<?php esc_attr_e( 'Samples site traffic and batches database updates to reduce server load.', 'notificator' ); ?>"><span class="dashicons <?php echo $observation_active ? 'dashicons-controls-pause' : 'dashicons-visibility'; ?>"></span><?php echo $observation_active ? esc_html__( 'Stop observing', 'notificator' ) : esc_html__( 'Observe for 10 min', 'notificator' ); ?></button></div></div>
+				<div class="notificator-discovery-heading"><div class="flex items-center gap-3"><div class="notificator-section-icon"><span class="dashicons dashicons-search"></span></div><div><h3><?php esc_html_e( 'Discovery inbox', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'Review ranked events before turning them into notifications.', 'notificator-project' ); ?></p></div></div><div class="notificator-discovery-observe"><span id="notificator-observation-status" class="badge <?php echo $observation_active ? 'badge-success' : 'badge-info'; ?>"><?php echo $observation_active ? esc_html__( 'Observing', 'notificator-project' ) : esc_html__( 'Observation off', 'notificator-project' ); ?></span><button type="button" id="notificator-observation-toggle" class="btn-secondary btn-secondary--compact" data-observing="<?php echo esc_attr( $observation_active ? '1' : '0' ); ?>" title="<?php esc_attr_e( 'Samples site traffic and batches database updates to reduce server load.', 'notificator-project' ); ?>"><span class="dashicons <?php echo $observation_active ? 'dashicons-controls-pause' : 'dashicons-visibility'; ?>"></span><?php echo $observation_active ? esc_html__( 'Stop observing', 'notificator-project' ) : esc_html__( 'Observe for 10 min', 'notificator-project' ); ?></button></div></div>
 			</div>
 			<div class="card-body">
-				<div class="notificator-discovery-summary"><span><strong><?php echo esc_html( $total_scanned_events ); ?></strong><?php esc_html_e( 'Scanned events', 'notificator' ); ?></span><span><strong><?php echo esc_html( count( $candidates ) ); ?></strong><?php esc_html_e( 'Review shortlist', 'notificator' ); ?></span><span><strong><?php echo esc_html( $recommended_count ); ?></strong><?php esc_html_e( 'Recommended', 'notificator' ); ?></span><span><strong><?php echo esc_html( count( $observed_counts ) ); ?></strong><?php esc_html_e( 'Observed', 'notificator' ); ?></span></div>
-				<p class="notificator-discovery-explainer"><?php esc_html_e( 'Discovery keeps a ranked shortlist for review. The complete scan remains available in the event browser.', 'notificator' ); ?></p>
-				<div class="notificator-discovery-controls"><div class="relative notificator-search"><input type="search" id="notificator-discovery-search" class="notificator-section-control notificator-section-control--search" placeholder="<?php esc_attr_e( 'Search hooks or plugins…', 'notificator' ); ?>"><span class="dashicons dashicons-search notificator-search-icon"></span></div><select id="notificator-discovery-filter" class="notificator-section-control notificator-section-control--select">
+				<div class="notificator-discovery-summary"><span><strong><?php echo esc_html( $total_scanned_events ); ?></strong><?php esc_html_e( 'Scanned events', 'notificator-project' ); ?></span><span><strong><?php echo esc_html( count( $candidates ) ); ?></strong><?php esc_html_e( 'Review shortlist', 'notificator-project' ); ?></span><span><strong><?php echo esc_html( $recommended_count ); ?></strong><?php esc_html_e( 'Recommended', 'notificator-project' ); ?></span><span><strong><?php echo esc_html( count( $observed_counts ) ); ?></strong><?php esc_html_e( 'Observed', 'notificator-project' ); ?></span></div>
+				<p class="notificator-discovery-explainer"><?php esc_html_e( 'Discovery keeps a ranked shortlist for review. The complete scan remains available in the event browser.', 'notificator-project' ); ?></p>
+				<div class="notificator-discovery-controls"><div class="relative notificator-search"><input type="search" id="notificator-discovery-search" class="notificator-section-control notificator-section-control--search" placeholder="<?php esc_attr_e( 'Search hooks or plugins…', 'notificator-project' ); ?>"><span class="dashicons dashicons-search notificator-search-icon"></span></div><select id="notificator-discovery-filter" class="notificator-section-control notificator-section-control--select">
 				<?php
 				foreach ( array(
-					'recommended'  => __( 'Recommended', 'notificator' ),
-					'all'          => __( 'Ranked shortlist', 'notificator' ),
-					'observed'     => __( 'Observed', 'notificator' ),
-					'noisy'        => __( 'Potentially noisy', 'notificator' ),
-					'dynamic'      => __( 'Dynamic patterns', 'notificator' ),
-					'registration' => __( 'Registration only', 'notificator' ),
-					'ignored'      => __( 'Ignored', 'notificator' ),
+					'recommended'  => __( 'Recommended', 'notificator-project' ),
+					'all'          => __( 'Ranked shortlist', 'notificator-project' ),
+					'observed'     => __( 'Observed', 'notificator-project' ),
+					'noisy'        => __( 'Potentially noisy', 'notificator-project' ),
+					'dynamic'      => __( 'Dynamic patterns', 'notificator-project' ),
+					'registration' => __( 'Registration only', 'notificator-project' ),
+					'ignored'      => __( 'Ignored', 'notificator-project' ),
 				) as $filter_key => $filter_label ) :
 					?>
 																<option value="<?php echo esc_attr( $filter_key ); ?>" data-filter-label="<?php echo esc_attr( $filter_label ); ?>" <?php disabled( 0 === $filter_counts[ $filter_key ] && 'ignored' !== $filter_key ); ?>><?php echo esc_html( sprintf( '%s (%d)', $filter_label, $filter_counts[ $filter_key ] ) ); ?></option><?php endforeach; ?></select><button type="button" id="notificator-browse-all-events" class="btn-secondary" data-event-count="<?php echo esc_attr( $total_scanned_events ); ?>"><span class="dashicons dashicons-list-view"></span><?php echo esc_html( $show_all_events_label ); ?></button></div>
@@ -1649,21 +1641,21 @@ class Notificator_Companion_Admin_Page {
 					$payload_fields_label = '';
 					if ( ! empty( $meta['arg_names'] ) ) {
 						/* translators: %d: Number of data fields supplied by an event. */
-						$payload_fields_label = sprintf( __( '%d payload fields', 'notificator' ), count( $meta['arg_names'] ) );
+						$payload_fields_label = sprintf( __( '%d payload fields', 'notificator-project' ), count( $meta['arg_names'] ) );
 					}
 					$observed_label = '';
 					if ( $observed ) {
 						/* translators: %d: Number of times an event was observed. */
-						$observed_label = sprintf( __( 'Observed at least %d times', 'notificator' ), (int) ( $observed['count'] ?? 0 ) );
+						$observed_label = sprintf( __( 'Observed at least %d times', 'notificator-project' ), (int) ( $observed['count'] ?? 0 ) );
 					}
 					?>
 					<article class="notificator-discovery-item" data-discovery-item data-search="<?php echo esc_attr( strtolower( $candidate['hook_name'] . ' ' . $candidate['label'] . ' ' . $candidate['plugin_name'] . ' ' . ( $meta['description'] ?? '' ) ) ); ?>" data-recommended="<?php echo isset( $recommended_ids[ $candidate['id'] ] ) ? '1' : '0'; ?>" data-recommend-priority="<?php echo esc_attr( isset( $essential_priority[ $candidate['hook_name'] ] ) ? (string) $essential_priority[ $candidate['hook_name'] ] : '999' ); ?>" data-risk="<?php echo esc_attr( $meta['risk'] ?? 'normal' ); ?>" data-dynamic="<?php echo ! empty( $meta['dynamic'] ) ? '1' : '0'; ?>" data-registration="<?php echo 'registration' === ( $meta['discovery'] ?? $meta['arg_mode'] ?? '' ) ? '1' : '0'; ?>" data-observed="<?php echo $observed ? '1' : '0'; ?>" data-ignored="<?php echo $candidate['ignored'] ? '1' : '0'; ?>">
-							<div class="notificator-discovery-score is-<?php echo esc_attr( $meta['confidence'] ?? 'low' ); ?>"><strong><?php echo esc_html( $candidate['score'] ); ?></strong><span><?php esc_html_e( 'score', 'notificator' ); ?></span></div>
-						<div class="notificator-discovery-content"><div class="notificator-discovery-title"><div><strong><?php echo esc_html( $candidate['label'] ); ?></strong><code><?php echo esc_html( $candidate['hook_name'] ); ?></code></div><span><?php echo esc_html( $candidate['plugin_name'] ); ?></span></div><p><?php echo esc_html( $meta['description'] ?? $meta['reason'] ?? __( 'Discovered in plugin code.', 'notificator' ) ); ?></p><div class="notificator-discovery-meta"><span><?php echo esc_html( ucfirst( $meta['type'] ?? 'action' ) ); ?></span>
+							<div class="notificator-discovery-score is-<?php echo esc_attr( $meta['confidence'] ?? 'low' ); ?>"><strong><?php echo esc_html( $candidate['score'] ); ?></strong><span><?php esc_html_e( 'score', 'notificator-project' ); ?></span></div>
+						<div class="notificator-discovery-content"><div class="notificator-discovery-title"><div><strong><?php echo esc_html( $candidate['label'] ); ?></strong><code><?php echo esc_html( $candidate['hook_name'] ); ?></code></div><span><?php echo esc_html( $candidate['plugin_name'] ); ?></span></div><p><?php echo esc_html( $meta['description'] ?? $meta['reason'] ?? __( 'Discovered in plugin code.', 'notificator-project' ) ); ?></p><div class="notificator-discovery-meta"><span><?php echo esc_html( ucfirst( $meta['type'] ?? 'action' ) ); ?></span>
 						<?php
 						if ( 'registered_integration' === ( $meta['discovery'] ?? '' ) ) :
 							?>
-							<span class="is-observed"><?php esc_html_e( 'Registered integration', 'notificator' ); ?></span><?php endif; ?><span><?php echo esc_html( ucfirst( $meta['confidence'] ?? 'low' ) ); ?> <?php esc_html_e( 'confidence', 'notificator' ); ?></span>
+							<span class="is-observed"><?php esc_html_e( 'Registered integration', 'notificator-project' ); ?></span><?php endif; ?><span><?php echo esc_html( ucfirst( $meta['confidence'] ?? 'low' ) ); ?> <?php esc_html_e( 'confidence', 'notificator-project' ); ?></span>
 							<?php
 							if ( $payload_fields_label ) :
 								?>
@@ -1679,12 +1671,12 @@ class Notificator_Companion_Admin_Page {
 					<?php
 					if ( $candidate['configured'] ) :
 						?>
-	<span class="is-configured"><?php esc_html_e( 'Already configured', 'notificator' ); ?></span><?php endif; ?></div></div>
-							<div class="notificator-discovery-actions"><button type="button" class="btn-primary btn-primary--compact" data-discovery-create data-plugin="<?php echo esc_attr( $candidate['plugin_key'] ); ?>" data-hook="<?php echo esc_attr( $candidate['hook_name'] ); ?>" <?php echo empty( $meta['selectable'] ) || $candidate['configured'] ? 'disabled' : ''; ?>><?php esc_html_e( 'Create', 'notificator' ); ?></button><button type="button" class="btn-secondary btn-secondary--compact" data-discovery-ignore data-candidate-id="<?php echo esc_attr( $candidate['id'] ); ?>"><?php echo $candidate['ignored'] ? esc_html__( 'Restore', 'notificator' ) : esc_html__( 'Ignore', 'notificator' ); ?></button></div>
+	<span class="is-configured"><?php esc_html_e( 'Already configured', 'notificator-project' ); ?></span><?php endif; ?></div></div>
+							<div class="notificator-discovery-actions"><button type="button" class="btn-primary btn-primary--compact" data-discovery-create data-plugin="<?php echo esc_attr( $candidate['plugin_key'] ); ?>" data-hook="<?php echo esc_attr( $candidate['hook_name'] ); ?>" <?php echo empty( $meta['selectable'] ) || $candidate['configured'] ? 'disabled' : ''; ?>><?php esc_html_e( 'Create', 'notificator-project' ); ?></button><button type="button" class="btn-secondary btn-secondary--compact" data-discovery-ignore data-candidate-id="<?php echo esc_attr( $candidate['id'] ); ?>"><?php echo $candidate['ignored'] ? esc_html__( 'Restore', 'notificator-project' ) : esc_html__( 'Ignore', 'notificator-project' ); ?></button></div>
 						</article>
 					<?php endforeach; ?>
 				</div>
-				<p id="notificator-discovery-empty" class="notificator-discovery-empty" hidden><?php esc_html_e( 'No discovery candidates match this view.', 'notificator' ); ?></p>
+				<p id="notificator-discovery-empty" class="notificator-discovery-empty" hidden><?php esc_html_e( 'No discovery candidates match this view.', 'notificator-project' ); ?></p>
 			</div>
 		</section>
 		<?php
@@ -1785,60 +1777,60 @@ class Notificator_Companion_Admin_Page {
 							<span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'log' ) ); ?> text-white"></span>
 						</div>
 						<div class="min-w-0">
-							<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Activity', 'notificator' ); ?></h3>
-							<p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Understand what triggered, where it went, and whether delivery succeeded.', 'notificator' ); ?></p>
+							<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Activity', 'notificator-project' ); ?></h3>
+							<p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Understand what triggered, where it went, and whether delivery succeeded.', 'notificator-project' ); ?></p>
 						</div>
 					</div>
-					<span class="notificator-activity-total"><strong id="notificator-log-count"><?php echo esc_html( $activity_counts['total'] ); ?></strong> <?php esc_html_e( 'events', 'notificator' ); ?></span>
+					<span class="notificator-activity-total"><strong id="notificator-log-count"><?php echo esc_html( $activity_counts['total'] ); ?></strong> <?php esc_html_e( 'events', 'notificator-project' ); ?></span>
 				</div>
 			</div>
 
 			<div class="card-body">
 				<?php if ( $log_enabled ) : ?>
-					<div class="notificator-activity-stats" aria-label="<?php esc_attr_e( 'Activity summary', 'notificator' ); ?>">
-						<div><span class="dashicons dashicons-list-view"></span><p><?php esc_html_e( 'Total', 'notificator' ); ?><strong><?php echo esc_html( $activity_counts['total'] ); ?></strong></p></div>
-						<div class="is-success"><span class="dashicons dashicons-yes-alt"></span><p><?php esc_html_e( 'Delivered', 'notificator' ); ?><strong><?php echo esc_html( $activity_counts['delivered'] ); ?></strong></p></div>
-						<div class="is-pending"><span class="dashicons dashicons-clock"></span><p><?php esc_html_e( 'Queued', 'notificator' ); ?><strong><?php echo esc_html( $activity_counts['queued'] ); ?></strong></p></div>
-						<div class="is-danger"><span class="dashicons dashicons-warning"></span><p><?php esc_html_e( 'Needs attention', 'notificator' ); ?><strong><?php echo esc_html( $activity_counts['attention'] ); ?></strong></p></div>
-						<div class="is-muted"><span class="dashicons dashicons-controls-pause"></span><p><?php esc_html_e( 'Suppressed', 'notificator' ); ?><strong><?php echo esc_html( $activity_counts['suppressed'] ); ?></strong></p></div>
+					<div class="notificator-activity-stats" aria-label="<?php esc_attr_e( 'Activity summary', 'notificator-project' ); ?>">
+						<div><span class="dashicons dashicons-list-view"></span><p><?php esc_html_e( 'Total', 'notificator-project' ); ?><strong><?php echo esc_html( $activity_counts['total'] ); ?></strong></p></div>
+						<div class="is-success"><span class="dashicons dashicons-yes-alt"></span><p><?php esc_html_e( 'Delivered', 'notificator-project' ); ?><strong><?php echo esc_html( $activity_counts['delivered'] ); ?></strong></p></div>
+						<div class="is-pending"><span class="dashicons dashicons-clock"></span><p><?php esc_html_e( 'Queued', 'notificator-project' ); ?><strong><?php echo esc_html( $activity_counts['queued'] ); ?></strong></p></div>
+						<div class="is-danger"><span class="dashicons dashicons-warning"></span><p><?php esc_html_e( 'Needs attention', 'notificator-project' ); ?><strong><?php echo esc_html( $activity_counts['attention'] ); ?></strong></p></div>
+						<div class="is-muted"><span class="dashicons dashicons-controls-pause"></span><p><?php esc_html_e( 'Suppressed', 'notificator-project' ); ?><strong><?php echo esc_html( $activity_counts['suppressed'] ); ?></strong></p></div>
 					</div>
 				<?php endif; ?>
 				<?php if ( ! $log_enabled ) : ?>
 					<div class="notice notice-warning inline notice-inline-warning">
-						<p><?php esc_html_e( 'Log is disabled. Enable it from Tools to start tracking notifications.', 'notificator' ); ?></p>
+						<p><?php esc_html_e( 'Log is disabled. Enable it from Tools to start tracking notifications.', 'notificator-project' ); ?></p>
 					</div>
 				<?php elseif ( empty( $log ) ) : ?>
-					<p class="text-sm text-gray-600"><?php esc_html_e( 'No notifications have been triggered yet.', 'notificator' ); ?></p>
+					<p class="text-sm text-gray-600"><?php esc_html_e( 'No notifications have been triggered yet.', 'notificator-project' ); ?></p>
 				<?php else : ?>
 					<div class="notificator-activity-toolbar">
 						<div class="relative notificator-search notificator-log-search-header">
-							<label class="screen-reader-text" for="notificator-log-search"><?php esc_html_e( 'Search activity', 'notificator' ); ?></label>
-							<input type="search" id="notificator-log-search" placeholder="<?php esc_attr_e( 'Search events, hooks, destinations…', 'notificator' ); ?>" class="notificator-section-control notificator-section-control--search" />
+							<label class="screen-reader-text" for="notificator-log-search"><?php esc_html_e( 'Search activity', 'notificator-project' ); ?></label>
+							<input type="search" id="notificator-log-search" placeholder="<?php esc_attr_e( 'Search events, hooks, destinations…', 'notificator-project' ); ?>" class="notificator-section-control notificator-section-control--search" />
 							<span class="dashicons dashicons-search notificator-search-icon" aria-hidden="true"></span>
 						</div>
-						<label><span class="screen-reader-text"><?php esc_html_e( 'Filter by status', 'notificator' ); ?></span><select id="notificator-log-status-filter" class="notificator-section-control notificator-section-control--select"><option value=""><?php esc_html_e( 'All statuses', 'notificator' ); ?></option><option value="delivered"><?php esc_html_e( 'Delivered', 'notificator' ); ?></option><option value="queued"><?php esc_html_e( 'Queued / retrying', 'notificator' ); ?></option><option value="attention"><?php esc_html_e( 'Needs attention', 'notificator' ); ?></option><option value="suppressed"><?php esc_html_e( 'Suppressed', 'notificator' ); ?></option></select></label>
-						<label><span class="screen-reader-text"><?php esc_html_e( 'Filter by severity', 'notificator' ); ?></span><select id="notificator-log-severity-filter" class="notificator-section-control notificator-section-control--select"><option value=""><?php esc_html_e( 'All severities', 'notificator' ); ?></option><option value="info"><?php esc_html_e( 'Low', 'notificator' ); ?></option><option value="warning"><?php esc_html_e( 'Medium', 'notificator' ); ?></option><option value="critical"><?php esc_html_e( 'Critical', 'notificator' ); ?></option></select></label>
-						<label><span class="screen-reader-text"><?php esc_html_e( 'Events per page', 'notificator' ); ?></span><select id="notificator-log-per-page" name="<?php echo esc_attr( $this->option_name ); ?>[log_per_page]" class="notificator-section-control notificator-section-control--select">
+						<label><span class="screen-reader-text"><?php esc_html_e( 'Filter by status', 'notificator-project' ); ?></span><select id="notificator-log-status-filter" class="notificator-section-control notificator-section-control--select"><option value=""><?php esc_html_e( 'All statuses', 'notificator-project' ); ?></option><option value="delivered"><?php esc_html_e( 'Delivered', 'notificator-project' ); ?></option><option value="queued"><?php esc_html_e( 'Queued / retrying', 'notificator-project' ); ?></option><option value="attention"><?php esc_html_e( 'Needs attention', 'notificator-project' ); ?></option><option value="suppressed"><?php esc_html_e( 'Suppressed', 'notificator-project' ); ?></option></select></label>
+						<label><span class="screen-reader-text"><?php esc_html_e( 'Filter by severity', 'notificator-project' ); ?></span><select id="notificator-log-severity-filter" class="notificator-section-control notificator-section-control--select"><option value=""><?php esc_html_e( 'All severities', 'notificator-project' ); ?></option><option value="info"><?php esc_html_e( 'Low', 'notificator-project' ); ?></option><option value="warning"><?php esc_html_e( 'Medium', 'notificator-project' ); ?></option><option value="critical"><?php esc_html_e( 'Critical', 'notificator-project' ); ?></option></select></label>
+						<label><span class="screen-reader-text"><?php esc_html_e( 'Events per page', 'notificator-project' ); ?></span><select id="notificator-log-per-page" name="<?php echo esc_attr( $this->option_name ); ?>[log_per_page]" class="notificator-section-control notificator-section-control--select">
 							<?php foreach ( array( 10, 20, 50, 100, 200 ) as $count ) : ?>
 								<?php
 								/* translators: %d: Number of activity entries shown on one page. */
-								$per_page_label = sprintf( __( '%d per page', 'notificator' ), $count );
+								$per_page_label = sprintf( __( '%d per page', 'notificator-project' ), $count );
 								?>
 								<option value="<?php echo esc_attr( $count ); ?>" <?php selected( $log_per_page, $count ); ?>><?php echo esc_html( $per_page_label ); ?></option>
 							<?php endforeach; ?>
 						</select></label>
-						<button type="button" id="notificator-log-reset" class="btn-secondary btn-secondary--compact"><span class="dashicons dashicons-image-rotate"></span><?php esc_html_e( 'Reset', 'notificator' ); ?></button>
-						<button type="button" id="notificator-clear-log" class="btn-secondary btn-secondary--danger btn-secondary--compact"><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Clear', 'notificator' ); ?></button>
+						<button type="button" id="notificator-log-reset" class="btn-secondary btn-secondary--compact"><span class="dashicons dashicons-image-rotate"></span><?php esc_html_e( 'Reset', 'notificator-project' ); ?></button>
+						<button type="button" id="notificator-clear-log" class="btn-secondary btn-secondary--danger btn-secondary--compact"><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Clear', 'notificator-project' ); ?></button>
 					</div>
 					<div class="overflow-x-auto">
 						<table class="widefat striped notificator-log-table">
 							<thead>
 								<tr>
-									<th><?php esc_html_e( 'Event', 'notificator' ); ?></th>
-									<th><?php esc_html_e( 'Delivery', 'notificator' ); ?></th>
-									<th><?php esc_html_e( 'Severity', 'notificator' ); ?></th>
-									<th><?php esc_html_e( 'Time', 'notificator' ); ?></th>
-									<th><?php esc_html_e( 'Actions', 'notificator' ); ?></th>
+									<th><?php esc_html_e( 'Event', 'notificator-project' ); ?></th>
+									<th><?php esc_html_e( 'Delivery', 'notificator-project' ); ?></th>
+									<th><?php esc_html_e( 'Severity', 'notificator-project' ); ?></th>
+									<th><?php esc_html_e( 'Time', 'notificator-project' ); ?></th>
+									<th><?php esc_html_e( 'Actions', 'notificator-project' ); ?></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -1851,9 +1843,9 @@ class Notificator_Companion_Admin_Page {
 									}
 									if ( $timestamp ) {
 										/* translators: %s: Human-readable elapsed time, such as "5 minutes". */
-										$time_relative = sprintf( __( '%s ago', 'notificator' ), human_time_diff( strtotime( $timestamp ), time() ) );
+										$time_relative = sprintf( __( '%s ago', 'notificator-project' ), human_time_diff( strtotime( $timestamp ), time() ) );
 									} else {
-										$time_relative = __( 'Unknown', 'notificator' );
+										$time_relative = __( 'Unknown', 'notificator-project' );
 									}
 										$severity = isset( $entry['severity'] ) ? (string) $entry['severity'] : 'info';
 										$status   = isset( $entry['status'] ) ? (string) $entry['status'] : '';
@@ -1862,18 +1854,18 @@ class Notificator_Companion_Admin_Page {
 										$status = $sent ? 'sent' : 'not_sent';
 									}
 										$status_labels = array(
-											'pending'   => __( 'Pending', 'notificator' ),
-											'retrying'  => __( 'Retrying', 'notificator' ),
-											'delivered' => __( 'Delivered', 'notificator' ),
-											'partial'   => __( 'Partially delivered', 'notificator' ),
-											'dashboard_only' => __( 'Dashboard delivered', 'notificator' ),
-											'connection_required' => __( 'API key required', 'notificator' ),
-											'failed'    => __( 'Failed', 'notificator' ),
-											'throttled' => __( 'Throttled', 'notificator' ),
-											'delivery_disabled' => __( 'Delivery disabled', 'notificator' ),
-											'sent'      => __( 'Sent', 'notificator' ),
+											'pending'   => __( 'Pending', 'notificator-project' ),
+											'retrying'  => __( 'Retrying', 'notificator-project' ),
+											'delivered' => __( 'Delivered', 'notificator-project' ),
+											'partial'   => __( 'Partially delivered', 'notificator-project' ),
+											'dashboard_only' => __( 'Dashboard delivered', 'notificator-project' ),
+											'connection_required' => __( 'API key required', 'notificator-project' ),
+											'failed'    => __( 'Failed', 'notificator-project' ),
+											'throttled' => __( 'Throttled', 'notificator-project' ),
+											'delivery_disabled' => __( 'Delivery disabled', 'notificator-project' ),
+											'sent'      => __( 'Sent', 'notificator-project' ),
 										);
-										$status_label  = isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : ( $sent ? __( 'Sent', 'notificator' ) : __( 'Not sent', 'notificator' ) );
+										$status_label  = isset( $status_labels[ $status ] ) ? $status_labels[ $status ] : ( $sent ? __( 'Sent', 'notificator-project' ) : __( 'Not sent', 'notificator-project' ) );
 										$status_badge  = in_array( $status, array( 'delivered', 'sent', 'dashboard_only' ), true ) ? 'badge-success' : ( in_array( $status, array( 'failed', 'connection_required' ), true ) ? 'badge-danger' : 'badge-warning' );
 										$status_error  = isset( $entry['error'] ) ? (string) $entry['error'] : '';
 										$badge_class   = 'badge-info';
@@ -1927,7 +1919,7 @@ class Notificator_Companion_Admin_Page {
 										if ( $scenario_name ) :
 											?>
 										<small><?php echo esc_html( $scenario_name ); ?></small><?php endif; ?></td>
-								<td class="notificator-activity-delivery"><span class="badge <?php echo esc_attr( $status_badge ); ?>"><?php echo esc_html( $status_label ); ?></span><strong><?php echo esc_html( $api_display ? $api_display : ( 'dashboard_only' === $status ? __( 'WordPress dashboard', 'notificator' ) : __( 'No remote destination', 'notificator' ) ) ); ?></strong>
+								<td class="notificator-activity-delivery"><span class="badge <?php echo esc_attr( $status_badge ); ?>"><?php echo esc_html( $status_label ); ?></span><strong><?php echo esc_html( $api_display ? $api_display : ( 'dashboard_only' === $status ? __( 'WordPress dashboard', 'notificator-project' ) : __( 'No remote destination', 'notificator-project' ) ) ); ?></strong>
 									<?php
 									if ( $status_error ) :
 										?>
@@ -1935,7 +1927,7 @@ class Notificator_Companion_Admin_Page {
 									<td><span class="badge <?php echo esc_attr( $badge_class ); ?>"><?php echo esc_html( ucfirst( $severity ) ); ?></span></td>
 									<td class="notificator-activity-time"><strong><?php echo esc_html( $time_relative ); ?></strong><small><?php echo esc_html( $time_display ); ?></small></td>
 										<td>
-											<button type="button" class="btn-icon btn-icon--danger notificator-log-delete" data-log-id="<?php echo esc_attr( $entry_id ); ?>" aria-label="<?php echo esc_attr__( 'Delete log entry', 'notificator' ); ?>">
+											<button type="button" class="btn-icon btn-icon--danger notificator-log-delete" data-log-id="<?php echo esc_attr( $entry_id ); ?>" aria-label="<?php echo esc_attr__( 'Delete log entry', 'notificator-project' ); ?>">
 												<span class="dashicons dashicons-trash"></span>
 											</button>
 										</td>
@@ -1944,7 +1936,7 @@ class Notificator_Companion_Admin_Page {
 							</tbody>
 						</table>
 					</div>
-					<div class="notificator-activity-footer"><p id="notificator-log-empty" class="text-sm text-gray-600" hidden><?php esc_html_e( 'No activity matches these filters.', 'notificator' ); ?></p><div class="notificator-log-pagination"><button type="button" id="notificator-log-prev" class="btn-secondary btn-secondary--compact" disabled><span class="dashicons dashicons-arrow-left-alt2"></span><?php esc_html_e( 'Previous', 'notificator' ); ?></button><span class="text-xs text-gray-500" id="notificator-log-page">1 / 1</span><button type="button" id="notificator-log-next" class="btn-secondary btn-secondary--compact" disabled><?php esc_html_e( 'Next', 'notificator' ); ?><span class="dashicons dashicons-arrow-right-alt2"></span></button></div></div>
+					<div class="notificator-activity-footer"><p id="notificator-log-empty" class="text-sm text-gray-600" hidden><?php esc_html_e( 'No activity matches these filters.', 'notificator-project' ); ?></p><div class="notificator-log-pagination"><button type="button" id="notificator-log-prev" class="btn-secondary btn-secondary--compact" disabled><span class="dashicons dashicons-arrow-left-alt2"></span><?php esc_html_e( 'Previous', 'notificator-project' ); ?></button><span class="text-xs text-gray-500" id="notificator-log-page">1 / 1</span><button type="button" id="notificator-log-next" class="btn-secondary btn-secondary--compact" disabled><?php esc_html_e( 'Next', 'notificator-project' ); ?><span class="dashicons dashicons-arrow-right-alt2"></span></button></div></div>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -1955,12 +1947,12 @@ class Notificator_Companion_Admin_Page {
 	private function render_help_section() {
 		?>
 		<div class="scenario-section notificator-section" id="notificator-help" data-notificator-section="help" data-notificator-workspace="support">
-			<div class="notificator-scenario-head notificator-scenario-head--help"><div class="flex items-center gap-3"><div class="notificator-section-icon"><span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'help' ) ); ?> text-white"></span></div><div><h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Support', 'notificator' ); ?></h3><p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Guides and the right next step when you need help.', 'notificator' ); ?></p></div></div></div>
+			<div class="notificator-scenario-head notificator-scenario-head--help"><div class="flex items-center gap-3"><div class="notificator-section-icon"><span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'help' ) ); ?> text-white"></span></div><div><h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Support', 'notificator-project' ); ?></h3><p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Guides and the right next step when you need help.', 'notificator-project' ); ?></p></div></div></div>
 			<div class="card-body"><div class="space-y-4">
-				<p class="text-sm text-slate-800"><?php esc_html_e( 'Start with the complete workflow or jump directly to the setup step you need.', 'notificator' ); ?></p>
+				<p class="text-sm text-slate-800"><?php esc_html_e( 'Start with the complete workflow or jump directly to the setup step you need.', 'notificator-project' ); ?></p>
 				<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 notificator-help-links-grid">
-					<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 notificator-help-link-card"><p class="text-sm font-semibold text-slate-900 mb-2"><?php esc_html_e( 'Setup guides', 'notificator' ); ?></p><div class="flex flex-col gap-2"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/workflow-overview/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Complete Workflow', 'notificator' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/account-creation/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Create Account', 'notificator' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/mobile-api-key-creation/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Create API Key (Mobile)', 'notificator' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/wordpress-plugin-setup/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'WordPress Plugin Setup', 'notificator' ); ?></a></div></div>
-					<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 notificator-help-link-card"><p class="text-sm font-semibold text-slate-900 mb-2"><?php esc_html_e( 'More help', 'notificator' ); ?></p><p class="text-sm text-slate-600 mb-3"><?php esc_html_e( 'Browse the documentation or contact the project when a guide does not answer your question.', 'notificator' ); ?></p><div class="flex flex-col gap-2"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open documentation', 'notificator' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://notificator-project.com/contact/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Contact the project', 'notificator' ); ?></a></div></div>
+					<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 notificator-help-link-card"><p class="text-sm font-semibold text-slate-900 mb-2"><?php esc_html_e( 'Setup guides', 'notificator-project' ); ?></p><div class="flex flex-col gap-2"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/workflow-overview/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Complete Workflow', 'notificator-project' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/account-creation/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Create Account', 'notificator-project' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/mobile-api-key-creation/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Create API Key (Mobile)', 'notificator-project' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/wordpress-plugin-setup/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'WordPress Plugin Setup', 'notificator-project' ); ?></a></div></div>
+					<div class="rounded-xl border border-slate-200 bg-slate-50 p-4 notificator-help-link-card"><p class="text-sm font-semibold text-slate-900 mb-2"><?php esc_html_e( 'More help', 'notificator-project' ); ?></p><p class="text-sm text-slate-600 mb-3"><?php esc_html_e( 'Browse the documentation or contact the project when a guide does not answer your question.', 'notificator-project' ); ?></p><div class="flex flex-col gap-2"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open documentation', 'notificator-project' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://notificator-project.com/contact/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Contact the project', 'notificator-project' ); ?></a></div></div>
 				</div>
 			</div></div>
 		</div>
@@ -1977,8 +1969,8 @@ add_action( 'notificator_companion_register_events', function () {
         'hook_name'   => 'notificator_sample_message_sent',
         'label'       => 'Sample message sent',
         'description' => 'Runs when the sample plugin sends a message.',
-        'plugin_slug' => 'notificator-sample',
-        'plugin_name' => 'Notificator Sample Plugin',
+		'plugin_slug' => 'notificator-sample-plugin',
+		'plugin_name' => 'Notificator – Integration Example',
         'plugin_file' => plugin_basename( __FILE__ ),
         'arg_names'   => array( 'message', 'suffix' ),
     ) );
@@ -1990,7 +1982,7 @@ add_action( 'notificator_companion_register_templates', function () {
         'hook_name'       => 'notificator_sample_message_sent',
         'description'     => 'Alert when the sample message is sent.',
         'scenario_name'   => 'Sample Message Sent',
-        'required_plugin' => 'notificator-sample',
+		'required_plugin' => 'notificator-sample-plugin',
     ) );
 } );
 
@@ -1998,14 +1990,14 @@ do_action( 'notificator_sample_message_sent', $message, $suffix );
 PHP;
 		?>
 		<div class="scenario-section notificator-section" id="notificator-integrations" data-notificator-section="developer" data-notificator-workspace="developer">
-			<div class="notificator-scenario-head notificator-scenario-head--help"><div class="flex items-center gap-3"><div class="notificator-section-icon"><span class="dashicons dashicons-editor-code text-white"></span></div><div><h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Developer integrations', 'notificator' ); ?></h3><p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Register reliable custom events and reusable notification templates.', 'notificator' ); ?></p></div></div></div>
+			<div class="notificator-scenario-head notificator-scenario-head--help"><div class="flex items-center gap-3"><div class="notificator-section-icon"><span class="dashicons dashicons-editor-code text-white"></span></div><div><h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Developer integrations', 'notificator-project' ); ?></h3><p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Register reliable custom events and reusable notification templates.', 'notificator-project' ); ?></p></div></div></div>
 			<div class="card-body"><div class="space-y-4">
-				<div class="notificator-developer-links"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/quick-start/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Quick Start', 'notificator' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/code-samples/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Code Samples', 'notificator' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/reference/public-notify/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Public Notify API', 'notificator' ); ?></a></div>
+				<div class="notificator-developer-links"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/quick-start/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Quick Start', 'notificator-project' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/code-samples/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Code Samples', 'notificator-project' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/reference/public-notify/' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Public Notify API', 'notificator-project' ); ?></a></div>
 				<div class="notificator-help-link-card notificator-integration-card">
-					<div class="notificator-integration-header"><div class="notificator-integration-copy"><p class="notificator-integration-title"><?php esc_html_e( 'Build a first-party integration', 'notificator' ); ?></p><p class="notificator-integration-description"><?php esc_html_e( 'Register an event for accurate, scan-free discovery, then add an optional template to give users a ready-made notification.', 'notificator' ); ?></p></div><div class="notificator-integration-actions"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://raw.githubusercontent.com/notificator-project/WordPress-Plugin/main/examples/notificator-sample-plugin.zip' ); ?>" download><span class="dashicons dashicons-download"></span><?php esc_html_e( 'Download sample plugin', 'notificator' ); ?></a><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/wordpress-custom-events/' ); ?>" target="_blank" rel="noopener noreferrer"><span class="dashicons dashicons-external"></span><?php esc_html_e( 'Integration guide', 'notificator' ); ?></a></div></div>
-					<div class="notificator-integration-concepts" aria-label="<?php esc_attr_e( 'Difference between registered events and templates', 'notificator' ); ?>"><div class="notificator-integration-concept is-event"><span class="dashicons dashicons-rss"></span><div><strong><?php esc_html_e( 'Registered event: what happened', 'notificator' ); ?></strong><p><?php esc_html_e( 'Describes a hook and its payload so it appears accurately in Discover. It does not create a notification by itself.', 'notificator' ); ?></p></div></div><div class="notificator-integration-concept is-template"><span class="dashicons dashicons-layout"></span><div><strong><?php esc_html_e( 'Template: suggested setup', 'notificator' ); ?></strong><p><?php esc_html_e( 'Provides a ready-made configuration. It becomes a notification only after the user applies and saves it.', 'notificator' ); ?></p></div></div></div>
-					<p class="notificator-integration-flow"><strong><?php esc_html_e( 'Together:', 'notificator' ); ?></strong> <?php esc_html_e( 'the event describes what can occur; the template recommends what the user can do with it.', 'notificator' ); ?></p>
-					<div class="notificator-integration-stats"><div class="notificator-integration-stat"><strong><?php echo esc_html( count( $registered_events ) ); ?></strong><span><?php esc_html_e( 'Registered events detected', 'notificator' ); ?></span></div><div class="notificator-integration-stat"><strong><?php echo esc_html( count( $registered_templates ) ); ?></strong><span><?php esc_html_e( 'Third-party templates detected', 'notificator' ); ?></span></div></div>
+					<div class="notificator-integration-header"><div class="notificator-integration-copy"><p class="notificator-integration-title"><?php esc_html_e( 'Build a first-party integration', 'notificator-project' ); ?></p><p class="notificator-integration-description"><?php esc_html_e( 'Register an event for accurate, scan-free discovery, then add an optional template to give users a ready-made notification.', 'notificator-project' ); ?></p></div><div class="notificator-integration-actions"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( 'https://docs.notificator-project.com/guides/wordpress-custom-events/' ); ?>" target="_blank" rel="noopener noreferrer"><span class="dashicons dashicons-external"></span><?php esc_html_e( 'Open integration guide', 'notificator-project' ); ?></a></div></div>
+					<div class="notificator-integration-concepts" aria-label="<?php esc_attr_e( 'Difference between registered events and templates', 'notificator-project' ); ?>"><div class="notificator-integration-concept is-event"><span class="dashicons dashicons-rss"></span><div><strong><?php esc_html_e( 'Registered event: what happened', 'notificator-project' ); ?></strong><p><?php esc_html_e( 'Describes a hook and its payload so it appears accurately in Discover. It does not create a notification by itself.', 'notificator-project' ); ?></p></div></div><div class="notificator-integration-concept is-template"><span class="dashicons dashicons-layout"></span><div><strong><?php esc_html_e( 'Template: suggested setup', 'notificator-project' ); ?></strong><p><?php esc_html_e( 'Provides a ready-made configuration. It becomes a notification only after the user applies and saves it.', 'notificator-project' ); ?></p></div></div></div>
+					<p class="notificator-integration-flow"><strong><?php esc_html_e( 'Together:', 'notificator-project' ); ?></strong> <?php esc_html_e( 'the event describes what can occur; the template recommends what the user can do with it.', 'notificator-project' ); ?></p>
+					<div class="notificator-integration-stats"><div class="notificator-integration-stat"><strong><?php echo esc_html( count( $registered_events ) ); ?></strong><span><?php esc_html_e( 'Registered events detected', 'notificator-project' ); ?></span></div><div class="notificator-integration-stat"><strong><?php echo esc_html( count( $registered_templates ) ); ?></strong><span><?php esc_html_e( 'Third-party templates detected', 'notificator-project' ); ?></span></div></div>
 					<?php
 					if ( $registered_events ) :
 						?>
@@ -2013,13 +2005,13 @@ PHP;
 						<?php
 						foreach ( array_slice( $registered_events, 0, 8 ) as $event ) :
 							?>
-						<div class="notificator-integration-item"><div><strong><?php echo esc_html( $event['label'] ?? $event['hook_name'] ?? __( 'Registered event', 'notificator' ) ); ?></strong><code><?php echo esc_html( $event['hook_name'] ?? '' ); ?></code></div><span class="badge badge-info text-xs"><?php echo esc_html( $event['plugin_name'] ?? $event['plugin_slug'] ?? __( 'Integration', 'notificator' ) ); ?></span></div><?php endforeach; ?></div>
+						<div class="notificator-integration-item"><div><strong><?php echo esc_html( $event['label'] ?? $event['hook_name'] ?? __( 'Registered event', 'notificator-project' ) ); ?></strong><code><?php echo esc_html( $event['hook_name'] ?? '' ); ?></code></div><span class="badge badge-info text-xs"><?php echo esc_html( $event['plugin_name'] ?? $event['plugin_slug'] ?? __( 'Integration', 'notificator-project' ) ); ?></span></div><?php endforeach; ?></div>
 						<?php
 else :
 	?>
-	<p class="notificator-integration-empty"><?php esc_html_e( 'No plugin has registered a Notificator event yet. Scanned WordPress hooks remain available as usual.', 'notificator' ); ?></p><?php endif; ?>
-					<details class="notificator-integration-example"><summary><?php esc_html_e( 'Event + template example', 'notificator' ); ?></summary><pre><code><?php echo esc_html( $integration_example ); ?></code></pre></details>
-					<details class="notificator-integration-install"><summary><?php esc_html_e( 'How to install and test the sample plugin', 'notificator' ); ?></summary><ol><li><?php esc_html_e( 'Download the sample ZIP using the button above.', 'notificator' ); ?></li><li><?php esc_html_e( 'In WordPress, open Plugins → Add New → Upload Plugin.', 'notificator' ); ?></li><li><?php esc_html_e( 'Choose the ZIP, install it, and activate Notificator Sample Plugin.', 'notificator' ); ?></li><li><?php esc_html_e( 'Return here to confirm one event and one template are detected.', 'notificator' ); ?></li><li><?php esc_html_e( 'Apply the sample template, trigger its event, then check Activity.', 'notificator' ); ?></li></ol></details>
+	<p class="notificator-integration-empty"><?php esc_html_e( 'No plugin has registered a Notificator event yet. Scanned WordPress hooks remain available as usual.', 'notificator-project' ); ?></p><?php endif; ?>
+					<details class="notificator-integration-example"><summary><?php esc_html_e( 'Event + template example', 'notificator-project' ); ?></summary><pre><code><?php echo esc_html( $integration_example ); ?></code></pre></details>
+					<div class="notificator-integration-actions"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( NOTIFICATOR_COMPANION_PLUGIN_URL . 'examples/notificator-sample-plugin.zip' ); ?>" download><span class="dashicons dashicons-download"></span><?php esc_html_e( 'Download integration example', 'notificator-project' ); ?></a><span class="notificator-integration-empty"><?php esc_html_e( 'Install this local ZIP as a plugin to test a registered event and ready-made template.', 'notificator-project' ); ?></span></div>
 				</div>
 			</div></div>
 		</div>
@@ -2062,11 +2054,11 @@ else :
 					<div class="notificator-modal-head notificator-scenario-head--builder">
 						<div class="flex items-center justify-between">
 							<div>
-								<h3 class="text-lg font-semibold text-white" x-text="editingIndex !== null ? <?php echo esc_attr( wp_json_encode( __( 'Edit notification', 'notificator' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Create notification', 'notificator' ) ) ); ?>"></h3>
+								<h3 class="text-lg font-semibold text-white" x-text="editingIndex !== null ? <?php echo esc_attr( wp_json_encode( __( 'Edit notification', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Create notification', 'notificator-project' ) ) ); ?>"></h3>
 								<p class="text-xs text-white text-opacity-70 mt-0.5">
-									<span x-show="modalStep === 1"><?php esc_html_e( 'Step 1: Choose a source', 'notificator' ); ?></span>
-									<span x-show="modalStep === 2"><?php esc_html_e( 'Step 2: Choose an event', 'notificator' ); ?></span>
-									<span x-show="modalStep === 3 && editingIndex === null"><?php esc_html_e( 'Step 3: Configure and review', 'notificator' ); ?></span>
+									<span x-show="modalStep === 1"><?php esc_html_e( 'Step 1: Choose a source', 'notificator-project' ); ?></span>
+									<span x-show="modalStep === 2"><?php esc_html_e( 'Step 2: Choose an event', 'notificator-project' ); ?></span>
+									<span x-show="modalStep === 3 && editingIndex === null"><?php esc_html_e( 'Step 3: Configure and review', 'notificator-project' ); ?></span>
 								</p>
 							</div>
 							<button @click="modalOpen = false" type="button"
@@ -2082,11 +2074,11 @@ else :
 					<template x-if="editingIndex === null">
 						<div class="notificator-modal-step-indicator px-6 py-3 bg-gray-50 border-b">
 							<div class="notificator-modal-steps">
-								<div class="notificator-modal-step" :class="modalStep >= 1 ? 'is-active' : ''"><span>1</span><strong><?php esc_html_e( 'Source', 'notificator' ); ?></strong></div>
+								<div class="notificator-modal-step" :class="modalStep >= 1 ? 'is-active' : ''"><span>1</span><strong><?php esc_html_e( 'Source', 'notificator-project' ); ?></strong></div>
 								<div class="notificator-modal-step__line" :class="modalStep >= 2 ? 'is-active' : ''"></div>
-								<div class="notificator-modal-step" :class="modalStep >= 2 ? 'is-active' : ''"><span>2</span><strong><?php esc_html_e( 'Event', 'notificator' ); ?></strong></div>
+								<div class="notificator-modal-step" :class="modalStep >= 2 ? 'is-active' : ''"><span>2</span><strong><?php esc_html_e( 'Event', 'notificator-project' ); ?></strong></div>
 								<div class="notificator-modal-step__line" :class="modalStep >= 3 ? 'is-active' : ''"></div>
-								<div class="notificator-modal-step" :class="modalStep >= 3 ? 'is-active' : ''"><span>3</span><strong><?php esc_html_e( 'Notification', 'notificator' ); ?></strong></div>
+								<div class="notificator-modal-step" :class="modalStep >= 3 ? 'is-active' : ''"><span>3</span><strong><?php esc_html_e( 'Notification', 'notificator-project' ); ?></strong></div>
 							</div>
 						</div>
 					</template>
@@ -2097,8 +2089,8 @@ else :
 						<!-- Step 1: Select Plugin -->
 						<div x-show="modalStep === 1">
 							<div class="mb-4">
-								<h3 class="text-sm font-semibold text-gray-900 mb-3"><?php esc_html_e( 'Build a custom notification', 'notificator' ); ?></h3>
-								<p class="text-xs text-gray-500 mb-4"><?php esc_html_e( 'Choose where the event comes from. You will select the exact WordPress event next.', 'notificator' ); ?></p>
+								<h3 class="text-sm font-semibold text-gray-900 mb-3"><?php esc_html_e( 'Build a custom notification', 'notificator-project' ); ?></h3>
+								<p class="text-xs text-gray-500 mb-4"><?php esc_html_e( 'Choose where the event comes from. You will select the exact WordPress event next.', 'notificator-project' ); ?></p>
 							</div>
 
 							<!-- Plugin Selection Grid -->
@@ -2109,13 +2101,10 @@ else :
 										:class="plugin.file && !pluginActiveStatus[key] ? 'opacity-40 cursor-not-allowed border-gray-200' : 'cursor-pointer border-gray-200 hover:border-indigo-300'">
 										<div class="flex items-center gap-3">
 											<div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
-												<template x-if="plugin.icon_url">
-													<img :src="plugin.icon_url" alt="" class="w-7 h-7 object-contain rounded" @error="plugin.icon_url = ''" />
-												</template>
-												<template x-if="!plugin.icon_url && String(plugin.icon || '').indexOf('dashicons-') === 0">
+												<template x-if="String(plugin.icon || '').indexOf('dashicons-') === 0">
 													<span class="dashicons" :class="plugin.icon" aria-hidden="true"></span>
 												</template>
-												<template x-if="!plugin.icon_url && String(plugin.icon || '').indexOf('dashicons-') !== 0">
+												<template x-if="String(plugin.icon || '').indexOf('dashicons-') !== 0">
 													<span x-text="plugin.icon || '🔌'"></span>
 												</template>
 											</div>
@@ -2137,8 +2126,8 @@ else :
 									<input type="search"
 										x-model="hookSearchQuery"
 										autocomplete="off"
-										aria-label="<?php esc_attr_e( 'Search available events', 'notificator' ); ?>"
-									placeholder="<?php esc_attr_e( 'Search events, e.g. order, login, form…', 'notificator' ); ?>"
+										aria-label="<?php esc_attr_e( 'Search available events', 'notificator-project' ); ?>"
+									placeholder="<?php esc_attr_e( 'Search events, e.g. order, login, form…', 'notificator-project' ); ?>"
 										class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
 									<span class="dashicons dashicons-search notificator-search-icon" aria-hidden="true"></span>
 								</div>
@@ -2169,7 +2158,7 @@ else :
 								</template>
 								<template x-if="Object.keys(getFilteredPluginHooks()).length === 0">
 									<div class="text-center py-8 text-gray-500">
-										<p class="text-sm"><?php esc_html_e( 'No events found matching your search', 'notificator' ); ?></p>
+										<p class="text-sm"><?php esc_html_e( 'No events found matching your search', 'notificator-project' ); ?></p>
 									</div>
 								</template>
 							</div>
@@ -2178,12 +2167,12 @@ else :
 						<div x-show="modalStep === 3">
 							<div class="space-y-4">
 								<div class="notificator-selected-event">
-									<div class="notificator-selected-event__eyebrow"><?php esc_html_e( 'When this happens', 'notificator' ); ?></div>
+									<div class="notificator-selected-event__eyebrow"><?php esc_html_e( 'When this happens', 'notificator-project' ); ?></div>
 									<strong x-text="(scenarioForm.hook_meta && scenarioForm.hook_meta.label) ? scenarioForm.hook_meta.label : scenarioForm.scenario_name"></strong>
 									<p x-text="scenarioForm.description"></p>
 									<template x-if="getHookArgumentSummary(scenarioForm.hook_meta).length">
 										<div class="notificator-available-data">
-											<div class="notificator-available-data__title"><?php esc_html_e( 'Information you can use', 'notificator' ); ?></div>
+											<div class="notificator-available-data__title"><?php esc_html_e( 'Information you can use', 'notificator-project' ); ?></div>
 											<div class="notificator-available-data__grid">
 												<template x-for="arg in getHookArgumentSummary(scenarioForm.hook_meta)" :key="'selected-arg-' + arg.value">
 													<div class="notificator-available-data__item"><strong x-text="arg.label"></strong><span x-text="arg.description"></span></div>
@@ -2192,45 +2181,45 @@ else :
 										</div>
 									</template>
 									<details class="notificator-technical-details">
-										<summary><?php esc_html_e( 'Technical details', 'notificator' ); ?></summary>
+										<summary><?php esc_html_e( 'Technical details', 'notificator-project' ); ?></summary>
 										<code x-text="scenarioForm.hook_name"></code>
 									</details>
 								</div>
 
 								<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 									<div>
-									<label class="block text-sm font-semibold text-gray-700 mb-2"><?php esc_html_e( 'Notification name', 'notificator' ); ?></label>
+									<label class="block text-sm font-semibold text-gray-700 mb-2"><?php esc_html_e( 'Notification name', 'notificator-project' ); ?></label>
 										<input type="text" x-model="scenarioForm.scenario_name"
 											class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-											placeholder="<?php esc_attr_e( 'e.g. New order placed', 'notificator' ); ?>">
+											placeholder="<?php esc_attr_e( 'e.g. New order placed', 'notificator-project' ); ?>">
 									</div>
 
 									<div>
-										<label class="block text-sm font-semibold text-gray-700 mb-2"><?php esc_html_e( 'Priority', 'notificator' ); ?></label>
+										<label class="block text-sm font-semibold text-gray-700 mb-2"><?php esc_html_e( 'Priority', 'notificator-project' ); ?></label>
 										<select x-model="scenarioForm.severity"
 											class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-											<option value="info"><?php esc_html_e( 'Normal — routine information', 'notificator' ); ?></option>
-											<option value="warning"><?php esc_html_e( 'Important — needs attention', 'notificator' ); ?></option>
-											<option value="critical"><?php esc_html_e( 'Urgent — act immediately', 'notificator' ); ?></option>
+											<option value="info"><?php esc_html_e( 'Normal — routine information', 'notificator-project' ); ?></option>
+											<option value="warning"><?php esc_html_e( 'Important — needs attention', 'notificator-project' ); ?></option>
+											<option value="critical"><?php esc_html_e( 'Urgent — act immediately', 'notificator-project' ); ?></option>
 										</select>
 									</div>
 								</div>
 
 							<div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-								<label class="block text-sm font-semibold text-gray-700 mb-1"><?php esc_html_e( 'Where should it be sent?', 'notificator' ); ?></label>
-								<p class="text-xs text-gray-500 mb-3"><?php esc_html_e( 'Choose at least one channel. Dashboard alerts work without an API key.', 'notificator' ); ?></p>
+								<label class="block text-sm font-semibold text-gray-700 mb-1"><?php esc_html_e( 'Where should it be sent?', 'notificator-project' ); ?></label>
+								<p class="text-xs text-gray-500 mb-3"><?php esc_html_e( 'Choose at least one channel. Dashboard alerts work without an API key.', 'notificator-project' ); ?></p>
 								<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
 									<label class="flex items-center gap-2 text-sm text-gray-700">
 										<input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" x-model="scenarioForm.send_dashboard">
-										<span><strong><?php esc_html_e( 'Dashboard', 'notificator' ); ?></strong><small><?php esc_html_e( 'WordPress admin alerts', 'notificator' ); ?></small></span>
+										<span><strong><?php esc_html_e( 'Dashboard', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'WordPress admin alerts', 'notificator-project' ); ?></small></span>
 									</label>
 									<label class="flex items-center gap-2 text-sm text-gray-700">
 										<input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" x-model="scenarioForm.send_push" :disabled="!hasRemoteDelivery">
-										<span><strong><?php esc_html_e( 'Mobile push', 'notificator' ); ?></strong><small x-text="hasRemoteDelivery ? <?php echo esc_attr( wp_json_encode( __( 'Connected phones', 'notificator' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'API key required', 'notificator' ) ) ); ?>"></small></span>
+										<span><strong><?php esc_html_e( 'Mobile push', 'notificator-project' ); ?></strong><small x-text="hasRemoteDelivery ? <?php echo esc_attr( wp_json_encode( __( 'Connected phones', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'API key required', 'notificator-project' ) ) ); ?>"></small></span>
 									</label>
 									<label class="flex items-center gap-2 text-sm text-gray-700">
 										<input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" x-model="scenarioForm.send_mqtt" :disabled="!hasRemoteDelivery">
-										<span><strong><?php esc_html_e( 'MQTT', 'notificator' ); ?></strong><small x-text="hasRemoteDelivery ? <?php echo esc_attr( wp_json_encode( __( 'Connected IoT devices', 'notificator' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'API key required', 'notificator' ) ) ); ?>"></small></span>
+										<span><strong><?php esc_html_e( 'MQTT', 'notificator-project' ); ?></strong><small x-text="hasRemoteDelivery ? <?php echo esc_attr( wp_json_encode( __( 'Connected IoT devices', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'API key required', 'notificator-project' ) ) ); ?>"></small></span>
 									</label>
 								</div>
 								</div>
@@ -2239,8 +2228,8 @@ else :
 								<div x-show="hasConditionSupport()">
 									<div class="flex items-center justify-between mb-2">
 										<div>
-											<label class="block text-sm font-semibold text-gray-700"><?php esc_html_e( 'Only notify me when…', 'notificator' ); ?></label>
-											<p class="text-xs text-gray-500 mt-0.5"><?php esc_html_e( 'Optional. Add a rule to receive fewer, more relevant alerts.', 'notificator' ); ?></p>
+											<label class="block text-sm font-semibold text-gray-700"><?php esc_html_e( 'Only notify me when…', 'notificator-project' ); ?></label>
+											<p class="text-xs text-gray-500 mt-0.5"><?php esc_html_e( 'Optional. Add a rule to receive fewer, more relevant alerts.', 'notificator-project' ); ?></p>
 										</div>
 										<button @click="addCondition()" type="button"
 											x-show="!areAllConditionsLocked()"
@@ -2248,7 +2237,7 @@ else :
 											<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
 											</svg>
-											<?php esc_html_e( 'Add rule', 'notificator' ); ?>
+											<?php esc_html_e( 'Add rule', 'notificator-project' ); ?>
 										</button>
 									</div>
 
@@ -2258,7 +2247,7 @@ else :
 												<div class="notificator-condition-grid flex-1 grid grid-cols-3 gap-2">
 													<!-- Field selector -->
 													<div class="notificator-condition-col">
-												<label class="block text-xs text-gray-600 mb-1"><?php esc_html_e( 'Information', 'notificator' ); ?></label>
+												<label class="block text-xs text-gray-600 mb-1"><?php esc_html_e( 'Information', 'notificator-project' ); ?></label>
 												<template x-if="condition.locked || condition.lock_field">
 												<div class="notificator-condition-locked w-full h-9 px-2 text-sm border border-gray-200 rounded bg-slate-50 text-gray-800 flex items-center" x-text="getFriendlyFieldLabel(condition.field)"></div>
 														</template>
@@ -2274,7 +2263,7 @@ else :
 
 													<!-- Operator selector -->
 													<div class="notificator-condition-col">
-												<label class="block text-xs text-gray-600 mb-1"><?php esc_html_e( 'Comparison', 'notificator' ); ?></label>
+												<label class="block text-xs text-gray-600 mb-1"><?php esc_html_e( 'Comparison', 'notificator-project' ); ?></label>
 												<template x-if="condition.locked || condition.lock_operator">
 												<div class="notificator-condition-locked w-full h-9 px-2 text-sm border border-gray-200 rounded bg-slate-50 text-gray-800 flex items-center" x-text="getOperatorLabel(condition.operator)"></div>
 														</template>
@@ -2289,10 +2278,10 @@ else :
 
 													<!-- Value input -->
 													<div class="notificator-condition-col">
-														<label class="block text-xs text-gray-600 mb-1" x-text="condition.value_label || <?php echo esc_attr( wp_json_encode( __( 'Value', 'notificator' ) ) ); ?>"></label>
+														<label class="block text-xs text-gray-600 mb-1" x-text="condition.value_label || <?php echo esc_attr( wp_json_encode( __( 'Value', 'notificator-project' ) ) ); ?>"></label>
 														<template x-if="Array.isArray(getConditionValueOptions(condition)) && getConditionValueOptions(condition).length">
 															<select x-model="condition.value" class="notificator-condition-control w-full h-9 px-2 text-sm border border-gray-300 rounded bg-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500">
-																<option value=""><?php esc_html_e( 'Select…', 'notificator' ); ?></option>
+																<option value=""><?php esc_html_e( 'Select…', 'notificator-project' ); ?></option>
 																<template x-for="opt in getConditionValueOptions(condition)" :key="'opt-' + opt.value">
 																	<option :value="opt.value" x-text="opt.label"></option>
 																</template>
@@ -2301,7 +2290,7 @@ else :
 														<template x-if="!(Array.isArray(getConditionValueOptions(condition)) && getConditionValueOptions(condition).length)">
 															<input :type="condition.value_type || 'text'" x-model="condition.value"
 																class="notificator-condition-control w-full h-9 px-2 text-sm border border-gray-300 rounded bg-white focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
-																:placeholder="condition.value_placeholder || <?php echo esc_attr( wp_json_encode( __( 'Enter value', 'notificator' ) ) ); ?>">
+																:placeholder="condition.value_placeholder || <?php echo esc_attr( wp_json_encode( __( 'Enter value', 'notificator-project' ) ) ); ?>">
 														</template>
 													</div>
 												</div>
@@ -2319,27 +2308,27 @@ else :
 
 										<template x-if="scenarioForm.conditions.length === 0">
 											<p class="text-xs text-gray-500 italic text-center py-2">
-										<?php esc_html_e( 'Every occurrence of this event will send a notification.', 'notificator' ); ?>
+										<?php esc_html_e( 'Every occurrence of this event will send a notification.', 'notificator-project' ); ?>
 											</p>
 										</template>
 
 										<template x-if="scenarioForm.conditions.length > 1">
 											<p class="text-xs text-gray-500 mt-2">
-												<?php esc_html_e( 'All rules must match before a notification is sent.', 'notificator' ); ?>
+												<?php esc_html_e( 'All rules must match before a notification is sent.', 'notificator-project' ); ?>
 											</p>
 										</template>
 									</div>
 								</div>
 
 								<div>
-									<label class="block text-sm font-semibold text-gray-700 mb-1"><?php esc_html_e( 'Notification message', 'notificator' ); ?></label>
-									<p class="text-xs text-gray-500 mb-2"><?php esc_html_e( 'Write the message recipients will see. Insert event information using the buttons below.', 'notificator' ); ?></p>
+									<label class="block text-sm font-semibold text-gray-700 mb-1"><?php esc_html_e( 'Notification message', 'notificator-project' ); ?></label>
+									<p class="text-xs text-gray-500 mb-2"><?php esc_html_e( 'Write the message recipients will see. Insert event information using the buttons below.', 'notificator-project' ); ?></p>
 									<textarea x-model="scenarioForm.scenario_notes" rows="3"
 										class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-										placeholder="<?php esc_attr_e( 'Example: Order #123 needs your attention', 'notificator' ); ?>"></textarea>
+										placeholder="<?php esc_attr_e( 'Example: Order #123 needs your attention', 'notificator-project' ); ?>"></textarea>
 									<template x-if="getNoteTagSuggestions().length">
 										<div class="mt-2">
-											<div class="text-xs text-gray-500 mb-1"><?php esc_html_e( 'Insert event information:', 'notificator' ); ?></div>
+											<div class="text-xs text-gray-500 mb-1"><?php esc_html_e( 'Insert event information:', 'notificator-project' ); ?></div>
 											<div class="flex flex-wrap gap-2">
 												<template x-for="tag in getNoteTagSuggestions()" :key="'note-tag-' + tag.value">
 													<button type="button" @click="insertNoteTag(tag.value)" :title="'Inserts {{' + tag.value + '}}'"
@@ -2354,23 +2343,23 @@ else :
 
 							<div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
 									<label class="inline-flex items-center cursor-pointer gap-2">
-									<input type="checkbox" x-model="scenarioForm.enabled" aria-label="<?php echo esc_attr( __( 'Enable notification', 'notificator' ) ); ?>">
+									<input type="checkbox" x-model="scenarioForm.enabled" aria-label="<?php echo esc_attr( __( 'Enable notification', 'notificator-project' ) ); ?>">
 										<div>
-										<div class="text-sm font-semibold text-gray-900"><?php esc_html_e( 'Enable notification', 'notificator' ); ?></div>
-											<div class="text-xs text-gray-500"><?php esc_html_e( 'Start watching for this event immediately', 'notificator' ); ?></div>
+										<div class="text-sm font-semibold text-gray-900"><?php esc_html_e( 'Enable notification', 'notificator-project' ); ?></div>
+											<div class="text-xs text-gray-500"><?php esc_html_e( 'Start watching for this event immediately', 'notificator-project' ); ?></div>
 										</div>
 									</label>
 								</div>
 							</div>
 
 							<div class="notificator-review-card" aria-live="polite">
-								<div class="notificator-review-card__label"><?php esc_html_e( 'Review', 'notificator' ); ?></div>
-								<strong x-text="scenarioForm.scenario_name || <?php echo esc_attr( wp_json_encode( __( 'Untitled notification', 'notificator' ) ) ); ?>"></strong>
+								<div class="notificator-review-card__label"><?php esc_html_e( 'Review', 'notificator-project' ); ?></div>
+								<strong x-text="scenarioForm.scenario_name || <?php echo esc_attr( wp_json_encode( __( 'Untitled notification', 'notificator-project' ) ) ); ?>"></strong>
 								<p><span x-text="scenarioForm.description || scenarioForm.hook_name"></span> · <span x-text="(scenarioForm.severity || 'info').charAt(0).toUpperCase() + (scenarioForm.severity || 'info').slice(1)"></span></p>
 								<div class="notificator-review-tags">
-									<span x-show="scenarioForm.send_dashboard"><?php esc_html_e( 'Dashboard', 'notificator' ); ?></span>
-									<span x-show="scenarioForm.send_push"><?php esc_html_e( 'Push', 'notificator' ); ?></span>
-									<span x-show="scenarioForm.send_mqtt"><?php esc_html_e( 'MQTT', 'notificator' ); ?></span>
+									<span x-show="scenarioForm.send_dashboard"><?php esc_html_e( 'Dashboard', 'notificator-project' ); ?></span>
+									<span x-show="scenarioForm.send_push"><?php esc_html_e( 'Push', 'notificator-project' ); ?></span>
+									<span x-show="scenarioForm.send_mqtt"><?php esc_html_e( 'MQTT', 'notificator-project' ); ?></span>
 									<span x-show="scenarioForm.conditions && scenarioForm.conditions.length" x-text="scenarioForm.conditions.length + ' condition' + (scenarioForm.conditions.length === 1 ? '' : 's')"></span>
 								</div>
 							</div>
@@ -2383,23 +2372,23 @@ else :
 						<div class="flex items-center justify-between gap-3 flex-wrap">
 						<template x-if="editingIndex === null">
 							<button @click="modalStep > 1 ? modalStep-- : modalOpen = false" type="button" class="btn-secondary btn-secondary--ghost">
-								<span x-show="modalStep === 1"><?php esc_html_e( 'Cancel', 'notificator' ); ?></span>
-								<span x-show="modalStep > 1">← <?php esc_html_e( 'Back', 'notificator' ); ?></span>
+								<span x-show="modalStep === 1"><?php esc_html_e( 'Cancel', 'notificator-project' ); ?></span>
+								<span x-show="modalStep > 1">← <?php esc_html_e( 'Back', 'notificator-project' ); ?></span>
 							</button>
 						</template>
 
 						<div class="flex items-center gap-2">
 							<button x-show="modalStep === 1" type="button" class="btn-primary" disabled>
-								<?php esc_html_e( 'Choose a plugin', 'notificator' ); ?>
+								<?php esc_html_e( 'Choose a plugin', 'notificator-project' ); ?>
 							</button>
 							<button x-show="modalStep === 2" type="button" class="btn-primary" disabled>
-								<?php esc_html_e( 'Choose an event', 'notificator' ); ?>
+								<?php esc_html_e( 'Choose an event', 'notificator-project' ); ?>
 							</button>
 							<button @click="modalStep === 3 ? saveScenario() : null"
 								x-show="modalStep === 3"
 								type="button"
 								class="btn-primary">
-								<span x-text="editingIndex !== null ? <?php echo esc_attr( wp_json_encode( __( 'Update notification', 'notificator' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Create notification', 'notificator' ) ) ); ?>"></span>
+								<span x-text="editingIndex !== null ? <?php echo esc_attr( wp_json_encode( __( 'Update notification', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'Create notification', 'notificator-project' ) ) ); ?>"></span>
 							</button>
 						</div>
 						</div>
@@ -2420,11 +2409,11 @@ else :
 				<span class="dashicons dashicons-search"></span>
 			</div>
 			<div class="notificator-first-time-setup__content">
-				<h3><?php esc_html_e( 'First-time setup', 'notificator' ); ?></h3>
-				<p><?php esc_html_e( 'Run a quick plugin scan to discover available hooks and unlock ready-to-use templates.', 'notificator' ); ?></p>
+				<h3><?php esc_html_e( 'First-time setup', 'notificator-project' ); ?></h3>
+				<p><?php esc_html_e( 'Run a quick plugin scan to discover available hooks and unlock ready-to-use templates.', 'notificator-project' ); ?></p>
 				<button type="button" id="auto-scan-btn" class="btn-secondary">
 					<span class="dashicons dashicons-update"></span>
-					<?php esc_html_e( 'Scan Plugins Now', 'notificator' ); ?>
+					<?php esc_html_e( 'Scan Plugins Now', 'notificator-project' ); ?>
 				</button>
 			</div>
 		</div>

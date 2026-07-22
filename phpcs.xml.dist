@@ -2,7 +2,7 @@
 <ruleset name="Notificator">
 	<description>Release coding standards for the Notificator WordPress plugin.</description>
 
-	<file>notificator.php</file>
+	<file>notificator-project.php</file>
 	<file>admin</file>
 	<file>includes</file>
 	<file>languages</file>
@@ -29,14 +29,14 @@
 
 	<!-- Legacy filenames and the mixed bootstrap are part of the public plugin layout. -->
 	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
-		<exclude-pattern>notificator.php</exclude-pattern>
+		<exclude-pattern>notificator-project.php</exclude-pattern>
 		<exclude-pattern>admin/class-admin-page.php</exclude-pattern>
 		<exclude-pattern>includes/class-plugin-scanner.php</exclude-pattern>
 		<exclude-pattern>includes/class-delivery-queue.php</exclude-pattern>
 		<exclude-pattern>includes/class-health-service.php</exclude-pattern>
 	</rule>
 	<rule ref="Universal.Files.SeparateFunctionsFromOO.Mixed">
-		<exclude-pattern>notificator.php</exclude-pattern>
+		<exclude-pattern>notificator-project.php</exclude-pattern>
 	</rule>
 
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">

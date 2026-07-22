@@ -725,23 +725,23 @@ class Notificator_Companion_Plugin_Scanner {
 
 		if ( ! empty( $meta['dynamic'] ) ) {
 			/* translators: %s: Human-readable event name. */
-			$description = sprintf( __( 'Represents a family of “%s” events. The exact event name is decided while the plugin is running.', 'notificator' ), $label );
+			$description = sprintf( __( 'Represents a family of “%s” events. The exact event name is decided while the plugin is running.', 'notificator-project' ), $label );
 		} elseif ( 'registration' === $discovery ) {
 			/* translators: %s: Human-readable event name. */
-			$description = sprintf( __( 'The plugin listens for “%s”, but the scanner did not find where that event starts. Test it before relying on it.', 'notificator' ), $label );
+			$description = sprintf( __( 'The plugin listens for “%s”, but the scanner did not find where that event starts. Test it before relying on it.', 'notificator-project' ), $label );
 		} elseif ( 'filter' === ( $meta['type'] ?? 'action' ) ) {
 			/* translators: %s: Human-readable event name. */
-			$description = sprintf( __( 'Runs while “%s” is being processed. It can inspect or change information before the plugin continues.', 'notificator' ), $label );
+			$description = sprintf( __( 'Runs while “%s” is being processed. It can inspect or change information before the plugin continues.', 'notificator-project' ), $label );
 		} else {
 			/* translators: %s: Human-readable event name. */
-			$description = sprintf( __( 'Triggered when “%s” happens. Use it to receive a notification when this event occurs.', 'notificator' ), $label );
+			$description = sprintf( __( 'Triggered when “%s” happens. Use it to receive a notification when this event occurs.', 'notificator-project' ), $label );
 		}
 
 		$arg_names = isset( $meta['arg_names'] ) && is_array( $meta['arg_names'] ) ? array_slice( $meta['arg_names'], 0, 3 ) : array();
 		if ( ! empty( $arg_names ) ) {
 			$details = array_map( array( $this, 'humanize_identifier' ), $arg_names );
 			/* translators: %s: Comma-separated list of details supplied by the event. */
-			$description .= ' ' . sprintf( __( 'Available details include %s.', 'notificator' ), implode( ', ', $details ) );
+			$description .= ' ' . sprintf( __( 'Available details include %s.', 'notificator-project' ), implode( ', ', $details ) );
 		}
 
 		return $description;
@@ -1277,40 +1277,40 @@ class Notificator_Companion_Plugin_Scanner {
 	private function get_wordpress_core_hooks() {
 		$hooks = array(
 			// Users & auth.
-			'user_register'              => __( 'New user registration', 'notificator' ),
-			'wp_login'                   => __( 'User login', 'notificator' ),
-			'wp_login_failed'            => __( 'Failed login attempt', 'notificator' ),
-			'retrieve_password'          => __( 'Password reset requested', 'notificator' ),
-			'password_reset'             => __( 'Password reset completed', 'notificator' ),
-			'delete_user'                => __( 'User deleted', 'notificator' ),
-			'profile_update'             => __( 'User profile updated', 'notificator' ),
+			'user_register'              => __( 'New user registration', 'notificator-project' ),
+			'wp_login'                   => __( 'User login', 'notificator-project' ),
+			'wp_login_failed'            => __( 'Failed login attempt', 'notificator-project' ),
+			'retrieve_password'          => __( 'Password reset requested', 'notificator-project' ),
+			'password_reset'             => __( 'Password reset completed', 'notificator-project' ),
+			'delete_user'                => __( 'User deleted', 'notificator-project' ),
+			'profile_update'             => __( 'User profile updated', 'notificator-project' ),
 
 			// Content.
-			'publish_post'               => __( 'Post published', 'notificator' ),
-			'wp_insert_post'             => __( 'Post created/updated', 'notificator' ),
-			'wp_trash_post'              => __( 'Post trashed', 'notificator' ),
-			'untrash_post'               => __( 'Post restored from trash', 'notificator' ),
-			'delete_post'                => __( 'Post deleted', 'notificator' ),
-			'comment_post'               => __( 'New comment posted', 'notificator' ),
-			'edit_comment'               => __( 'Comment edited', 'notificator' ),
-			'wp_set_comment_status'      => __( 'Comment status changed', 'notificator' ),
-			'add_attachment'             => __( 'Media uploaded', 'notificator' ),
-			'delete_attachment'          => __( 'Media deleted', 'notificator' ),
+			'publish_post'               => __( 'Post published', 'notificator-project' ),
+			'wp_insert_post'             => __( 'Post created/updated', 'notificator-project' ),
+			'wp_trash_post'              => __( 'Post trashed', 'notificator-project' ),
+			'untrash_post'               => __( 'Post restored from trash', 'notificator-project' ),
+			'delete_post'                => __( 'Post deleted', 'notificator-project' ),
+			'comment_post'               => __( 'New comment posted', 'notificator-project' ),
+			'edit_comment'               => __( 'Comment edited', 'notificator-project' ),
+			'wp_set_comment_status'      => __( 'Comment status changed', 'notificator-project' ),
+			'add_attachment'             => __( 'Media uploaded', 'notificator-project' ),
+			'delete_attachment'          => __( 'Media deleted', 'notificator-project' ),
 
 			// Site & settings.
-			'switch_theme'               => __( 'Theme changed', 'notificator' ),
-			'customize_save_after'       => __( 'Customizer settings saved', 'notificator' ),
-			'update_option'              => __( 'Option updated', 'notificator' ),
-			'added_option'               => __( 'Option added', 'notificator' ),
-			'deleted_option'             => __( 'Option deleted', 'notificator' ),
+			'switch_theme'               => __( 'Theme changed', 'notificator-project' ),
+			'customize_save_after'       => __( 'Customizer settings saved', 'notificator-project' ),
+			'update_option'              => __( 'Option updated', 'notificator-project' ),
+			'added_option'               => __( 'Option added', 'notificator-project' ),
+			'deleted_option'             => __( 'Option deleted', 'notificator-project' ),
 
 			// Updates.
-			'upgrader_process_complete'  => __( 'Update completed (plugin/theme/core)', 'notificator' ),
-			'automatic_updates_complete' => __( 'Automatic updates completed', 'notificator' ),
+			'upgrader_process_complete'  => __( 'Update completed (plugin/theme/core)', 'notificator-project' ),
+			'automatic_updates_complete' => __( 'Automatic updates completed', 'notificator-project' ),
 
 			// Plugins.
-			'activated_plugin'           => __( 'Plugin activated', 'notificator' ),
-			'deactivated_plugin'         => __( 'Plugin deactivated', 'notificator' ),
+			'activated_plugin'           => __( 'Plugin activated', 'notificator-project' ),
+			'deactivated_plugin'         => __( 'Plugin deactivated', 'notificator-project' ),
 		);
 		foreach ( $hooks as $hook_name => $label ) {
 			$meta                = array(
@@ -1327,7 +1327,7 @@ class Notificator_Companion_Plugin_Scanner {
 			$meta['score']       = 90;
 			$meta['confidence']  = 'high';
 			$meta['recommended'] = true;
-			$meta['reason']      = __( 'Curated WordPress event.', 'notificator' );
+			$meta['reason']      = __( 'Curated WordPress event.', 'notificator-project' );
 			$hooks[ $hook_name ] = $meta;
 		}
 
@@ -1401,7 +1401,7 @@ class Notificator_Companion_Plugin_Scanner {
 		if ( ! isset( $all_plugins[ $plugin_file ] ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Plugin is no longer installed.', 'notificator' ),
+				'message' => __( 'Plugin is no longer installed.', 'notificator-project' ),
 			);
 		}
 
@@ -1486,7 +1486,7 @@ class Notificator_Companion_Plugin_Scanner {
 		if ( empty( $available_plugins ) || ! $this->save_hooks_to_file( $available_plugins ) ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Failed to publish scan results.', 'notificator' ),
+				'message' => __( 'Failed to publish scan results.', 'notificator-project' ),
 			);
 		}
 		update_option( 'notificator_companion_last_scan', time(), false );
@@ -1663,7 +1663,7 @@ class Notificator_Companion_Plugin_Scanner {
 		if ( ! $saved ) {
 			return array(
 				'success' => false,
-				'message' => __( 'Failed to save scanned hooks. Check file permissions.', 'notificator' ),
+				'message' => __( 'Failed to save scanned hooks. Check file permissions.', 'notificator-project' ),
 			);
 		}
 

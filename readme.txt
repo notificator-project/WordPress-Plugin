@@ -1,4 +1,4 @@
-=== Notificator ===
+=== Notificator – Alerts & Notifications ===
 Contributors: eboxnet
 Donate link: https://buymeacoffee.com/vagelis
 Tags: notifications, alerts, hooks, monitoring, mqtt
@@ -13,7 +13,7 @@ Turn WordPress events into dashboard alerts, with optional mobile push and MQTT 
 
 == Description ==
 
-Notificator helps site administrators notice important WordPress events without watching logs or writing a complete monitoring integration.
+Notificator is the official WordPress plugin of the Notificator Project. It helps site administrators notice important WordPress events without watching logs or writing a complete monitoring integration.
 
 Discover events exposed by WordPress and installed plugins, choose the events that matter, and decide how each notification should be delivered. Dashboard notifications work entirely inside WordPress and do not require an account or API key.
 
@@ -111,7 +111,7 @@ For other ways to contribute or support the platform, [get in touch](https://not
 
 Notificator can connect to the Notificator service, operated by Notificator Project, to deliver notifications outside WordPress. This connection is optional. Dashboard-only notifications do not use the service.
 
-The plugin connects to the Notificator API at `https://wpnotif.notificator-project.com` only when an administrator tests an API key or an enabled notification requests Mobile push or MQTT delivery.
+The plugin connects to the Notificator API at `https://wpnotif.notificator-project.com` only when an administrator tests an API key, an enabled notification requests Mobile push or MQTT delivery, or a previously configured website monitor is sent to the service. The plugin does not load executable code, fonts, stylesheets, images, or other assets from this or any other remote service.
 
 = Data sent to the service =
 
@@ -123,6 +123,7 @@ For a triggered notification, the request can include:
 * Mobile push and MQTT delivery choices.
 * Site URL and name, WordPress and plugin versions, and event timestamp.
 * Administrator-configured placeholder values.
+* For a configured website monitor, its name, URL, HTTP method, and enabled state.
 
 Raw hook arguments, WordPress database contents, and user exports are not sent wholesale.
 
@@ -130,7 +131,7 @@ Raw hook arguments, WordPress database contents, and user exports are not sent w
 
 The service validates the API key and allowed domains. Notification content may be encrypted with the account's public key and stored in Supabase for the Notificator app. Depending on account settings, it can use Expo for push, HiveMQ for MQTT, and Resend for email. Push previews may be generic while full content remains encrypted.
 
-Use of the remote service is subject to the information published by [Notificator Project](https://notificator-project.com/) and its [documentation](https://docs.notificator-project.com/).
+Use of the remote service is subject to the information published by [Notificator Project](https://notificator-project.com/), its [documentation](https://docs.notificator-project.com/), and its [privacy policy](https://notificator-project.com/privacy/).
 
 == Privacy ==
 

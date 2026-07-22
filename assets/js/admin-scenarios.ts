@@ -198,19 +198,12 @@ type AnyFn = (...args: any[]) => any;
 				const pluginData = plugins[pluginKey] || {};
 				const pluginName = pluginData && pluginData.name ? String(pluginData.name) : pluginKey;
 				const slug = derivePluginSlug(pluginKey, pluginData);
-				const iconUrl =
-					pluginData && pluginData.icon_url
-						? String(pluginData.icon_url)
-						: slug
-							? `https://ps.w.org/${slug}/assets/icon-128x128.png`
-							: '';
 				const icon =
 					pluginData && pluginData.icon ? String(pluginData.icon) : getPluginFallbackIcon(pluginKey, pluginName);
 
 				normalized[pluginKey] = {
 					...pluginData,
 					slug,
-					icon_url: iconUrl,
 					icon
 				};
 			}
@@ -883,13 +876,6 @@ type AnyFn = (...args: any[]) => any;
 						this.availablePlugins && this.availablePlugins[requiredPlugin]
 							? this.availablePlugins[requiredPlugin]
 							: null;
-					const derivedSlug = derivePluginSlug(requiredPlugin, pluginData || {});
-					const pluginIconUrl =
-						pluginData && pluginData.icon_url
-							? String(pluginData.icon_url)
-							: derivedSlug
-								? `https://ps.w.org/${derivedSlug}/assets/icon-128x128.png`
-								: '';
 					const pluginIcon =
 						pluginData && pluginData.icon
 							? String(pluginData.icon)
@@ -901,23 +887,11 @@ type AnyFn = (...args: any[]) => any;
 								? 'WordPress Core'
 								: String(requiredPlugin);
 
-					if (!pluginIcon) {
-						return {
-							...enriched,
-							plugin_key: requiredPlugin,
-							plugin_name: pluginName,
-							plugin_icon_url: pluginIconUrl,
-							icon_class: ''
-						};
-					}
-
 					return {
 						...enriched,
 						plugin_key: requiredPlugin,
 						plugin_name: pluginName,
-						plugin_icon_url: pluginIconUrl,
-						icon: pluginIcon,
-						icon_class: ''
+						icon: pluginIcon
 					};
 				});
 

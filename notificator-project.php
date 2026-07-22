@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: Notificator
+ * Plugin Name: Notificator – Alerts & Notifications
  * Plugin URI: https://github.com/notificator-project/WordPress-Plugin
  * Description: Turn WordPress events into dashboard alerts, with optional mobile push and MQTT delivery.
  * Version: 1.1
- * Author: Vagelis Papaioannou
- * Author URI: https://github.com/vagelisp
+ * Author: Notificator Project
+ * Author URI: https://notificator-project.com/
  * License: GPL-3.0-or-later
- * Text Domain: notificator
+ * Text Domain: notificator-project
  * Domain Path: /languages
  * Requires at least: 5.0
  * Requires PHP: 7.2
@@ -400,7 +400,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_export_hooks', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
@@ -443,7 +443,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_import_hooks', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
@@ -455,17 +455,17 @@ class Notificator_Companion {
 		$payload_input = filter_input( INPUT_POST, 'payload', FILTER_UNSAFE_RAW );
 		$payload_raw   = is_string( $payload_input ) ? trim( wp_unslash( $payload_input ) ) : '';
 		if ( '' === $payload_raw ) {
-			wp_send_json_error( array( 'message' => __( 'Missing import payload', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Missing import payload', 'notificator-project' ) ), 400 );
 			return;
 		}
 
 		$data = json_decode( $payload_raw, true );
 		if ( ! is_array( $data ) ) {
-			$message = __( 'Invalid JSON file', 'notificator' );
+			$message = __( 'Invalid JSON file', 'notificator-project' );
 			if ( JSON_ERROR_NONE !== json_last_error() ) {
 				$message = sprintf(
 					/* translators: %s is the JSON error message. */
-					__( 'Invalid JSON file: %s', 'notificator' ),
+					__( 'Invalid JSON file: %s', 'notificator-project' ),
 					json_last_error_msg()
 				);
 			}
@@ -482,14 +482,14 @@ class Notificator_Companion {
 		}
 
 		if ( ! is_array( $hooks_in ) ) {
-			wp_send_json_error( array( 'message' => __( 'No scenarios found in import file', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'No scenarios found in import file', 'notificator-project' ) ), 400 );
 			return;
 		}
 
 		$sanitized    = $this->sanitize_settings( array( 'hooks' => $hooks_in ) );
 		$import_hooks = isset( $sanitized['hooks'] ) && is_array( $sanitized['hooks'] ) ? array_values( $sanitized['hooks'] ) : array();
 		if ( empty( $import_hooks ) ) {
-			wp_send_json_error( array( 'message' => __( 'Import file contained no valid scenarios', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Import file contained no valid scenarios', 'notificator-project' ) ), 400 );
 			return;
 		}
 
@@ -529,13 +529,13 @@ class Notificator_Companion {
 				}
 				$base_name = trim( $base_name );
 				if ( '' === $base_name ) {
-					$base_name = __( 'Imported scenario', 'notificator' );
+					$base_name = __( 'Imported scenario', 'notificator-project' );
 				}
 
 				$name  = $base_name;
 				$lower = strtolower( $name );
 				if ( isset( $existing_names[ $lower ] ) ) {
-					$suffix = __( ' (imported)', 'notificator' );
+					$suffix = __( ' (imported)', 'notificator-project' );
 					$name   = $base_name . $suffix;
 					$i      = 2;
 					while ( isset( $existing_names[ strtolower( $name ) ] ) ) {
@@ -562,8 +562,8 @@ class Notificator_Companion {
 		wp_send_json_success(
 			array(
 				'message' => ( 'replace' === $mode )
-					? __( 'Scenarios imported (replaced existing).', 'notificator' )
-					: __( 'Scenarios imported (merged).', 'notificator' ),
+					? __( 'Scenarios imported (replaced existing).', 'notificator-project' )
+					: __( 'Scenarios imported (merged).', 'notificator-project' ),
 				'hooks'   => isset( $options['hooks'] ) ? $options['hooks'] : array(),
 			)
 		);
@@ -576,7 +576,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_save_settings', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
@@ -612,7 +612,7 @@ class Notificator_Companion {
 				: null;
 		}
 		if ( ! is_array( $input ) ) {
-			wp_send_json_error( array( 'message' => __( 'Missing settings payload', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Missing settings payload', 'notificator-project' ) ), 400 );
 			return;
 		}
 
@@ -621,7 +621,7 @@ class Notificator_Companion {
 
 		wp_send_json_success(
 			array(
-				'message' => __( 'Saved', 'notificator' ),
+				'message' => __( 'Saved', 'notificator-project' ),
 				'hooks'   => isset( $sanitized['hooks'] ) ? $sanitized['hooks'] : array(),
 			)
 		);
@@ -634,13 +634,13 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_toggle_log', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
 		$state = isset( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '';
 		if ( ! in_array( $state, array( 'enable', 'disable' ), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator-project' ) ), 400 );
 			return;
 		}
 
@@ -653,8 +653,8 @@ class Notificator_Companion {
 		update_option( $this->option_name, $options, false );
 
 		$message = ( 'enable' === $state )
-			? __( 'Notifications log enabled.', 'notificator' )
-			: __( 'Notifications log disabled.', 'notificator' );
+			? __( 'Notifications log enabled.', 'notificator-project' )
+			: __( 'Notifications log disabled.', 'notificator-project' );
 
 		wp_send_json_success(
 			array(
@@ -671,13 +671,13 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_toggle_admin_toasts', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
 		$state = isset( $_POST['state'] ) ? sanitize_text_field( wp_unslash( $_POST['state'] ) ) : '';
 		if ( ! in_array( $state, array( 'enable', 'disable' ), true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Invalid state', 'notificator-project' ) ), 400 );
 			return;
 		}
 
@@ -690,8 +690,8 @@ class Notificator_Companion {
 		update_option( $this->option_name, $options, false );
 
 		$message = ( 'enable' === $state )
-			? __( 'Dashboard alerts enabled.', 'notificator' )
-			: __( 'Dashboard alerts disabled.', 'notificator' );
+			? __( 'Dashboard alerts enabled.', 'notificator-project' )
+			: __( 'Dashboard alerts disabled.', 'notificator-project' );
 
 		wp_send_json_success(
 			array(
@@ -707,13 +707,13 @@ class Notificator_Companion {
 	public function handle_export_log() {
 		check_ajax_referer( 'notificator_companion_export_log', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
 		$log = get_option( 'notificator_companion_notification_log', array() );
 		if ( ! is_array( $log ) || empty( $log ) ) {
-			wp_send_json_error( array( 'message' => __( 'No log entries found', 'notificator' ) ), 404 );
+			wp_send_json_error( array( 'message' => __( 'No log entries found', 'notificator-project' ) ), 404 );
 			return;
 		}
 
@@ -786,14 +786,14 @@ class Notificator_Companion {
 	public function handle_clear_log() {
 		check_ajax_referer( 'notificator_companion_clear_log', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
 		update_option( 'notificator_companion_notification_log', array(), false );
 		wp_send_json_success(
 			array(
-				'message' => __( 'Log cleared.', 'notificator' ),
+				'message' => __( 'Log cleared.', 'notificator-project' ),
 			)
 		);
 	}
@@ -804,13 +804,13 @@ class Notificator_Companion {
 	public function handle_delete_log_entry() {
 		check_ajax_referer( 'notificator_companion_delete_log_entry', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
 		$entry_id = isset( $_POST['entry_id'] ) ? sanitize_text_field( wp_unslash( $_POST['entry_id'] ) ) : '';
 		if ( '' === $entry_id ) {
-			wp_send_json_error( array( 'message' => __( 'Missing entry id', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Missing entry id', 'notificator-project' ) ), 400 );
 			return;
 		}
 
@@ -829,7 +829,7 @@ class Notificator_Companion {
 		update_option( 'notificator_companion_notification_log', array_values( $filtered ), false );
 		wp_send_json_success(
 			array(
-				'message' => __( 'Log entry removed.', 'notificator' ),
+				'message' => __( 'Log entry removed.', 'notificator-project' ),
 			)
 		);
 	}
@@ -839,8 +839,8 @@ class Notificator_Companion {
 	 */
 	public function add_admin_menu() {
 		add_menu_page(
-			__( 'Notificator Settings', 'notificator' ),
-			__( 'Notificator', 'notificator' ),
+			__( 'Notificator Settings', 'notificator-project' ),
+			__( 'Notificator', 'notificator-project' ),
 			'manage_options',
 			'notificator',
 			array( $this->admin_page, 'render_settings_page' ),
@@ -849,18 +849,18 @@ class Notificator_Companion {
 		);
 
 		$subpages = array(
-			'notificator'               => __( 'Overview', 'notificator' ),
-			'notificator-notifications' => __( 'Notifications', 'notificator' ),
-			'notificator-activity'      => __( 'Activity', 'notificator' ),
-			'notificator-settings'      => __( 'Settings', 'notificator' ),
-			'notificator-developer'     => __( 'Developer', 'notificator' ),
-			'notificator-support'       => __( 'Support', 'notificator' ),
+			'notificator'               => __( 'Overview', 'notificator-project' ),
+			'notificator-notifications' => __( 'Notifications', 'notificator-project' ),
+			'notificator-activity'      => __( 'Activity', 'notificator-project' ),
+			'notificator-settings'      => __( 'Settings', 'notificator-project' ),
+			'notificator-developer'     => __( 'Developer', 'notificator-project' ),
+			'notificator-support'       => __( 'Support', 'notificator-project' ),
 		);
 
 		foreach ( $subpages as $slug => $label ) {
 			add_submenu_page(
 				'notificator',
-				$label . ' — ' . __( 'Notificator', 'notificator' ),
+				$label . ' — ' . __( 'Notificator', 'notificator-project' ),
 				$label,
 				'manage_options',
 				$slug,
@@ -1312,7 +1312,7 @@ class Notificator_Companion {
 	public function handle_observation_start() {
 		check_ajax_referer( 'notificator_companion_observation', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 		}
 		$duration = isset( $_POST['duration'] ) ? (int) $_POST['duration'] : 600;
 		$duration = max( 60, min( 1800, $duration ) );
@@ -1332,7 +1332,7 @@ class Notificator_Companion {
 	public function handle_observation_stop() {
 		check_ajax_referer( 'notificator_companion_observation', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 		}
 		$state               = get_option( 'notificator_companion_hook_observation', array() );
 		$state               = is_array( $state ) ? $state : array();
@@ -1347,13 +1347,13 @@ class Notificator_Companion {
 	public function handle_discovery_ignore() {
 		check_ajax_referer( 'notificator_companion_discovery', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 		}
 		$candidate_id = isset( $_POST['candidate_id'] ) ? sanitize_text_field( wp_unslash( $_POST['candidate_id'] ) ) : '';
 		$ignored      = get_option( 'notificator_companion_discovery_ignored', array() );
 		$ignored      = is_array( $ignored ) ? array_values( array_filter( array_map( 'strval', $ignored ) ) ) : array();
 		if ( '' === $candidate_id ) {
-			wp_send_json_error( array( 'message' => __( 'Missing discovery candidate.', 'notificator' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Missing discovery candidate.', 'notificator-project' ) ), 400 );
 		}
 		if ( in_array( $candidate_id, $ignored, true ) ) {
 			$ignored    = array_values( array_diff( $ignored, array( $candidate_id ) ) );
@@ -1371,7 +1371,7 @@ class Notificator_Companion {
 	public function handle_reset_test_data() {
 		check_ajax_referer( 'notificator_companion_reset_test_data', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 		}
 
 		$options   = get_option( $this->option_name, array() );
@@ -1407,8 +1407,8 @@ class Notificator_Companion {
 		wp_send_json_success(
 			array(
 				'message' => $cache_cleared
-					? __( 'Plugin data reset. API keys were preserved.', 'notificator' )
-					: __( 'Plugin data reset and API keys preserved, but one scan cache file could not be removed.', 'notificator' ),
+					? __( 'Plugin data reset. API keys were preserved.', 'notificator-project' )
+					: __( 'Plugin data reset and API keys preserved, but one scan cache file could not be removed.', 'notificator-project' ),
 			)
 		);
 	}
@@ -2021,7 +2021,7 @@ class Notificator_Companion {
 		);
 
 		if ( false === $queue_id && $log_id ) {
-			$this->update_notification_log_entry( $log_id, 'failed', false, __( 'Unable to queue delivery.', 'notificator' ) );
+			$this->update_notification_log_entry( $log_id, 'failed', false, __( 'Unable to queue delivery.', 'notificator-project' ) );
 		}
 	}
 
@@ -2067,7 +2067,7 @@ class Notificator_Companion {
 			$type = 'warn';
 		}
 
-		$title_text = $title ? $title : __( 'Notification sent', 'notificator' );
+		$title_text = $title ? $title : __( 'Notification sent', 'notificator-project' );
 		$message    = $title_text;
 
 		$toasts = get_option( 'notificator_companion_admin_toasts', array() );
@@ -2210,7 +2210,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_fetch_admin_toasts', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
@@ -2681,7 +2681,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_refresh_hooks', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( __( 'Unauthorized', 'notificator' ) );
+			wp_send_json_error( __( 'Unauthorized', 'notificator-project' ) );
 			return;
 		}
 
@@ -2690,8 +2690,8 @@ class Notificator_Companion {
 		wp_send_json_success(
 			array(
 				'message' => $queued
-					? __( 'Scan queued in safe background batches.', 'notificator' )
-					: __( 'A background scan is already running.', 'notificator' ),
+					? __( 'Scan queued in safe background batches.', 'notificator-project' )
+					: __( 'A background scan is already running.', 'notificator-project' ),
 			)
 		);
 	}
@@ -2704,7 +2704,7 @@ class Notificator_Companion {
 	public function handle_get_health() {
 		check_ajax_referer( 'notificator_companion_get_health', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
 			return;
 		}
 
@@ -2748,7 +2748,7 @@ class Notificator_Companion {
 		check_ajax_referer( 'notificator_companion_test', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ) );
 		}
 
 		$requested_key       = isset( $_POST['api_key'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) ) : '';
@@ -2771,7 +2771,7 @@ class Notificator_Companion {
 		if ( empty( $api_keys ) ) {
 			wp_send_json_error(
 				array(
-					'message' => __( 'Please configure your API key first.', 'notificator' ),
+					'message' => __( 'Please configure your API key first.', 'notificator-project' ),
 				)
 			);
 		}
@@ -2843,10 +2843,10 @@ class Notificator_Companion {
 				)
 			);
 			$message = ( 1 === $total )
-				? __( 'Test notification sent successfully! Check your mobile app for the alert.', 'notificator' )
+				? __( 'Test notification sent successfully! Check your mobile app for the alert.', 'notificator-project' )
 				: sprintf(
 					/* translators: %1$d is number sent, %2$d is total API keys */
-					__( 'Test notification sent to %1$d of %2$d configured API keys.', 'notificator' ),
+					__( 'Test notification sent to %1$d of %2$d configured API keys.', 'notificator-project' ),
 					$sent,
 					$total
 				);
@@ -2870,7 +2870,7 @@ class Notificator_Companion {
 			array(
 				'message'  => sprintf(
 					/* translators: %d is the HTTP status code */
-					__( 'Failed to send notification. Status: %d. Please check your API key.', 'notificator' ),
+					__( 'Failed to send notification. Status: %d. Please check your API key.', 'notificator-project' ),
 					(int) $last_code
 				),
 				'response' => $last_body,
@@ -2888,7 +2888,7 @@ class Notificator_Companion {
 		$settings_link = sprintf(
 			'<a href="%s">%s</a>',
 			admin_url( 'admin.php?page=notificator' ),
-			__( 'Settings', 'notificator' )
+			__( 'Settings', 'notificator-project' )
 		);
 		array_unshift( $links, $settings_link );
 		return $links;
@@ -2927,7 +2927,7 @@ class Notificator_Companion {
 				: array();
 			$registered_meta                                = array(
 				'label'         => isset( $event['label'] ) ? (string) $event['label'] : $hook_name,
-				'description'   => isset( $event['description'] ) && '' !== $event['description'] ? (string) $event['description'] : __( 'An event explicitly registered by another plugin.', 'notificator' ),
+				'description'   => isset( $event['description'] ) && '' !== $event['description'] ? (string) $event['description'] : __( 'An event explicitly registered by another plugin.', 'notificator-project' ),
 				'type'          => 'action',
 				'arg_names'     => isset( $event['arg_names'] ) ? array_values( (array) $event['arg_names'] ) : array(),
 				'payload_arity' => isset( $event['arg_names'] ) ? count( (array) $event['arg_names'] ) : 0,
@@ -2938,7 +2938,7 @@ class Notificator_Companion {
 				'recommended'   => true,
 				'selectable'    => true,
 				'discovery'     => 'registered_integration',
-				'reason'        => __( 'Registered directly by the integration.', 'notificator' ),
+				'reason'        => __( 'Registered directly by the integration.', 'notificator-project' ),
 			);
 			$plugins[ $plugin_slug ]['hooks'][ $hook_name ] = array_merge( $existing_meta, $registered_meta );
 		}

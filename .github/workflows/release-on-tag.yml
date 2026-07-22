@@ -41,7 +41,7 @@ jobs:
           set -euo pipefail
 
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PLUGIN_VERSION="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*' notificator.php | sed -E 's/.*Version:[[:space:]]*([^[:space:]]+).*/\1/')"
+          PLUGIN_VERSION="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*' notificator-project.php | sed -E 's/.*Version:[[:space:]]*([^[:space:]]+).*/\1/')"
           STABLE_TAG="$(grep -m1 -E '^Stable tag:[[:space:]]*' readme.txt | sed -E 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/')"
 
           echo "Tag version: ${TAG_VERSION}"
@@ -49,7 +49,7 @@ jobs:
           echo "Readme stable tag: ${STABLE_TAG}"
 
           if [[ "${PLUGIN_VERSION}" != "${TAG_VERSION}" ]]; then
-            echo "ERROR: notificator.php Version (${PLUGIN_VERSION}) does not match tag (${TAG_VERSION})."
+            echo "ERROR: notificator-project.php Version (${PLUGIN_VERSION}) does not match tag (${TAG_VERSION})."
             exit 1
           fi
 
@@ -73,8 +73,8 @@ jobs:
           set -euo pipefail
 
           TAG_VERSION="${GITHUB_REF_NAME#v}"
-          SOURCE_ZIP="dist/notificator.zip"
-          TARGET_ZIP="dist/notificator-${TAG_VERSION}.zip"
+          SOURCE_ZIP="dist/notificator-project.zip"
+          TARGET_ZIP="dist/notificator-project-${TAG_VERSION}.zip"
 
           if [[ ! -f "${SOURCE_ZIP}" ]]; then
             echo "ERROR: Expected package not found at ${SOURCE_ZIP}"
