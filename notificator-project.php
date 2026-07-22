@@ -287,6 +287,7 @@ class Notificator_Companion {
 		add_action( 'wp_ajax_notificator_companion_test', array( $this, 'handle_test_notification' ) );
 		add_action( 'wp_ajax_notificator_companion_refresh_hooks', array( $this, 'handle_refresh_hooks' ) );
 		add_action( 'wp_ajax_notificator_companion_get_health', array( $this, 'handle_get_health' ) );
+		add_action( 'wp_ajax_notificator_companion_get_discovery_inbox', array( $this->admin_page, 'handle_get_discovery_inbox' ) );
 		add_action( 'wp_ajax_notificator_companion_save_settings', array( $this, 'handle_save_settings_ajax' ) );
 		add_action( 'wp_ajax_notificator_companion_export_hooks', array( $this, 'handle_export_hooks' ) );
 		add_action( 'wp_ajax_notificator_companion_import_hooks', array( $this, 'handle_import_hooks' ) );

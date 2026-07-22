@@ -718,6 +718,51 @@ function initDiscoveryInbox(): void {
 	apply();
 }
 
+let discoveryRefreshRequest: Promise<void> | null = null;
+
+/** Replace the server-rendered Discovery inbox after a scan without reloading wp-admin. */
+function refreshDiscoveryInbox(): Promise<void> {
+	if (discoveryRefreshRequest) return discoveryRefreshRequest;
+
+	const data = window.notificatorCompanionData || {};
+	const action = data.actions?.discoveryRefresh || '';
+	const nonce = data.nonces?.discovery || '';
+	if (!action || !nonce) return Promise.resolve();
+
+	const currentInbox = document.getElementById('notificator-discovery');
+	currentInbox?.setAttribute('aria-busy', 'true');
+	discoveryRefreshRequest = postAdminAction<{ html?: string; message?: string }>(action, nonce)
+		.then((result) => {
+			const html = typeof result.data?.html === 'string' ? result.data.html.trim() : '';
+			if (!result.success || !html) {
+				throw new Error(result.data?.message || 'Discovery results could not be refreshed.');
+			}
+
+			const template = document.createElement('template');
+			template.innerHTML = html;
+			const replacement = template.content.querySelector<HTMLElement>('#notificator-discovery');
+			const activeInbox = document.getElementById('notificator-discovery');
+			if (!replacement || !activeInbox) throw new Error('The refreshed Discovery view was incomplete.');
+
+			activeInbox.replaceWith(replacement);
+			initDiscoveryInbox();
+			window.dispatchEvent(new CustomEvent('notificator:discovery:refreshed'));
+		})
+		.catch((error) => {
+			currentInbox?.removeAttribute('aria-busy');
+			notify(error instanceof Error ? error.message : 'Discovery results could not be refreshed.', 'warn', 5000);
+		})
+		.finally(() => {
+			discoveryRefreshRequest = null;
+		});
+
+	return discoveryRefreshRequest;
+}
+
+window.addEventListener('notificator:scan:complete', () => {
+	void refreshDiscoveryInbox();
+});
+
 if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', initLogSearch);
 } else {

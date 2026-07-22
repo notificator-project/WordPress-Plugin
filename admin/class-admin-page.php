@@ -132,6 +132,7 @@ class Notificator_Companion_Admin_Page {
 					'deleteLog'         => 'notificator_companion_delete_log_entry',
 					'toggleAdminToasts' => 'notificator_companion_toggle_admin_toasts',
 					'discoveryIgnore'   => 'notificator_companion_discovery_ignore',
+					'discoveryRefresh'  => 'notificator_companion_get_discovery_inbox',
 					'observationStart'  => 'notificator_companion_observation_start',
 					'observationStop'   => 'notificator_companion_observation_stop',
 					'resetTestData'     => 'notificator_companion_reset_test_data',
@@ -1418,6 +1419,36 @@ class Notificator_Companion_Admin_Page {
 			<?php $this->render_scenario_modal(); ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Return a freshly rendered Discovery inbox after a plugin scan.
+	 *
+	 * @return void
+	 */
+	public function handle_get_discovery_inbox() {
+		check_ajax_referer( 'notificator_companion_discovery', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
+			return;
+		}
+
+		$options = get_option( $this->option_name );
+		if ( ! is_array( $options ) ) {
+			$options = array();
+		}
+		$hooks             = isset( $options['hooks'] ) && is_array( $options['hooks'] ) ? $options['hooks'] : array();
+		$available_plugins = $this->plugin->get_available_plugins_with_hooks();
+
+		ob_start();
+		$this->render_discovery_inbox( $available_plugins, $hooks );
+		$html = ob_get_clean();
+
+		wp_send_json_success(
+			array(
+				'html' => is_string( $html ) ? $html : '',
+			)
+		);
 	}
 
 	/**
