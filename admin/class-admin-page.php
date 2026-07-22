@@ -2011,7 +2011,7 @@ else :
 	?>
 	<p class="notificator-integration-empty"><?php esc_html_e( 'No plugin has registered a Notificator event yet. Scanned WordPress hooks remain available as usual.', 'notificator-project' ); ?></p><?php endif; ?>
 					<details class="notificator-integration-example"><summary><?php esc_html_e( 'Event + template example', 'notificator-project' ); ?></summary><pre><code><?php echo esc_html( $integration_example ); ?></code></pre></details>
-					<div class="notificator-integration-actions"><a class="btn-secondary btn-secondary--compact" href="<?php echo esc_url( NOTIFICATOR_COMPANION_PLUGIN_URL . 'examples/notificator-sample-plugin.zip' ); ?>" download><span class="dashicons dashicons-download"></span><?php esc_html_e( 'Download integration example', 'notificator-project' ); ?></a><span class="notificator-integration-empty"><?php esc_html_e( 'Install this local ZIP as a plugin to test a registered event and ready-made template.', 'notificator-project' ); ?></span></div>
+					<p class="notificator-integration-empty"><?php esc_html_e( 'The integration guide includes the complete example source and installation instructions.', 'notificator-project' ); ?></p>
 				</div>
 			</div></div>
 		</div>

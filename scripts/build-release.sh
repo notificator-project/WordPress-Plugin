@@ -43,15 +43,13 @@ mkdir -p "$PACKAGE_DIR/assets"
 cp -R "$ROOT_DIR/assets/dist" "$PACKAGE_DIR/assets/"
 cp -R "$ROOT_DIR/includes" "$PACKAGE_DIR/"
 cp -R "$ROOT_DIR/languages" "$PACKAGE_DIR/"
-mkdir -p "$PACKAGE_DIR/examples"
-cp "$SAMPLE_ZIP" "$PACKAGE_DIR/examples/"
 
 # Remove junk files that can trigger Plugin Check warnings.
 find "$PACKAGE_DIR" -name '.DS_Store' -delete
 find "$PACKAGE_DIR" -name '*.backup' -delete
 find "$PACKAGE_DIR" -name 'methods_insert.txt' -delete
 
-for required_file in "$PLUGIN_FILE" readme.txt uninstall.php THIRD-PARTY-NOTICES.txt assets/dist/admin.js assets/dist/admin.css assets/dist/admin-toast.js assets/dist/admin-toast.css examples/notificator-sample-plugin.zip; do
+for required_file in "$PLUGIN_FILE" readme.txt uninstall.php THIRD-PARTY-NOTICES.txt assets/dist/admin.js assets/dist/admin.css assets/dist/admin-toast.js assets/dist/admin-toast.css; do
 	if [[ ! -f "$PACKAGE_DIR/$required_file" ]]; then
 		echo "Missing required release file: $required_file" >&2
 		exit 1
@@ -60,6 +58,11 @@ done
 
 if find "$PACKAGE_DIR" -type f \( -name '*.map' -o -name '*.backup' -o -name '.DS_Store' \) -print -quit | grep -q .; then
 	echo "Development-only files remain in the release package." >&2
+	exit 1
+fi
+
+if find "$PACKAGE_DIR" -type f \( -iname '*.zip' -o -iname '*.gz' -o -iname '*.tgz' -o -iname '*.rar' -o -iname '*.7z' \) -print -quit | grep -q .; then
+	echo "Compressed files are not permitted inside the WordPress.org package." >&2
 	exit 1
 fi
 

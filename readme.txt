@@ -89,7 +89,7 @@ No. Notificator is free and open source, and we intend to keep its current featu
 
 = Can another plugin register an event or template? =
 
-Yes. Integrations can register documented events with `notificator_companion_register_event()` and provide templates through `notificator_companion_register_templates`. See the repository README and included sample plugin for complete examples.
+Yes. Integrations can register documented events with `notificator_companion_register_event()` and provide templates through `notificator_companion_register_templates`. See the repository README and integration guide for complete examples.
 
 = Can I reuse my notification setup on another site? =
 
