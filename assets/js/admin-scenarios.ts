@@ -1508,7 +1508,9 @@ type AnyFn = (...args: any[]) => any;
 	 * Plugin Scanner
 	 */
 	window.startPluginScan = function () {
-		const $btn = $('#scan-plugins-btn, #auto-scan-btn, #notificator-scan-plugins-tool');
+		const $btn = $(
+			'#scan-plugins-btn, #auto-scan-btn, #notificator-scan-plugins-tool, #notificator-scan-recommendation-button'
+		);
 		const $modal = $('#scan-modal');
 		const $progress = $('#scan-progress');
 		const $progressBar = $('#scan-progress-bar');
@@ -1545,9 +1547,9 @@ type AnyFn = (...args: any[]) => any;
 			};
 			window.notificatorCompanionData = currentData;
 
-			const firstTimeSetup = document.getElementById('notificator-first-time-setup');
-			if (firstTimeSetup) {
-				firstTimeSetup.remove();
+			const scanRecommendation = document.getElementById('notificator-scan-recommendation');
+			if (scanRecommendation) {
+				scanRecommendation.remove();
 			}
 
 			const overviewStep = document.getElementById('notificator-overview-scan-step');

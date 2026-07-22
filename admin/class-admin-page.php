@@ -766,20 +766,22 @@ class Notificator_Companion_Admin_Page {
 	 * @return void
 	 */
 	private function render_overview_section( $options, $has_api_key ) {
-		$hooks        = isset( $options['hooks'] ) && is_array( $options['hooks'] ) ? $options['hooks'] : array();
-		$active_hooks = array_filter(
+		$hooks                    = isset( $options['hooks'] ) && is_array( $options['hooks'] ) ? $options['hooks'] : array();
+		$active_hooks             = array_filter(
 			$hooks,
 			static function ( $hook ) {
 				return is_array( $hook ) && ! empty( $hook['enabled'] );
 			}
 		);
-		$health       = $this->plugin->get_admin_health();
-		$queue        = isset( $health['queue'] ) && is_array( $health['queue'] ) ? $health['queue'] : array();
-		$pending      = isset( $queue['pending'] ) ? (int) $queue['pending'] : 0;
-		$last_scan    = isset( $health['last_scan_at'] ) ? (int) $health['last_scan_at'] : 0;
-		$last_test    = isset( $health['last_test_status'] ) ? (string) $health['last_test_status'] : '';
-		$delivery     = isset( $health['last_delivery_status'] ) ? (string) $health['last_delivery_status'] : '';
-		$saved_keys   = isset( $options['api_keys'] ) && is_array( $options['api_keys'] ) ? array_values( $options['api_keys'] ) : array();
+		$health                   = $this->plugin->get_admin_health();
+		$queue                    = isset( $health['queue'] ) && is_array( $health['queue'] ) ? $health['queue'] : array();
+		$pending                  = isset( $queue['pending'] ) ? (int) $queue['pending'] : 0;
+		$last_scan                = isset( $health['last_scan_at'] ) ? (int) $health['last_scan_at'] : 0;
+		$unscanned_active_plugins = $this->plugin->get_unscanned_active_plugins();
+		$scan_complete            = $last_scan && empty( $unscanned_active_plugins );
+		$last_test                = isset( $health['last_test_status'] ) ? (string) $health['last_test_status'] : '';
+		$delivery                 = isset( $health['last_delivery_status'] ) ? (string) $health['last_delivery_status'] : '';
+		$saved_keys               = isset( $options['api_keys'] ) && is_array( $options['api_keys'] ) ? array_values( $options['api_keys'] ) : array();
 		if ( empty( $saved_keys ) && ! empty( $options['api_key'] ) ) {
 			$saved_keys = array( (string) $options['api_key'] );
 		}
@@ -791,7 +793,9 @@ class Notificator_Companion_Admin_Page {
 			}
 		}
 		$disabled_key_count = max( 0, count( $saved_keys ) - $enabled_key_count );
-		if ( $last_scan ) {
+		if ( ! empty( $unscanned_active_plugins ) ) {
+			$scan_label = __( 'Scan recommended', 'notificator-project' );
+		} elseif ( $last_scan ) {
 			/* translators: %s: Human-readable elapsed time, such as "5 minutes". */
 			$scan_label = sprintf( __( '%s ago', 'notificator-project' ), human_time_diff( $last_scan, time() ) );
 		} else {
@@ -851,7 +855,7 @@ class Notificator_Companion_Admin_Page {
 						<div><h3><?php esc_html_e( 'Getting started', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'Complete these steps once, then this becomes your health dashboard.', 'notificator-project' ); ?></p></div>
 					</div>
 					<ol class="notificator-checklist">
-						<li id="notificator-overview-scan-step" class="<?php echo $last_scan ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo $last_scan ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Discover site events', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Scan active plugins for events and ready-made templates.', 'notificator-project' ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator-project' ); ?></button></li>
+						<li id="notificator-overview-scan-step" class="<?php echo $scan_complete ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo $scan_complete ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Discover site events', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Scan active plugins for events and ready-made templates.', 'notificator-project' ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator-project' ); ?></button></li>
 						<li class="<?php echo ! empty( $hooks ) ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo ! empty( $hooks ) ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Create a notification', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Choose a template or build one from a WordPress event.', 'notificator-project' ); ?></small></div><a href="#notifications" data-notificator-workspace-tab="notifications"><?php esc_html_e( 'Open', 'notificator-project' ); ?></a></li>
 					</ol>
 				</div>
@@ -1083,9 +1087,10 @@ class Notificator_Companion_Admin_Page {
 		if ( ! $has_remote_delivery && empty( $api_keys ) && ! empty( $options['api_key'] ) ) {
 			$has_remote_delivery = true;
 		}
-		$available_plugins     = $this->plugin->get_available_plugins_with_hooks();
-		$last_scan             = get_option( 'notificator_companion_last_scan', 0 );
-		$show_first_time_setup = empty( $last_scan ) && 1 === count( $available_plugins );
+		$available_plugins        = $this->plugin->get_available_plugins_with_hooks();
+		$last_scan                = get_option( 'notificator_companion_last_scan', 0 );
+		$unscanned_active_plugins = $this->plugin->get_unscanned_active_plugins();
+		$show_scan_recommendation = ( empty( $last_scan ) && 1 === count( $available_plugins ) ) || ! empty( $unscanned_active_plugins );
 
 		// Build active status for plugins.
 		$plugin_active_status = array();
@@ -1126,8 +1131,8 @@ class Notificator_Companion_Admin_Page {
 				</button>
 			</nav>
 
-			<?php if ( $show_first_time_setup ) : ?>
-				<?php $this->render_first_time_setup(); ?>
+			<?php if ( $show_scan_recommendation ) : ?>
+				<?php $this->render_scan_recommendation( $unscanned_active_plugins ); ?>
 			<?php endif; ?>
 
 			<div x-show="notificationView === 'discover'" x-cloak>
@@ -2431,18 +2436,34 @@ else :
 	}
 
 	/**
-	 * Render first time setup prompt
+	 * Render the initial or newly activated plugin scan prompt.
+	 *
+	 * @param array<int, array{file: string, name: string, slug: string}> $unscanned_plugins Unscanned active plugins.
+	 * @return void
 	 */
-	private function render_first_time_setup() {
+	private function render_scan_recommendation( $unscanned_plugins = array() ) {
+		$unscanned_count = count( $unscanned_plugins );
+		if ( 1 === $unscanned_count ) {
+			$title = __( 'New plugin detected', 'notificator-project' );
+			/* translators: %s: Name of the newly activated plugin. */
+			$message = sprintf( __( '%s was activated after the last scan. Scan again to discover its events and templates.', 'notificator-project' ), (string) $unscanned_plugins[0]['name'] );
+		} elseif ( 1 < $unscanned_count ) {
+			$title = __( 'New plugins detected', 'notificator-project' );
+			/* translators: %d: Number of newly activated plugins. */
+			$message = sprintf( __( '%d plugins were activated after the last scan. Scan again to discover their events and templates.', 'notificator-project' ), $unscanned_count );
+		} else {
+			$title   = __( 'First-time setup', 'notificator-project' );
+			$message = __( 'Run a quick plugin scan to discover available hooks and unlock ready-to-use templates.', 'notificator-project' );
+		}
 		?>
-		<div id="notificator-first-time-setup" class="notificator-first-time-setup">
+		<div id="notificator-scan-recommendation" class="notificator-first-time-setup">
 			<div class="notificator-first-time-setup__icon" aria-hidden="true">
 				<span class="dashicons dashicons-search"></span>
 			</div>
 			<div class="notificator-first-time-setup__content">
-				<h3><?php esc_html_e( 'First-time setup', 'notificator-project' ); ?></h3>
-				<p><?php esc_html_e( 'Run a quick plugin scan to discover available hooks and unlock ready-to-use templates.', 'notificator-project' ); ?></p>
-				<button type="button" id="auto-scan-btn" class="btn-secondary">
+				<h3><?php echo esc_html( $title ); ?></h3>
+				<p><?php echo esc_html( $message ); ?></p>
+				<button type="button" id="notificator-scan-recommendation-button" class="btn-secondary">
 					<span class="dashicons dashicons-update"></span>
 					<?php esc_html_e( 'Scan Plugins Now', 'notificator-project' ); ?>
 				</button>

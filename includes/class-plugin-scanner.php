@@ -1370,6 +1370,58 @@ class Notificator_Companion_Plugin_Scanner {
 	}
 
 	/**
+	 * Return active plugins that have not been covered by a successful scan.
+	 *
+	 * Comparing plugin slugs with the saved fingerprint map is intentionally
+	 * inexpensive: opening an admin page must not trigger filesystem scanning.
+	 *
+	 * @return array<int, array{file: string, name: string, slug: string}> Unscanned plugins.
+	 */
+	public function get_unscanned_active_plugins() {
+		if ( ! get_option( 'notificator_companion_last_scan', 0 ) ) {
+			return array();
+		}
+
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		$all_plugins    = get_plugins();
+		$active_plugins = get_option( 'active_plugins', array() );
+		$fingerprints   = get_option( 'notificator_companion_scan_fingerprints', array() );
+		$self_plugin    = plugin_basename( NOTIFICATOR_COMPANION_PLUGIN_FILE );
+		$unscanned      = array();
+
+		$active_plugins = is_array( $active_plugins ) ? $active_plugins : array();
+		$fingerprints   = is_array( $fingerprints ) ? $fingerprints : array();
+
+		foreach ( $active_plugins as $plugin_file ) {
+			$plugin_file = plugin_basename( (string) $plugin_file );
+			if ( $self_plugin === $plugin_file || ! isset( $all_plugins[ $plugin_file ] ) ) {
+				continue;
+			}
+
+			$plugin_slug = dirname( $plugin_file );
+			if ( '.' === $plugin_slug || '' === $plugin_slug ) {
+				$plugin_slug = sanitize_title( basename( $plugin_file, '.php' ) );
+			}
+
+			if ( array_key_exists( $plugin_slug, $fingerprints ) ) {
+				continue;
+			}
+
+			$plugin_data = $all_plugins[ $plugin_file ];
+			$unscanned[] = array(
+				'file' => $plugin_file,
+				'name' => isset( $plugin_data['Name'] ) ? (string) $plugin_data['Name'] : $plugin_file,
+				'slug' => $plugin_slug,
+			);
+		}
+
+		return $unscanned;
+	}
+
+	/**
 	 * Start a resumable scan without replacing the currently published cache.
 	 *
 	 * @param string $scan_id Unique scan identifier.

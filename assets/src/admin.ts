@@ -580,7 +580,9 @@ function initToolsModal(): void {
 function initScanTriggers(): void {
 	const details = document.getElementById('notificator-scenarios-menu') as HTMLDetailsElement | null;
 	document
-		.querySelectorAll<HTMLButtonElement>('#scan-plugins-btn, #auto-scan-btn, #notificator-scan-plugins-tool')
+		.querySelectorAll<HTMLButtonElement>(
+			'#scan-plugins-btn, #auto-scan-btn, #notificator-scan-plugins-tool, #notificator-scan-recommendation-button'
+		)
 		.forEach((button) => {
 			button.addEventListener('click', (event) => {
 				event.preventDefault();

@@ -2948,6 +2948,15 @@ class Notificator_Companion {
 	}
 
 	/**
+	 * Get active plugins that were not covered by the last successful scan.
+	 *
+	 * @return array<int, array{file: string, name: string, slug: string}> Unscanned plugins.
+	 */
+	public function get_unscanned_active_plugins() {
+		return $this->plugin_scanner->get_unscanned_active_plugins();
+	}
+
+	/**
 	 * Check if a plugin is active
 	 *
 	 * @param string $plugin_file Plugin file path.
