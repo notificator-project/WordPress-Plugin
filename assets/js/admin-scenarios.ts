@@ -1533,6 +1533,29 @@ type AnyFn = (...args: any[]) => any;
 			$('#scan-error-message').removeClass('hidden');
 			$('#scan-error-detail').text(message || 'The plugin scan could not be completed.');
 		};
+		const markScanComplete = function (data) {
+			const currentData = window.notificatorCompanionData || {};
+			const currentHealth = currentData.health || {};
+			const responseHealth = data && data.health ? data.health : {};
+			currentData.health = {
+				...currentHealth,
+				...responseHealth,
+				last_scan_status: 'complete',
+				last_scan_at: Number(responseHealth.last_scan_at || currentHealth.last_scan_at || Math.floor(Date.now() / 1000))
+			};
+			window.notificatorCompanionData = currentData;
+
+			const firstTimeSetup = document.getElementById('notificator-first-time-setup');
+			if (firstTimeSetup) {
+				firstTimeSetup.remove();
+			}
+
+			window.dispatchEvent(
+				new CustomEvent('notificator:scan:complete', {
+					detail: data || {}
+				})
+			);
+		};
 
 		const finishScan = function (data) {
 			setScanProgress(100);
@@ -1547,8 +1570,7 @@ type AnyFn = (...args: any[]) => any;
 				if (data.available_plugins) window.notificatorScenarioBuilder.availablePlugins = data.available_plugins;
 				if (data.plugin_active_status) window.notificatorScenarioBuilder.pluginActiveStatus = data.plugin_active_status;
 			}
-			window.notificatorCompanionData = window.notificatorCompanionData || {};
-			window.notificatorCompanionData.health = health;
+			markScanComplete(data);
 			$('#notificator-scan-review').removeClass('hidden');
 			if (window.notificatorToast)
 				window.notificatorToast.show('Scan complete. Review the discovered events when you are ready.', 'success');
@@ -1653,6 +1675,7 @@ type AnyFn = (...args: any[]) => any;
 							window.notificatorScenarioBuilder.hookActiveStatus = response.data.hook_active_status;
 						}
 					}
+					markScanComplete(response.data || {});
 
 					$('#notificator-scan-review').removeClass('hidden');
 					$btn.prop('disabled', false);

@@ -2404,7 +2404,7 @@ else :
 	 */
 	private function render_first_time_setup() {
 		?>
-		<div class="notificator-first-time-setup">
+		<div id="notificator-first-time-setup" class="notificator-first-time-setup">
 			<div class="notificator-first-time-setup__icon" aria-hidden="true">
 				<span class="dashicons dashicons-search"></span>
 			</div>
