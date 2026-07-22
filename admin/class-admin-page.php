@@ -835,7 +835,7 @@ class Notificator_Companion_Admin_Page {
 				</div>
 				<div class="notificator-health-card">
 					<span class="notificator-health-icon dashicons dashicons-update" aria-hidden="true"></span>
-					<div><span><?php esc_html_e( 'Plugin scan', 'notificator-project' ); ?></span><strong><?php echo esc_html( $scan_label ); ?></strong></div>
+					<div><span><?php esc_html_e( 'Plugin scan', 'notificator-project' ); ?></span><strong id="notificator-overview-scan-status"><?php echo esc_html( $scan_label ); ?></strong></div>
 				</div>
 				<div class="notificator-health-card">
 					<span class="notificator-health-icon dashicons dashicons-clock" aria-hidden="true"></span>
@@ -850,7 +850,7 @@ class Notificator_Companion_Admin_Page {
 						<div><h3><?php esc_html_e( 'Getting started', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'Complete these steps once, then this becomes your health dashboard.', 'notificator-project' ); ?></p></div>
 					</div>
 					<ol class="notificator-checklist">
-						<li class="<?php echo $last_scan ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo $last_scan ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Discover site events', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Scan active plugins for events and ready-made templates.', 'notificator-project' ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator-project' ); ?></button></li>
+						<li id="notificator-overview-scan-step" class="<?php echo $last_scan ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo $last_scan ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Discover site events', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Scan active plugins for events and ready-made templates.', 'notificator-project' ); ?></small></div><button type="button" id="auto-scan-btn"><?php esc_html_e( 'Scan', 'notificator-project' ); ?></button></li>
 						<li class="<?php echo ! empty( $hooks ) ? 'is-complete' : ''; ?>"><span class="dashicons <?php echo ! empty( $hooks ) ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>"></span><div><strong><?php esc_html_e( 'Create a notification', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Choose a template or build one from a WordPress event.', 'notificator-project' ); ?></small></div><a href="#notifications" data-notificator-workspace-tab="notifications"><?php esc_html_e( 'Open', 'notificator-project' ); ?></a></li>
 					</ol>
 				</div>
@@ -858,7 +858,7 @@ class Notificator_Companion_Admin_Page {
 					<div class="notificator-panel-heading"><div><h3><?php esc_html_e( 'Latest status', 'notificator-project' ); ?></h3><p><?php esc_html_e( 'Live operational signals from this site.', 'notificator-project' ); ?></p></div></div>
 					<dl class="notificator-status-list">
 						<div><dt><?php esc_html_e( 'Last delivery', 'notificator-project' ); ?></dt><dd><span class="badge <?php echo in_array( $delivery, array( 'delivered', 'partial' ), true ) ? 'badge-success' : 'badge-info'; ?>"><?php echo esc_html( $delivery ? ucfirst( $delivery ) : __( 'No activity', 'notificator-project' ) ); ?></span></dd></div>
-						<div><dt><?php esc_html_e( 'Events discovered', 'notificator-project' ); ?></dt><dd><?php echo esc_html( isset( $health['last_scan_hooks'] ) ? (int) $health['last_scan_hooks'] : 0 ); ?></dd></div>
+						<div><dt><?php esc_html_e( 'Events discovered', 'notificator-project' ); ?></dt><dd id="notificator-overview-events-discovered"><?php echo esc_html( isset( $health['last_scan_hooks'] ) ? (int) $health['last_scan_hooks'] : 0 ); ?></dd></div>
 						<div><dt><?php esc_html_e( 'Configured notifications', 'notificator-project' ); ?></dt><dd><?php echo esc_html( count( $hooks ) ); ?></dd></div>
 					</dl>
 					<a class="btn-secondary btn-secondary--compact" href="#activity" data-notificator-workspace-tab="activity"><?php esc_html_e( 'View activity', 'notificator-project' ); ?></a>

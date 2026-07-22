@@ -1550,6 +1550,23 @@ type AnyFn = (...args: any[]) => any;
 				firstTimeSetup.remove();
 			}
 
+			const overviewStep = document.getElementById('notificator-overview-scan-step');
+			if (overviewStep) {
+				overviewStep.classList.add('is-complete');
+				const overviewIcon = overviewStep.querySelector('.dashicons');
+				if (overviewIcon) {
+					overviewIcon.classList.remove('dashicons-marker');
+					overviewIcon.classList.add('dashicons-yes-alt');
+				}
+			}
+
+			const overviewStatus = document.getElementById('notificator-overview-scan-status');
+			if (overviewStatus) overviewStatus.textContent = 'Just now';
+
+			const overviewEventCount = document.getElementById('notificator-overview-events-discovered');
+			const discoveredCount = Number(responseHealth.last_scan_hooks || data?.hooks_found || 0);
+			if (overviewEventCount && discoveredCount >= 0) overviewEventCount.textContent = String(discoveredCount);
+
 			window.dispatchEvent(
 				new CustomEvent('notificator:scan:complete', {
 					detail: data || {}
