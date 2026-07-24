@@ -404,15 +404,15 @@ class Notificator_Companion_Admin_Page {
 		$toast_poll_summary_format = __( 'Every %d seconds', 'notificator-project' );
 		$toast_poll_summary        = sprintf( $toast_poll_summary_format, $toast_poll_interval );
 		$poll_intervals            = array(
-			15  => __( 'Every 15 seconds — fastest', 'notificator-project' ),
-			30  => __( 'Every 30 seconds — recommended', 'notificator-project' ),
+			15  => __( 'Every 15 seconds (fastest)', 'notificator-project' ),
+			30  => __( 'Every 30 seconds (recommended)', 'notificator-project' ),
 			60  => __( 'Every minute', 'notificator-project' ),
 			120 => __( 'Every 2 minutes', 'notificator-project' ),
-			300 => __( 'Every 5 minutes — lightest', 'notificator-project' ),
+			300 => __( 'Every 5 minutes (lightest)', 'notificator-project' ),
 		);
 		if ( ! isset( $poll_intervals[ $toast_poll_interval ] ) ) {
 			/* translators: %d: Custom dashboard alert polling interval in seconds. */
-			$custom_poll_interval_format            = __( 'Every %d seconds — custom', 'notificator-project' );
+			$custom_poll_interval_format            = __( 'Every %d seconds (custom)', 'notificator-project' );
 			$poll_intervals[ $toast_poll_interval ] = sprintf( $custom_poll_interval_format, $toast_poll_interval );
 			ksort( $poll_intervals );
 		}
@@ -450,7 +450,7 @@ class Notificator_Companion_Admin_Page {
 				<div>
 					<p class="notificator-eyebrow"><?php esc_html_e( 'WordPress notifications', 'notificator-project' ); ?></p>
 					<h1><?php esc_html_e( 'Notificator', 'notificator-project' ); ?></h1>
-					<p><?php esc_html_e( 'Turn important WordPress events into useful notifications—without touching code.', 'notificator-project' ); ?></p>
+					<p><?php esc_html_e( 'Turn important WordPress events into useful notifications without touching code.', 'notificator-project' ); ?></p>
 				</div>
 				<div class="notificator-overview-actions">
 					<button type="button" class="btn-primary notificator-header-create" data-notificator-create>
@@ -979,7 +979,7 @@ class Notificator_Companion_Admin_Page {
 							<h3 id="notificator-scan-modal-title" class="text-lg font-semibold text-gray-900 mb-2"><?php esc_html_e( 'Discovering events…', 'notificator-project' ); ?></h3>
 							<p id="scan-current-plugin" class="text-sm text-gray-600"><?php esc_html_e( 'Preparing the plugin scan…', 'notificator-project' ); ?></p>
 							<div class="notificator-scan-progress-track" aria-hidden="true"><span id="scan-progress-bar"></span></div>
-							<p class="notificator-scan-progress-help"><?php esc_html_e( 'You can close this window—the scan will continue in the background.', 'notificator-project' ); ?></p>
+							<p class="notificator-scan-progress-help"><?php esc_html_e( 'You can close this window. The scan will continue in the background.', 'notificator-project' ); ?></p>
 						</div>
 					</div>
 
@@ -2249,9 +2249,9 @@ else :
 										<label class="block text-sm font-semibold text-gray-700 mb-2"><?php esc_html_e( 'Priority', 'notificator-project' ); ?></label>
 										<select x-model="scenarioForm.severity"
 											class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-											<option value="info"><?php esc_html_e( 'Normal — routine information', 'notificator-project' ); ?></option>
-											<option value="warning"><?php esc_html_e( 'Important — needs attention', 'notificator-project' ); ?></option>
-											<option value="critical"><?php esc_html_e( 'Urgent — act immediately', 'notificator-project' ); ?></option>
+											<option value="info"><?php esc_html_e( 'Normal (routine information)', 'notificator-project' ); ?></option>
+											<option value="warning"><?php esc_html_e( 'Important (needs attention)', 'notificator-project' ); ?></option>
+											<option value="critical"><?php esc_html_e( 'Urgent (act immediately)', 'notificator-project' ); ?></option>
 										</select>
 									</div>
 								</div>

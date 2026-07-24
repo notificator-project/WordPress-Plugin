@@ -444,14 +444,14 @@ The installable example at [`examples/notificator-sample-plugin/`](./examples/no
 
 ## Extension hooks
 
-- `notificator_companion_register_events` — registration point for event definitions.
-- `notificator_companion_registered_events` — filters normalized registered definitions.
-- `notificator_companion_register_templates` — registration point for templates.
-- `notificator_companion_templates` — filters the final template library.
-- `notificator_companion_active_plugin_identifiers` — extends template visibility.
-- `notificator_companion_api_endpoint` — replaces the remote delivery endpoint.
-- `notificator_companion_scanner_hook_emitters` — adds scanner emitter functions.
-- `notificator_companion_scan_hook_limit` — adjusts the bounded per-plugin discovery limit.
+- `notificator_companion_register_events`: registration point for event definitions.
+- `notificator_companion_registered_events`: filters normalized registered definitions.
+- `notificator_companion_register_templates`: registration point for templates.
+- `notificator_companion_templates`: filters the final template library.
+- `notificator_companion_active_plugin_identifiers`: extends template visibility.
+- `notificator_companion_api_endpoint`: replaces the remote delivery endpoint.
+- `notificator_companion_scanner_hook_emitters`: adds scanner emitter functions.
+- `notificator_companion_scan_hook_limit`: adjusts the bounded per-plugin discovery limit.
 
 ## Support and license
 

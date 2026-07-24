@@ -861,7 +861,7 @@ class Notificator_Companion {
 		foreach ( $subpages as $slug => $label ) {
 			add_submenu_page(
 				'notificator',
-				$label . ' — ' . __( 'Notificator', 'notificator-project' ),
+				$label . ' | ' . __( 'Notificator', 'notificator-project' ),
 				$label,
 				'manage_options',
 				$slug,

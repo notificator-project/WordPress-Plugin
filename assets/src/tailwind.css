@@ -1,4 +1,4 @@
-/* Tailwind v4 entry (theme + utilities only — no global preflight).
+/* Tailwind v4 entry (theme and utilities only; no global preflight).
    WordPress admin has its own base styles; importing Tailwind preflight globally
    can unintentionally affect other wp-admin UI.
 
