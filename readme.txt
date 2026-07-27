@@ -161,6 +161,11 @@ The minified files in `assets/dist` are generated from `assets/js` and `assets/s
 = 1.1.16 =
 
 * Prevents saved field metadata from selecting or invoking runtime object methods.
+* Resolves supported WooCommerce and Contact Form 7 object fields through explicit server-side handlers.
+* Removes obsolete getter-method metadata from built-in templates and adds a trusted PHP filter for custom integrations.
+
+= 1.1.5 =
+
 * Prompts for a new discovery scan when a plugin is activated after the last successful scan.
 * Identifies newly activated plugins directly in the Overview scan step.
 * Hides the first-time scan prompt immediately after event discovery completes, without requiring a page reload.
