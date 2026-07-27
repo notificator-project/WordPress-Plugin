@@ -298,7 +298,8 @@ A release is acceptable only when:
 - Never log, export, or interpolate API keys.
 - Keep remote request bodies bounded and JSON encoded.
 - Treat discovered payloads as untrusted.
-- Allow object methods only when trusted metadata explicitly declares them.
+- Never execute object method names from saved notification metadata.
+- Resolve built-in object values through explicit class/property branches and custom values through trusted PHP filters.
 
 ## Integration API
 
@@ -351,6 +352,8 @@ The event appears under **Notifications → Discover events** without a scan.
 | `properties`  | No       | Safe object-property metadata for conditions and placeholders |
 
 Registration returns `true` when accepted and `false` when invalid. Registering the same `plugin_slug` and `hook_name` replaces the earlier definition, preventing duplicate cards.
+
+Property definitions describe the fields shown in the builder; saved `method` values are never executed. If an argument is an object with no public property, resolve it in PHP with `notificator_companion_resolve_object_property`. Validate the object type and property name before calling a getter.
 
 ### Payload and privacy guidance
 
@@ -452,6 +455,7 @@ The installable example at [`examples/notificator-sample-plugin/`](./examples/no
 - `notificator_companion_api_endpoint`: replaces the remote delivery endpoint.
 - `notificator_companion_scanner_hook_emitters`: adds scanner emitter functions.
 - `notificator_companion_scan_hook_limit`: adjusts the bounded per-plugin discovery limit.
+- `notificator_companion_resolve_object_property`: lets trusted integration code resolve a declared field from its own runtime object.
 
 ## Support and license
 

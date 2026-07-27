@@ -26,7 +26,6 @@ type ScenarioTemplateHookMetaProperty = {
 	name: string;
 	label?: string;
 	type?: string;
-	method?: string;
 };
 
 type ScenarioTemplateHookMeta = {
@@ -75,10 +74,10 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				order: [
-					{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' },
-					{ name: 'status', label: 'Order Status', type: 'string', method: 'get_status' },
-					{ name: 'billing_email', label: 'Billing Email', type: 'string', method: 'get_billing_email' },
-					{ name: 'payment_method', label: 'Payment Method', type: 'string', method: 'get_payment_method' }
+					{ name: 'total', label: 'Order Total', type: 'number' },
+					{ name: 'status', label: 'Order Status', type: 'string' },
+					{ name: 'billing_email', label: 'Billing Email', type: 'string' },
+					{ name: 'payment_method', label: 'Payment Method', type: 'string' }
 				]
 			}
 		},
@@ -97,7 +96,7 @@ const templates: ScenarioTemplate[] = [
 			arg_names: ['order_id', 'order'],
 			payload_arity: 2,
 			properties: {
-				order: [{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' }]
+				order: [{ name: 'total', label: 'Order Total', type: 'number' }]
 			}
 		},
 		conditions: [
@@ -127,7 +126,7 @@ const templates: ScenarioTemplate[] = [
 			arg_names: ['order_id', 'order'],
 			payload_arity: 2,
 			properties: {
-				order: [{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' }]
+				order: [{ name: 'total', label: 'Order Total', type: 'number' }]
 			}
 		},
 		conditions: [
@@ -423,8 +422,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3,
 			properties: {
 				order: [
-					{ name: 'total', label: 'Order Total', type: 'number', method: 'get_total' },
-					{ name: 'payment_method', label: 'Payment Method', type: 'string', method: 'get_payment_method' }
+					{ name: 'total', label: 'Order Total', type: 'number' },
+					{ name: 'payment_method', label: 'Payment Method', type: 'string' }
 				]
 			}
 		},
@@ -568,8 +567,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				subscription: [
-					{ name: 'status', label: 'Status', type: 'string', method: 'get_status' },
-					{ name: 'billing_email', label: 'Billing Email', type: 'string', method: 'get_billing_email' }
+					{ name: 'status', label: 'Status', type: 'string' },
+					{ name: 'billing_email', label: 'Billing Email', type: 'string' }
 				]
 			}
 		},
@@ -601,8 +600,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				subscription: [
-					{ name: 'status', label: 'Status', type: 'string', method: 'get_status' },
-					{ name: 'billing_email', label: 'Billing Email', type: 'string', method: 'get_billing_email' }
+					{ name: 'status', label: 'Status', type: 'string' },
+					{ name: 'billing_email', label: 'Billing Email', type: 'string' }
 				]
 			}
 		},
@@ -642,9 +641,9 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				product: [
-					{ name: 'name', label: 'Product Name', type: 'string', method: 'get_name' },
-					{ name: 'sku', label: 'SKU', type: 'string', method: 'get_sku' },
-					{ name: 'stock_quantity', label: 'Stock Quantity', type: 'number', method: 'get_stock_quantity' }
+					{ name: 'name', label: 'Product Name', type: 'string' },
+					{ name: 'sku', label: 'SKU', type: 'string' },
+					{ name: 'stock_quantity', label: 'Stock Quantity', type: 'number' }
 				]
 			}
 		},
@@ -676,9 +675,9 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				product: [
-					{ name: 'name', label: 'Product Name', type: 'string', method: 'get_name' },
-					{ name: 'sku', label: 'SKU', type: 'string', method: 'get_sku' },
-					{ name: 'stock_quantity', label: 'Stock Quantity', type: 'number', method: 'get_stock_quantity' }
+					{ name: 'name', label: 'Product Name', type: 'string' },
+					{ name: 'sku', label: 'SKU', type: 'string' },
+					{ name: 'stock_quantity', label: 'Stock Quantity', type: 'number' }
 				]
 			}
 		},
@@ -710,9 +709,9 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3,
 			properties: {
 				product: [
-					{ name: 'name', label: 'Product Name', type: 'string', method: 'get_name' },
-					{ name: 'sku', label: 'SKU', type: 'string', method: 'get_sku' },
-					{ name: 'stock_quantity', label: 'Stock Quantity', type: 'number', method: 'get_stock_quantity' }
+					{ name: 'name', label: 'Product Name', type: 'string' },
+					{ name: 'sku', label: 'SKU', type: 'string' },
+					{ name: 'stock_quantity', label: 'Stock Quantity', type: 'number' }
 				]
 			}
 		},
@@ -786,9 +785,9 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				post: [
-					{ name: 'post_type', label: 'Post Type', type: 'string', method: '' },
-					{ name: 'post_author', label: 'Author ID', type: 'number', method: '' },
-					{ name: 'post_title', label: 'Title', type: 'string', method: '' }
+					{ name: 'post_type', label: 'Post Type', type: 'string' },
+					{ name: 'post_author', label: 'Author ID', type: 'number' },
+					{ name: 'post_title', label: 'Title', type: 'string' }
 				]
 			}
 		},
@@ -820,9 +819,9 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3,
 			properties: {
 				post_after: [
-					{ name: 'post_type', label: 'Post Type', type: 'string', method: '' },
-					{ name: 'post_status', label: 'Status', type: 'string', method: '' },
-					{ name: 'post_title', label: 'Title', type: 'string', method: '' }
+					{ name: 'post_type', label: 'Post Type', type: 'string' },
+					{ name: 'post_status', label: 'Status', type: 'string' },
+					{ name: 'post_title', label: 'Title', type: 'string' }
 				]
 			}
 		},
@@ -854,8 +853,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				post: [
-					{ name: 'post_type', label: 'Post Type', type: 'string', method: '' },
-					{ name: 'post_title', label: 'Title', type: 'string', method: '' }
+					{ name: 'post_type', label: 'Post Type', type: 'string' },
+					{ name: 'post_title', label: 'Title', type: 'string' }
 				]
 			}
 		},
@@ -887,8 +886,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				post: [
-					{ name: 'post_type', label: 'Post Type', type: 'string', method: '' },
-					{ name: 'post_title', label: 'Title', type: 'string', method: '' }
+					{ name: 'post_type', label: 'Post Type', type: 'string' },
+					{ name: 'post_title', label: 'Title', type: 'string' }
 				]
 			}
 		},
@@ -951,8 +950,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				post: [
-					{ name: 'post_type', label: 'Post Type', type: 'string', method: '' },
-					{ name: 'post_title', label: 'Title', type: 'string', method: '' }
+					{ name: 'post_type', label: 'Post Type', type: 'string' },
+					{ name: 'post_title', label: 'Title', type: 'string' }
 				]
 			}
 		},
@@ -1018,8 +1017,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				comment: [
-					{ name: 'comment_approved', label: 'Approved', type: 'string', method: '' },
-					{ name: 'comment_author_email', label: 'Author Email', type: 'string', method: '' }
+					{ name: 'comment_approved', label: 'Approved', type: 'string' },
+					{ name: 'comment_author_email', label: 'Author Email', type: 'string' }
 				]
 			}
 		},
@@ -1051,8 +1050,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				comment: [
-					{ name: 'comment_approved', label: 'Approved', type: 'string', method: '' },
-					{ name: 'comment_author_email', label: 'Author Email', type: 'string', method: '' }
+					{ name: 'comment_approved', label: 'Approved', type: 'string' },
+					{ name: 'comment_author_email', label: 'Author Email', type: 'string' }
 				]
 			}
 		},
@@ -1169,8 +1168,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				old_user_data: [
-					{ name: 'user_email', label: 'Email', type: 'string', method: '' },
-					{ name: 'user_login', label: 'Login', type: 'string', method: '' }
+					{ name: 'user_email', label: 'Email', type: 'string' },
+					{ name: 'user_login', label: 'Login', type: 'string' }
 				]
 			}
 		},
@@ -1287,8 +1286,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				user: [
-					{ name: 'user_email', label: 'Email', type: 'string', method: '' },
-					{ name: 'roles', label: 'Roles', type: 'string', method: '' }
+					{ name: 'user_email', label: 'Email', type: 'string' },
+					{ name: 'roles', label: 'Roles', type: 'string' }
 				]
 			}
 		},
@@ -1346,7 +1345,7 @@ const templates: ScenarioTemplate[] = [
 			arg_names: ['user_id', 'old_user_data'],
 			payload_arity: 2,
 			properties: {
-				old_user_data: [{ name: 'user_email', label: 'Old Email', type: 'string', method: '' }]
+				old_user_data: [{ name: 'user_email', label: 'Old Email', type: 'string' }]
 			}
 		},
 		conditions: [
@@ -1589,8 +1588,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 3,
 			properties: {
 				post: [
-					{ name: 'post_type', label: 'Post Type', type: 'string', method: '' },
-					{ name: 'post_title', label: 'Title', type: 'string', method: '' }
+					{ name: 'post_type', label: 'Post Type', type: 'string' },
+					{ name: 'post_title', label: 'Title', type: 'string' }
 				]
 			}
 		},
@@ -1622,8 +1621,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				post: [
-					{ name: 'post_type', label: 'Post Type', type: 'string', method: '' },
-					{ name: 'post_title', label: 'Title', type: 'string', method: '' }
+					{ name: 'post_type', label: 'Post Type', type: 'string' },
+					{ name: 'post_title', label: 'Title', type: 'string' }
 				]
 			}
 		},
@@ -1655,8 +1654,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				user: [
-					{ name: 'user_email', label: 'Email', type: 'string', method: '' },
-					{ name: 'user_login', label: 'Login', type: 'string', method: '' }
+					{ name: 'user_email', label: 'Email', type: 'string' },
+					{ name: 'user_login', label: 'Login', type: 'string' }
 				]
 			}
 		},
@@ -1790,8 +1789,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				user: [
-					{ name: 'user_login', label: 'Username', type: 'string', method: '' },
-					{ name: 'user_email', label: 'Email', type: 'string', method: '' }
+					{ name: 'user_login', label: 'Username', type: 'string' },
+					{ name: 'user_email', label: 'Email', type: 'string' }
 				]
 			}
 		},
@@ -1969,8 +1968,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				user: [
-					{ name: 'roles', label: 'Roles', type: 'string', method: '' },
-					{ name: 'user_email', label: 'Email', type: 'string', method: '' }
+					{ name: 'roles', label: 'Roles', type: 'string' },
+					{ name: 'user_email', label: 'Email', type: 'string' }
 				]
 			}
 		},
@@ -2009,8 +2008,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				contact_form: [
-					{ name: 'id', label: 'Form ID', type: 'number', method: 'id' },
-					{ name: 'title', label: 'Form Title', type: 'string', method: 'title' }
+					{ name: 'id', label: 'Form ID', type: 'number' },
+					{ name: 'title', label: 'Form Title', type: 'string' }
 				]
 			}
 		},
@@ -2042,8 +2041,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				contact_form: [
-					{ name: 'id', label: 'Form ID', type: 'number', method: 'id' },
-					{ name: 'title', label: 'Form Title', type: 'string', method: 'title' }
+					{ name: 'id', label: 'Form ID', type: 'number' },
+					{ name: 'title', label: 'Form Title', type: 'string' }
 				]
 			}
 		},
@@ -2075,8 +2074,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 2,
 			properties: {
 				contact_form: [
-					{ name: 'id', label: 'Form ID', type: 'number', method: 'id' },
-					{ name: 'title', label: 'Form Title', type: 'string', method: 'title' }
+					{ name: 'id', label: 'Form ID', type: 'number' },
+					{ name: 'title', label: 'Form Title', type: 'string' }
 				]
 			}
 		},
@@ -2108,8 +2107,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				contact_form: [
-					{ name: 'id', label: 'Form ID', type: 'number', method: 'id' },
-					{ name: 'title', label: 'Form Title', type: 'string', method: 'title' }
+					{ name: 'id', label: 'Form ID', type: 'number' },
+					{ name: 'title', label: 'Form Title', type: 'string' }
 				]
 			}
 		},
@@ -2141,8 +2140,8 @@ const templates: ScenarioTemplate[] = [
 			payload_arity: 1,
 			properties: {
 				contact_form: [
-					{ name: 'id', label: 'Form ID', type: 'number', method: 'id' },
-					{ name: 'title', label: 'Form Title', type: 'string', method: 'title' }
+					{ name: 'id', label: 'Form ID', type: 'number' },
+					{ name: 'title', label: 'Form Title', type: 'string' }
 				]
 			}
 		},

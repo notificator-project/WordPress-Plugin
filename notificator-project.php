@@ -1167,15 +1167,19 @@ class Notificator_Companion {
 
 								$sanitized_props = array();
 								foreach ( $props as $prop ) {
-									if ( ! is_array( $prop ) || empty( $prop['name'] ) ) {
+									if ( ! is_array( $prop ) || ! isset( $prop['name'] ) || ! is_scalar( $prop['name'] ) ) {
+										continue;
+									}
+
+									$property_name = sanitize_key( (string) $prop['name'] );
+									if ( '' === $property_name ) {
 										continue;
 									}
 
 									$sanitized_props[] = array(
-										'name'   => sanitize_text_field( $prop['name'] ),
-										'label'  => isset( $prop['label'] ) ? sanitize_text_field( $prop['label'] ) : '',
-										'type'   => isset( $prop['type'] ) ? sanitize_text_field( $prop['type'] ) : 'string',
-										'method' => isset( $prop['method'] ) ? sanitize_text_field( $prop['method'] ) : '',
+										'name'  => $property_name,
+										'label' => isset( $prop['label'] ) ? sanitize_text_field( $prop['label'] ) : '',
+										'type'  => isset( $prop['type'] ) ? sanitize_text_field( $prop['type'] ) : 'string',
 									);
 								}
 
@@ -1640,30 +1644,87 @@ class Notificator_Companion {
 			return array_key_exists( $prop, $base_value ) ? $base_value[ $prop ] : null;
 		}
 
-		// Object access (prefer method mapping from hook_meta.properties).
+		// Object access is restricted to explicit built-in resolvers, public data,
+		// and trusted PHP filters. Saved metadata never controls method execution.
 		if ( is_object( $base_value ) ) {
-			$method = $this->resolve_property_method_from_meta( $base, $prop, $hook_meta );
-			if ( $method && is_callable( array( $base_value, $method ) ) ) {
-				try {
-					return $base_value->{$method}();
-				} catch ( \Throwable $e ) {
-					return null;
-				}
-			}
-
-			$fallback_method = 'get_' . $prop;
-			if ( is_callable( array( $base_value, $fallback_method ) ) ) {
-				try {
-					return $base_value->{$fallback_method}();
-				} catch ( \Throwable $e ) {
-					return null;
-				}
-			}
-
-			return isset( $base_value->{$prop} ) ? $base_value->{$prop} : null;
+			return $this->resolve_object_property_value( $base_value, $base, $prop, $hook_meta );
 		}
 
 		return null;
+	}
+
+	/**
+	 * Resolve a safe value from a runtime object.
+	 *
+	 * Built-in integrations use explicit class and property branches so an
+	 * administrator-controlled field cannot select a method name. Public object
+	 * properties are read from get_object_vars(), which avoids magic accessors.
+	 * Other plugins can resolve their own objects with the trusted PHP filter.
+	 *
+	 * @param object $runtime_object Runtime hook argument.
+	 * @param string $arg_name Configured argument name.
+	 * @param string $property Configured property name.
+	 * @param array  $hook_meta Hook metadata supplied for filter context.
+	 * @return mixed|null
+	 */
+	private function resolve_object_property_value( $runtime_object, $arg_name, $property, $hook_meta ) {
+		try {
+			if ( is_a( $runtime_object, 'WC_Abstract_Order' ) ) {
+				switch ( $property ) {
+					case 'total':
+						return $runtime_object->get_total();
+					case 'status':
+						return $runtime_object->get_status();
+					case 'billing_email':
+						return $runtime_object->get_billing_email();
+					case 'payment_method':
+						return $runtime_object->get_payment_method();
+				}
+			}
+
+			if ( is_a( $runtime_object, 'WC_Product' ) ) {
+				switch ( $property ) {
+					case 'name':
+						return $runtime_object->get_name();
+					case 'sku':
+						return $runtime_object->get_sku();
+					case 'stock_quantity':
+						return $runtime_object->get_stock_quantity();
+					case 'status':
+						return $runtime_object->get_status();
+				}
+			}
+
+			if ( is_a( $runtime_object, 'WPCF7_ContactForm' ) ) {
+				switch ( $property ) {
+					case 'id':
+						return $runtime_object->id();
+					case 'title':
+						return $runtime_object->title();
+				}
+			}
+
+			$public_properties = get_object_vars( $runtime_object );
+			if ( array_key_exists( $property, $public_properties ) ) {
+				return $public_properties[ $property ];
+			}
+
+			/**
+			 * Resolve a property from an object owned by another plugin.
+			 *
+			 * The callback is PHP code registered by the integration developer;
+			 * no method name from saved notification metadata is executed.
+			 *
+			 * @param mixed  $value Current resolved value, null by default.
+			 * @param object $runtime_object Runtime hook argument.
+			 * @param string $arg_name Configured argument name.
+			 * @param string $property Configured property name.
+			 * @param array  $hook_meta Hook metadata.
+			 */
+			return apply_filters( 'notificator_companion_resolve_object_property', null, $runtime_object, $arg_name, $property, $hook_meta );
+		} catch ( \Throwable $e ) {
+			return null;
+		}
 	}
 
 	/**
@@ -1726,34 +1787,6 @@ class Notificator_Companion {
 		if ( preg_match( '/^arg_(\d+)$/i', $arg_name, $m ) ) {
 			$idx = (int) $m[1] - 1;
 			return array_key_exists( $idx, $args ) ? $args[ $idx ] : null;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Resolve method name for a property path using hook_meta.properties.
-	 *
-	 * @param string $arg_name Base arg name (e.g. 'order').
-	 * @param string $prop Property name (e.g. 'total').
-	 * @param array  $hook_meta Hook metadata.
-	 * @return string|null
-	 */
-	private function resolve_property_method_from_meta( $arg_name, $prop, $hook_meta ) {
-		if ( ! isset( $hook_meta['properties'] ) || ! is_array( $hook_meta['properties'] ) ) {
-			return null;
-		}
-		if ( ! isset( $hook_meta['properties'][ $arg_name ] ) || ! is_array( $hook_meta['properties'][ $arg_name ] ) ) {
-			return null;
-		}
-
-		foreach ( $hook_meta['properties'][ $arg_name ] as $def ) {
-			if ( ! is_array( $def ) ) {
-				continue;
-			}
-			if ( isset( $def['name'] ) && (string) $def['name'] === (string) $prop ) {
-				return isset( $def['method'] ) && '' !== (string) $def['method'] ? (string) $def['method'] : null;
-			}
 		}
 
 		return null;
