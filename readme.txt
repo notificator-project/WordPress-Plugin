@@ -5,7 +5,7 @@ Tags: notifications, alerts, hooks, monitoring, mqtt
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.2
-Stable tag: 1.1.5
+Stable tag: 1.1.16
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -158,7 +158,7 @@ The minified files in `assets/dist` are generated from `assets/js` and `assets/s
 
 == Changelog ==
 
-= 1.1.5 =
+= 1.1.16 =
 
 * Prevents saved field metadata from selecting or invoking runtime object methods.
 * Prompts for a new discovery scan when a plugin is activated after the last successful scan.
