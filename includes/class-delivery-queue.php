@@ -25,12 +25,21 @@ class Notificator_Companion_Delivery_Queue {
 	private $headers_callback;
 
 	/**
+	 * Callback that injects ephemeral data immediately before delivery.
+	 *
+	 * @var callable|null
+	 */
+	private $body_callback;
+
+	/**
 	 * Initialize the delivery queue.
 	 *
 	 * @param callable $headers_callback Builds signed request headers.
+	 * @param callable $body_callback    Optional request-body preparation callback.
 	 */
-	public function __construct( $headers_callback ) {
+	public function __construct( $headers_callback, $body_callback = null ) {
 		$this->headers_callback = $headers_callback;
+		$this->body_callback    = $body_callback;
 		add_action( self::CRON_HOOK, array( $this, 'process' ), 10, 1 );
 	}
 
@@ -96,8 +105,15 @@ class Notificator_Companion_Delivery_Queue {
 		$delivered = 0;
 		$errors    = array();
 		foreach ( (array) $job['api_keys'] as $api_key ) {
+			$request_body = is_callable( $this->body_callback )
+				? call_user_func( $this->body_callback, $job['body'] )
+				: $job['body'];
+			if ( ! is_string( $request_body ) || '' === $request_body ) {
+				$errors[] = 'Request body preparation failed';
+				continue;
+			}
 			$headers  = is_callable( $this->headers_callback )
-				? call_user_func( $this->headers_callback, $api_key, $job['body'] )
+				? call_user_func( $this->headers_callback, $api_key, $request_body )
 				: array();
 			$response = wp_remote_post(
 				notificator_companion_get_api_endpoint(),
@@ -105,7 +121,7 @@ class Notificator_Companion_Delivery_Queue {
 					'timeout'     => 15,
 					'data_format' => 'body',
 					'headers'     => $headers,
-					'body'        => $job['body'],
+					'body'        => $request_body,
 				)
 			);
 

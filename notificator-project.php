@@ -3,7 +3,7 @@
  * Plugin Name: Notificator – Alerts & Notifications
  * Plugin URI: https://github.com/notificator-project/WordPress-Plugin
  * Description: Turn WordPress events into dashboard alerts, with optional mobile push and MQTT delivery.
- * Version: 1.1.16
+ * Version: 1.2
  * Author: Notificator Project
  * Author URI: https://notificator-project.com/
  * License: GPL-3.0-or-later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'NOTIFICATOR_COMPANION_VERSION', '1.1.16' );
+define( 'NOTIFICATOR_COMPANION_VERSION', '1.2' );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_FILE', __FILE__ );
@@ -140,6 +140,7 @@ if ( ! function_exists( 'notificator_companion_get_api_endpoint' ) ) {
 require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'admin/class-admin-page.php';
 require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'includes/class-plugin-scanner.php';
 require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'includes/class-health-service.php';
+require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'includes/class-notificator-companion-mqtt-config.php';
 require_once NOTIFICATOR_COMPANION_PLUGIN_DIR . 'includes/class-delivery-queue.php';
 
 if ( ! function_exists( 'notificator_companion_register_template' ) ) {
@@ -264,7 +265,10 @@ class Notificator_Companion {
 		$this->admin_page     = new Notificator_Companion_Admin_Page( $this );
 		$this->plugin_scanner = new Notificator_Companion_Plugin_Scanner();
 		$this->health_service = new Notificator_Companion_Health_Service();
-		$this->delivery_queue = new Notificator_Companion_Delivery_Queue( array( $this, 'get_delivery_request_headers' ) );
+		$this->delivery_queue = new Notificator_Companion_Delivery_Queue(
+			array( $this, 'get_delivery_request_headers' ),
+			array( $this, 'prepare_delivery_request_body' )
+		);
 
 		// Register hooks.
 		$this->register_hooks();
@@ -285,6 +289,7 @@ class Notificator_Companion {
 
 		// AJAX handlers.
 		add_action( 'wp_ajax_notificator_companion_test', array( $this, 'handle_test_notification' ) );
+		add_action( 'wp_ajax_notificator_companion_test_mqtt', array( $this, 'handle_test_mqtt_connection' ) );
 		add_action( 'wp_ajax_notificator_companion_refresh_hooks', array( $this, 'handle_refresh_hooks' ) );
 		add_action( 'wp_ajax_notificator_companion_get_health', array( $this, 'handle_get_health' ) );
 		add_action( 'wp_ajax_notificator_companion_get_discovery_inbox', array( $this->admin_page, 'handle_get_discovery_inbox' ) );
@@ -608,9 +613,13 @@ class Notificator_Companion {
 				}
 			}
 		} else {
-			$input = isset( $_POST[ $this->option_name ] )
-				? map_deep( wp_unslash( $_POST[ $this->option_name ] ), 'sanitize_text_field' )
+			$raw_input = isset( $_POST[ $this->option_name ] ) && is_array( $_POST[ $this->option_name ] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Values are normalized below and the MQTT password must retain its original bytes.
+				? wp_unslash( $_POST[ $this->option_name ] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Every non-secret field is sanitized by map_deep and sanitize_settings.
 				: null;
+			$input     = is_array( $raw_input ) ? map_deep( $raw_input, 'sanitize_text_field' ) : null;
+			if ( is_array( $input ) && isset( $raw_input['mqtt_password'] ) && is_string( $raw_input['mqtt_password'] ) ) {
+				$input['mqtt_password'] = $raw_input['mqtt_password'];
+			}
 		}
 		if ( ! is_array( $input ) ) {
 			wp_send_json_error( array( 'message' => __( 'Missing settings payload', 'notificator-project' ) ), 400 );
@@ -624,6 +633,7 @@ class Notificator_Companion {
 			array(
 				'message' => __( 'Saved', 'notificator-project' ),
 				'hooks'   => isset( $sanitized['hooks'] ) ? $sanitized['hooks'] : array(),
+				'mqtt'    => Notificator_Companion_Mqtt_Config::get_admin_state( $sanitized ),
 			)
 		);
 	}
@@ -983,6 +993,46 @@ class Notificator_Companion {
 		if ( ! is_array( $current_options ) ) {
 			$current_options = array();
 		}
+
+		// Custom HiveMQ Cloud connection. The password is encrypted separately
+		// and never stored in this general settings option.
+		$mqtt_custom_enabled = array_key_exists( 'mqtt_custom_enabled', $input )
+			? (bool) $input['mqtt_custom_enabled']
+			: ! empty( $current_options['mqtt_custom_enabled'] );
+		$mqtt_host           = array_key_exists( 'mqtt_host', $input )
+			? Notificator_Companion_Mqtt_Config::sanitize_host( $input['mqtt_host'] )
+			: Notificator_Companion_Mqtt_Config::sanitize_host( isset( $current_options['mqtt_host'] ) ? $current_options['mqtt_host'] : '' );
+		$mqtt_username       = array_key_exists( 'mqtt_username', $input )
+			? Notificator_Companion_Mqtt_Config::sanitize_username( $input['mqtt_username'] )
+			: Notificator_Companion_Mqtt_Config::sanitize_username( isset( $current_options['mqtt_username'] ) ? $current_options['mqtt_username'] : '' );
+		$mqtt_topic_prefix   = array_key_exists( 'mqtt_topic_prefix', $input )
+			? Notificator_Companion_Mqtt_Config::sanitize_topic_prefix( $input['mqtt_topic_prefix'] )
+			: Notificator_Companion_Mqtt_Config::sanitize_topic_prefix( isset( $current_options['mqtt_topic_prefix'] ) ? $current_options['mqtt_topic_prefix'] : Notificator_Companion_Mqtt_Config::DEFAULT_TOPIC_PREFIX );
+		if ( '' === $mqtt_topic_prefix ) {
+			$mqtt_topic_prefix = Notificator_Companion_Mqtt_Config::DEFAULT_TOPIC_PREFIX;
+		}
+
+		if ( ! empty( $input['mqtt_forget'] ) ) {
+			Notificator_Companion_Mqtt_Config::forget_password();
+			$mqtt_custom_enabled = false;
+			$mqtt_host           = '';
+			$mqtt_username       = '';
+			$mqtt_topic_prefix   = Notificator_Companion_Mqtt_Config::DEFAULT_TOPIC_PREFIX;
+		} elseif ( isset( $input['mqtt_password'] ) && '' !== (string) $input['mqtt_password'] ) {
+			if ( ! Notificator_Companion_Mqtt_Config::store_password( $input['mqtt_password'] ) ) {
+				add_settings_error(
+					$this->option_name,
+					'notificator_mqtt_secret_failed',
+					__( 'The MQTT password could not be encrypted. The previous password was kept.', 'notificator-project' ),
+					'error'
+				);
+			}
+		}
+
+		$sanitized['mqtt_custom_enabled'] = $mqtt_custom_enabled;
+		$sanitized['mqtt_host']           = $mqtt_host;
+		$sanitized['mqtt_username']       = $mqtt_username;
+		$sanitized['mqtt_topic_prefix']   = $mqtt_topic_prefix;
 
 		// Log pagination preference.
 		$log_per_page = isset( $input['log_per_page'] ) ? (int) $input['log_per_page'] : 20;
@@ -1372,7 +1422,7 @@ class Notificator_Companion {
 		wp_send_json_success( array( 'ignored' => $is_ignored ) );
 	}
 
-	/** Reset plugin-generated test data while preserving API key connections. */
+	/** Reset plugin-generated test data while preserving remote connections. */
 	public function handle_reset_test_data() {
 		check_ajax_referer( 'notificator_companion_reset_test_data', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -1382,7 +1432,7 @@ class Notificator_Companion {
 		$options   = get_option( $this->option_name, array() );
 		$options   = is_array( $options ) ? $options : array();
 		$preserved = array();
-		foreach ( array( 'api_key', 'api_keys', 'api_key_nicknames', 'api_key_enabled' ) as $key ) {
+		foreach ( array( 'api_key', 'api_keys', 'api_key_nicknames', 'api_key_enabled', 'mqtt_custom_enabled', 'mqtt_host', 'mqtt_username', 'mqtt_topic_prefix' ) as $key ) {
 			if ( array_key_exists( $key, $options ) ) {
 				$preserved[ $key ] = $options[ $key ];
 			}
@@ -1412,8 +1462,8 @@ class Notificator_Companion {
 		wp_send_json_success(
 			array(
 				'message' => $cache_cleared
-					? __( 'Plugin data reset. API keys were preserved.', 'notificator-project' )
-					: __( 'Plugin data reset and API keys preserved, but one scan cache file could not be removed.', 'notificator-project' ),
+					? __( 'Plugin data reset. API keys and the MQTT connection were preserved.', 'notificator-project' )
+					: __( 'Plugin data reset and remote connections preserved, but one scan cache file could not be removed.', 'notificator-project' ),
 			)
 		);
 	}
@@ -1892,6 +1942,7 @@ class Notificator_Companion {
 		$api_keys            = $this->get_api_keys_from_options( $options );
 		$api_key_labels_map  = $this->get_api_key_labels_map_from_options( $options );
 		$has_remote_delivery = ! empty( $api_keys );
+		$mqtt_state          = Notificator_Companion_Mqtt_Config::get_admin_state( is_array( $options ) ? $options : array() );
 
 		$scenario_name  = is_array( $hook_config ) && isset( $hook_config['scenario_name'] ) ? (string) $hook_config['scenario_name'] : '';
 		$scenario_notes = is_array( $hook_config ) && isset( $hook_config['scenario_notes'] ) ? (string) $hook_config['scenario_notes'] : '';
@@ -1901,7 +1952,7 @@ class Notificator_Companion {
 		$push_requested = ! ( is_array( $hook_config ) && array_key_exists( 'send_push', $hook_config ) ) || (bool) $hook_config['send_push'];
 		$mqtt_requested = ! ( is_array( $hook_config ) && array_key_exists( 'send_mqtt', $hook_config ) ) || (bool) $hook_config['send_mqtt'];
 		$send_push      = $has_remote_delivery && $push_requested;
-		$send_mqtt      = $has_remote_delivery && $mqtt_requested;
+		$send_mqtt      = $has_remote_delivery && $mqtt_requested && ! empty( $mqtt_state['ready'] );
 
 		$title = $scenario_name ? $scenario_name : ( $description ? $description : $hook_name );
 
@@ -1989,6 +2040,12 @@ class Notificator_Companion {
 				'timestamp'      => gmdate( 'c' ),
 			),
 		);
+		if ( $send_mqtt ) {
+			$payload['mqttConnection'] = array(
+				'mode'   => 'custom',
+				'status' => 'pending',
+			);
+		}
 
 		if ( ! $send_push && ! $send_mqtt ) {
 			if ( $dashboard_delivered ) {
@@ -2687,6 +2744,48 @@ class Notificator_Companion {
 	}
 
 	/**
+	 * Add custom MQTT credentials immediately before an API request is sent.
+	 *
+	 * The delivery queue persists only the original body. This method runs for
+	 * every attempt, ensuring the decrypted password exists only in memory and
+	 * in the HTTPS request body. An incomplete user-owned broker configuration
+	 * disables MQTT for the request; there is no implicit fallback broker.
+	 *
+	 * @param string $body Stored JSON request body.
+	 * @return string Prepared JSON request body, or an empty string on failure.
+	 */
+	public function prepare_delivery_request_body( $body ) {
+		$payload = json_decode( (string) $body, true );
+		if ( ! is_array( $payload ) ) {
+			return '';
+		}
+
+		$options = get_option( $this->option_name, array() );
+		$options = is_array( $options ) ? $options : array();
+		if ( empty( $payload['sendMqtt'] ) ) {
+			return (string) $body;
+		}
+
+		$mqtt_config = Notificator_Companion_Mqtt_Config::get_request_config( $options );
+		if ( empty( $mqtt_config ) ) {
+			$payload['sendMqtt']       = false;
+			$payload['mqttConnection'] = array(
+				'mode'   => 'custom',
+				'status' => 'incomplete',
+			);
+		} else {
+			$payload['mqttConnection'] = array(
+				'mode'   => 'custom',
+				'status' => 'ready',
+			);
+			$payload['mqttConfig']     = $mqtt_config;
+		}
+
+		$prepared = wp_json_encode( $payload );
+		return is_string( $prepared ) ? $prepared : '';
+	}
+
+	/**
 	 * Public compatibility wrapper used by the delivery queue.
 	 *
 	 * @param string $api_key API key.
@@ -2788,17 +2887,16 @@ class Notificator_Companion {
 		$requested_key       = isset( $_POST['api_key'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['api_key'] ) ) ) : '';
 		$requested_index_raw = isset( $_POST['api_key_index'] ) ? sanitize_text_field( wp_unslash( $_POST['api_key_index'] ) ) : '';
 		$requested_index     = '' !== $requested_index_raw ? absint( $requested_index_raw ) : null;
+		$options             = get_option( $this->option_name );
 		if ( '' !== $requested_key ) {
 			// Test only the key requested by the clicked row button.
 			$api_keys = array( $requested_key );
 		} elseif ( null !== $requested_index ) {
-			$options        = get_option( $this->option_name );
 			$saved_keys     = $this->get_api_keys_from_options( $options, false );
 			$enabled_states = is_array( $options ) && isset( $options['api_key_enabled'] ) && is_array( $options['api_key_enabled'] ) ? array_values( $options['api_key_enabled'] ) : array();
 			$is_enabled     = ! isset( $enabled_states[ $requested_index ] ) || (bool) $enabled_states[ $requested_index ];
 			$api_keys       = $is_enabled && isset( $saved_keys[ $requested_index ] ) ? array( $saved_keys[ $requested_index ] ) : array();
 		} else {
-			$options  = get_option( $this->option_name );
 			$api_keys = $this->get_api_keys_from_options( $options );
 		}
 
@@ -2810,9 +2908,11 @@ class Notificator_Companion {
 			);
 		}
 
-		$site_url  = home_url();
-		$site_name = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
-		$wp_ver    = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : '';
+		$site_url   = home_url();
+		$site_name  = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
+		$wp_ver     = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : '';
+		$mqtt_state = Notificator_Companion_Mqtt_Config::get_admin_state( is_array( $options ) ? $options : array() );
+		$mqtt_ready = ! empty( $mqtt_state['ready'] );
 
 		$payload = array(
 			'type'        => 'generic_notification',
@@ -2820,6 +2920,8 @@ class Notificator_Companion {
 			'body'        => sprintf( "Test notification from %s\n\nURL: %s", $site_name ? $site_name : 'your WordPress site', $site_url ),
 			'severity'    => 'info',
 			'source'      => 'wp_plugin',
+			'sendPush'    => true,
+			'sendMqtt'    => $mqtt_ready,
 			'pushPreview' => 'custom',
 			'pushTitle'   => 'WordPress Test',
 			'pushBody'    => $site_name ? $site_name : (string) $site_url,
@@ -2831,8 +2933,14 @@ class Notificator_Companion {
 				'timestamp'      => gmdate( 'c' ),
 			),
 		);
+		if ( $mqtt_ready ) {
+			$payload['mqttConnection'] = array(
+				'mode'   => 'custom',
+				'status' => 'pending',
+			);
+		}
 
-		$body = wp_json_encode( $payload );
+		$body = $this->prepare_delivery_request_body( wp_json_encode( $payload ) );
 
 		$total     = count( $api_keys );
 		$sent      = 0;
@@ -2845,10 +2953,7 @@ class Notificator_Companion {
 				array(
 					'timeout'     => 30,
 					'data_format' => 'body',
-					'headers'     => array(
-						// Keep headers explicit here to avoid breaking older sites if helper is removed.
-						// build_api_request_headers() also adds signature headers + Origin/Referer.
-					) + $this->build_api_request_headers( $api_key, $body ),
+					'headers'     => $this->build_api_request_headers( $api_key, $body ),
 					'body'        => $body,
 				)
 			);
@@ -2910,6 +3015,89 @@ class Notificator_Companion {
 				'response' => $last_body,
 			)
 		);
+	}
+
+	/**
+	 * Test the saved HiveMQ connection through the Notificator API.
+	 *
+	 * Credentials are decrypted only for this request. A successful HTTP status
+	 * is not enough: the API must explicitly confirm that the supplied broker
+	 * configuration was used.
+	 *
+	 * @return void
+	 */
+	public function handle_test_mqtt_connection() {
+		check_ajax_referer( 'notificator_companion_test_mqtt', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
+		}
+
+		$options    = get_option( $this->option_name, array() );
+		$options    = is_array( $options ) ? $options : array();
+		$mqtt_state = Notificator_Companion_Mqtt_Config::get_admin_state( $options );
+		$api_keys   = $this->get_api_keys_from_options( $options );
+		if ( empty( $mqtt_state['ready'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Save a complete HiveMQ connection before testing it.', 'notificator-project' ) ), 400 );
+		}
+		if ( empty( $api_keys ) ) {
+			wp_send_json_error( array( 'message' => __( 'An enabled Notificator API key is required for the broker test.', 'notificator-project' ) ), 400 );
+		}
+
+		$payload = array(
+			'type'               => 'generic_notification',
+			'title'              => __( 'MQTT connection test', 'notificator-project' ),
+			'body'               => __( 'Your WordPress site connected to your HiveMQ Cloud cluster.', 'notificator-project' ),
+			'severity'           => 'info',
+			'source'             => 'wp_plugin',
+			'sendPush'           => false,
+			'sendMqtt'           => true,
+			'mqttConnectionTest' => true,
+			'mqttConnection'     => array(
+				'mode'   => 'custom',
+				'status' => 'pending',
+			),
+			'data'               => array(
+				'site_url'       => home_url(),
+				'plugin_version' => defined( 'NOTIFICATOR_COMPANION_VERSION' ) ? NOTIFICATOR_COMPANION_VERSION : '',
+				'timestamp'      => gmdate( 'c' ),
+			),
+		);
+		$body    = $this->prepare_delivery_request_body( wp_json_encode( $payload ) );
+		if ( '' === $body ) {
+			wp_send_json_error( array( 'message' => __( 'The MQTT test request could not be prepared.', 'notificator-project' ) ), 500 );
+		}
+
+		$response = wp_remote_post(
+			notificator_companion_get_api_endpoint(),
+			array(
+				'timeout'     => 30,
+				'data_format' => 'body',
+				'headers'     => $this->build_api_request_headers( $api_keys[0], $body ),
+				'body'        => $body,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( array( 'message' => __( 'The broker test request could not reach the Notificator API.', 'notificator-project' ) ), 502 );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		$result      = json_decode( wp_remote_retrieve_body( $response ), true );
+		$confirmed   = is_array( $result ) && (
+			! empty( $result['mqttConfigAccepted'] ) ||
+			( isset( $result['mqttConnectionMode'] ) && 'custom' === $result['mqttConnectionMode'] )
+		);
+		if ( $status_code >= 200 && $status_code < 300 && $confirmed ) {
+			wp_send_json_success(
+				array(
+					'message' => __( 'HiveMQ connection verified. Check your device for the test notification.', 'notificator-project' ),
+					'mqtt'    => $mqtt_state,
+				)
+			);
+		}
+
+		/* translators: %d: HTTP response status. */
+		$message = sprintf( __( 'The custom MQTT connection was not confirmed by the API (HTTP %d).', 'notificator-project' ), $status_code );
+		wp_send_json_error( array( 'message' => $message ), 502 );
 	}
 
 	/**

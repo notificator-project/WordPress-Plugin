@@ -545,7 +545,7 @@ function initToolsModal(): void {
 		if (!actions.resetTestData || !nonces.resetTestData) return;
 		if (
 			!window.confirm(
-				'Reset notifications, activity, scan results, observation data, and preferences? Your API keys and their enabled states will be kept.'
+				'Reset notifications, activity, scan results, observation data, and preferences? Your API keys, enabled states, and custom MQTT connection will be kept.'
 			)
 		)
 			return;
@@ -1065,6 +1065,84 @@ if (document.readyState === 'loading') {
 	moveWpNotices();
 }
 
+/** Present the settings form as focused categories without changing its fields. */
+function initSettingsNavigation(): void {
+	const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-notificator-settings-tab]'));
+	const groups = Array.from(document.querySelectorAll<HTMLElement>('[data-notificator-settings-group]'));
+	const preferences = document.querySelector<HTMLElement>('[data-notificator-settings-preferences]');
+	const panelTitle = document.querySelector<HTMLElement>('[data-notificator-settings-panel-title]');
+	const panelDescription = document.querySelector<HTMLElement>('[data-notificator-settings-panel-description]');
+	const shell = document.querySelector<HTMLElement>('.notificator-companion-wrap');
+	if (!tabs.length || !groups.length || !preferences) return;
+
+	const validCategories = ['connections', 'dashboard', 'delivery', 'data'];
+	let activeCategory = 'connections';
+
+	const getRequestedCategory = (): string => {
+		const requested = new URL(window.location.href).searchParams.get('settings_tab') || '';
+		return validCategories.includes(requested) ? requested : 'connections';
+	};
+
+	const activate = (category: string, updateUrl = true): void => {
+		activeCategory = validCategories.includes(category) ? category : 'connections';
+		tabs.forEach((tab) => {
+			const active = tab.dataset.notificatorSettingsTab === activeCategory;
+			tab.classList.toggle('is-active', active);
+			tab.setAttribute('aria-pressed', active ? 'true' : 'false');
+		});
+
+		groups.forEach((group) => {
+			group.hidden = group.dataset.notificatorSettingsGroup !== activeCategory;
+		});
+
+		const showPreferences = activeCategory !== 'connections';
+		preferences.hidden = !showPreferences;
+		const activeTab = tabs.find((tab) => tab.dataset.notificatorSettingsTab === activeCategory);
+		if (showPreferences && activeTab) {
+			if (panelTitle) panelTitle.textContent = activeTab.dataset.notificatorSettingsTitle || '';
+			if (panelDescription) {
+				panelDescription.textContent = activeTab.dataset.notificatorSettingsDescription || '';
+			}
+		}
+
+		if (updateUrl) {
+			const url = new URL(window.location.href);
+			if (activeCategory === 'connections') {
+				url.searchParams.delete('settings_tab');
+			} else {
+				url.searchParams.set('settings_tab', activeCategory);
+			}
+			history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+		}
+	};
+
+	tabs.forEach((tab, index) => {
+		tab.addEventListener('click', () => activate(tab.dataset.notificatorSettingsTab || 'connections'));
+		tab.addEventListener('keydown', (event) => {
+			if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+			event.preventDefault();
+			let targetIndex = index;
+			if (event.key === 'Home') targetIndex = 0;
+			else if (event.key === 'End') targetIndex = tabs.length - 1;
+			else if (event.key === 'ArrowLeft') targetIndex = (index - 1 + tabs.length) % tabs.length;
+			else targetIndex = (index + 1) % tabs.length;
+			tabs[targetIndex]?.focus();
+			tabs[targetIndex]?.click();
+		});
+	});
+
+	document.addEventListener('notificator:workspace-change', (event) => {
+		const detail = event instanceof CustomEvent ? event.detail : null;
+		if (detail?.workspace === 'settings') {
+			activate(activeCategory, false);
+		}
+	});
+
+	shell?.classList.add('notificator-settings-tabs-ready');
+	activeCategory = getRequestedCategory();
+	activate(activeCategory, false);
+}
+
 /**
  * Workspace navigation. Existing section ids remain supported so
  * bookmarks and links from older releases continue to land in the right place.
@@ -1116,6 +1194,7 @@ function initWorkspaceNavigation(): void {
 			else tab.removeAttribute('aria-current');
 		});
 		if (title) title.textContent = labels[next];
+		document.dispatchEvent(new CustomEvent('notificator:workspace-change', { detail: { workspace: next } }));
 		if (updateHash && window.location.hash !== `#${next}`) {
 			history.replaceState(null, '', `#${next}`);
 		}
@@ -1149,4 +1228,10 @@ if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', initWorkspaceNavigation);
 } else {
 	initWorkspaceNavigation();
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initSettingsNavigation);
+} else {
+	initSettingsNavigation();
 }

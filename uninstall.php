@@ -89,6 +89,7 @@ $notificator_companion_cleanup_site = static function () use ( $notificator_comp
 		'notificator_companion_discovery_ignored',
 		'notificator_companion_admin_toasts',
 		'notificator_companion_admin_toast_seq',
+		'notificator_companion_mqtt_secret',
 		'notificator_companion_scanned_hooks',
 		// Options used by older releases before the plugin was renamed.
 		'authenticator_companion_settings',

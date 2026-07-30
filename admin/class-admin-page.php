@@ -107,6 +107,7 @@ class Notificator_Companion_Admin_Page {
 					'scan'              => wp_create_nonce( 'notificator_companion_refresh_hooks' ),
 					'health'            => wp_create_nonce( 'notificator_companion_get_health' ),
 					'test'              => wp_create_nonce( 'notificator_companion_test' ),
+					'testMqtt'          => wp_create_nonce( 'notificator_companion_test_mqtt' ),
 					'saveSettings'      => wp_create_nonce( 'notificator_companion_save_settings' ),
 					'exportHooks'       => wp_create_nonce( 'notificator_companion_export_hooks' ),
 					'importHooks'       => wp_create_nonce( 'notificator_companion_import_hooks' ),
@@ -123,6 +124,7 @@ class Notificator_Companion_Admin_Page {
 					'scan'              => 'notificator_companion_refresh_hooks',
 					'health'            => 'notificator_companion_get_health',
 					'test'              => 'notificator_companion_test',
+					'testMqtt'          => 'notificator_companion_test_mqtt',
 					'saveSettings'      => 'notificator_companion_save_settings',
 					'exportHooks'       => 'notificator_companion_export_hooks',
 					'importHooks'       => 'notificator_companion_import_hooks',
@@ -387,6 +389,23 @@ class Notificator_Companion_Admin_Page {
 		$hooks                = isset( $options['hooks'] ) ? $options['hooks'] : array();
 		$has_api_key          = ! empty( $api_keys );
 		$active_api_key_count = count( array_filter( $api_key_enabled ) );
+		$mqtt_state           = Notificator_Companion_Mqtt_Config::get_admin_state( $options );
+		if ( ! empty( $mqtt_state['ready'] ) ) {
+			$mqtt_status_class  = 'is-active';
+			$mqtt_status_label  = __( 'Connected', 'notificator-project' );
+			$mqtt_summary_label = __( 'Your broker', 'notificator-project' );
+			$mqtt_summary_text  = $mqtt_state['host'];
+		} elseif ( ! empty( $mqtt_state['enabled'] ) ) {
+			$mqtt_status_class  = 'is-warning';
+			$mqtt_status_label  = __( 'Needs setup', 'notificator-project' );
+			$mqtt_summary_label = __( 'Incomplete', 'notificator-project' );
+			$mqtt_summary_text  = __( 'MQTT paused', 'notificator-project' );
+		} else {
+			$mqtt_status_class  = 'is-neutral';
+			$mqtt_status_label  = __( 'Not configured', 'notificator-project' );
+			$mqtt_summary_label = __( 'Not configured', 'notificator-project' );
+			$mqtt_summary_text  = __( 'Connect your broker', 'notificator-project' );
+		}
 		$admin_toasts_enabled = ! isset( $options['admin_toasts_enabled'] ) || (bool) $options['admin_toasts_enabled'];
 		$toast_duration       = isset( $options['toast_duration'] ) ? (int) $options['toast_duration'] : 3;
 		if ( $toast_duration < 1 ) {
@@ -562,34 +581,53 @@ class Notificator_Companion_Admin_Page {
 							<div><p class="notificator-eyebrow"><?php esc_html_e( 'Configuration', 'notificator-project' ); ?></p><h2 id="notificator-settings-title"><?php esc_html_e( 'Connections & preferences', 'notificator-project' ); ?></h2><p><?php esc_html_e( 'See what is active, then fine-tune how notifications behave.', 'notificator-project' ); ?></p></div>
 							<div class="notificator-settings-summary">
 								<span id="notificator-remote-summary" class="<?php echo $active_api_key_count ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Remote delivery', 'notificator-project' ); ?></small><strong><b id="notificator-active-key-count"><?php echo esc_html( $active_api_key_count ); ?></b>/<b id="notificator-configured-key-count"><?php echo esc_html( count( $api_keys ) ); ?></b></strong><em><?php esc_html_e( 'keys active', 'notificator-project' ); ?></em></span>
+								<span id="notificator-mqtt-summary" class="<?php echo esc_attr( $mqtt_status_class ); ?>"><small><?php esc_html_e( 'MQTT broker', 'notificator-project' ); ?></small><strong data-notificator-mqtt-summary-label><?php echo esc_html( $mqtt_summary_label ); ?></strong><em data-notificator-mqtt-summary-detail><?php echo esc_html( $mqtt_summary_text ); ?></em></span>
 								<span id="notificator-dashboard-summary" class="<?php echo $admin_toasts_enabled ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Dashboard alerts', 'notificator-project' ); ?></small><strong><?php echo esc_html( $admin_toasts_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></strong><em><?php echo esc_html( $toast_poll_summary ); ?></em></span>
 								<span id="notificator-log-summary" class="<?php echo $log_enabled ? 'is-active' : 'is-neutral'; ?>"><small><?php esc_html_e( 'Activity log', 'notificator-project' ); ?></small><strong><?php echo esc_html( $log_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></strong><em><?php esc_html_e( 'Delivery history', 'notificator-project' ); ?></em></span>
 							</div>
 						</section>
 
+						<nav class="notificator-settings-tabs" data-notificator-workspace="settings" aria-label="<?php esc_attr_e( 'Settings categories', 'notificator-project' ); ?>">
+							<button type="button" class="is-active" data-notificator-settings-tab="connections" aria-pressed="true">
+								<span class="dashicons dashicons-admin-links" aria-hidden="true"></span>
+								<span><strong><?php esc_html_e( 'Connections', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'API keys and MQTT', 'notificator-project' ); ?></small></span>
+							</button>
+							<button type="button" data-notificator-settings-tab="dashboard" data-notificator-settings-title="<?php esc_attr_e( 'Dashboard alerts', 'notificator-project' ); ?>" data-notificator-settings-description="<?php esc_attr_e( 'Choose when dashboard alerts appear and how administrators dismiss them.', 'notificator-project' ); ?>" aria-pressed="false">
+								<span class="dashicons dashicons-dashboard" aria-hidden="true"></span>
+								<span><strong><?php esc_html_e( 'Dashboard alerts', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Timing and appearance', 'notificator-project' ); ?></small></span>
+							</button>
+							<button type="button" data-notificator-settings-tab="delivery" data-notificator-settings-title="<?php esc_attr_e( 'Discovery & delivery', 'notificator-project' ); ?>" data-notificator-settings-description="<?php esc_attr_e( 'Control event scanning limits and protection against repeated notifications.', 'notificator-project' ); ?>" aria-pressed="false">
+								<span class="dashicons dashicons-performance" aria-hidden="true"></span>
+								<span><strong><?php esc_html_e( 'Discovery & delivery', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Scanning and safeguards', 'notificator-project' ); ?></small></span>
+							</button>
+							<button type="button" data-notificator-settings-tab="data" data-notificator-settings-title="<?php esc_attr_e( 'Data & logs', 'notificator-project' ); ?>" data-notificator-settings-description="<?php esc_attr_e( 'Manage delivery history, exports, and plugin-generated test data.', 'notificator-project' ); ?>" aria-pressed="false">
+								<span class="dashicons dashicons-database" aria-hidden="true"></span>
+								<span><strong><?php esc_html_e( 'Data & logs', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'History and reset', 'notificator-project' ); ?></small></span>
+							</button>
+						</nav>
+
 						<!-- API Configuration -->
-						<div class="scenario-section notificator-section" id="notificator-api" data-notificator-section="api" data-notificator-workspace="settings">
+						<div class="scenario-section notificator-section" id="notificator-api" data-notificator-section="api" data-notificator-settings-group="connections" data-notificator-workspace="settings">
 							<div class="notificator-scenario-head notificator-scenario-head--api">
-								<div class="flex items-start sm:items-center justify-between gap-3 flex-wrap">
-									<div class="flex items-center gap-3 min-w-0">
-										<div class="notificator-section-icon">
-											<span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'api' ) ); ?> text-white"></span>
-										</div>
-										<div class="min-w-0">
-											<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Remote delivery', 'notificator-project' ); ?></h3>
-											<p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Optional API keys for mobile push and MQTT.', 'notificator-project' ); ?></p>
-										</div>
-										</div>
-										<span id="notificator-remote-section-status" class="notificator-section-status <?php echo $active_api_key_count ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $active_api_key_count ? __( 'Connected', 'notificator-project' ) : __( 'Optional', 'notificator-project' ) ); ?></span>
+								<div class="flex items-center gap-3 min-w-0">
+									<div class="notificator-section-icon">
+										<span class="dashicons <?php echo esc_attr( $this->get_section_icon_class( 'api' ) ); ?> text-white"></span>
+									</div>
+									<div class="min-w-0">
+										<span class="notificator-connection-kicker"><?php esc_html_e( 'Mobile app & API', 'notificator-project' ); ?></span>
+										<h3 class="text-base font-semibold text-white"><?php esc_html_e( 'Remote delivery', 'notificator-project' ); ?></h3>
+										<p class="text-xs text-white text-opacity-70"><?php esc_html_e( 'Optional API keys for mobile push and authenticated MQTT delivery.', 'notificator-project' ); ?></p>
 									</div>
 								</div>
+								<span id="notificator-remote-section-status" class="notificator-section-status <?php echo $active_api_key_count ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $active_api_key_count ? __( 'Connected', 'notificator-project' ) : __( 'Optional', 'notificator-project' ) ); ?></span>
+							</div>
 							<div class="card-body space-y-4">
 								<div class="notificator-remote-guide">
 									<span class="dashicons dashicons-smartphone"></span>
 									<div><strong><?php esc_html_e( 'Connect the Notificator mobile app', 'notificator-project' ); ?></strong><p><?php esc_html_e( 'Add an API key when you want mobile push or MQTT. Dashboard-only notifications work without one.', 'notificator-project' ); ?></p></div>
 									<a href="<?php echo esc_url( admin_url( 'admin.php?page=notificator-support' ) ); ?>"><?php esc_html_e( 'Account guide', 'notificator-project' ); ?></a>
 								</div>
-								<div>
+								<div class="notificator-connection-panel">
 									<label class="block text-sm font-semibold text-gray-700 mb-2" for="api_key_0">
 										<?php esc_html_e( 'Connected accounts', 'notificator-project' ); ?>
 									</label>
@@ -661,32 +699,114 @@ class Notificator_Companion_Admin_Page {
 							</div>
 						</div>
 
-						<section class="scenario-section notificator-section notificator-preferences" id="notificator-preferences" data-notificator-workspace="settings" aria-labelledby="notificator-preferences-title">
+						<section class="scenario-section notificator-section notificator-mqtt-settings" id="notificator-mqtt" data-notificator-settings-group="connections" data-notificator-workspace="settings" aria-labelledby="notificator-mqtt-title" data-mqtt-ready="<?php echo esc_attr( ! empty( $mqtt_state['ready'] ) ? '1' : '0' ); ?>">
+							<div class="notificator-scenario-head">
+								<div class="flex items-center gap-3">
+									<div class="notificator-section-icon"><span class="dashicons dashicons-cloud"></span></div>
+									<div>
+										<span class="notificator-connection-kicker"><?php esc_html_e( 'Devices & broker', 'notificator-project' ); ?></span>
+										<h3 id="notificator-mqtt-title"><?php esc_html_e( 'MQTT broker', 'notificator-project' ); ?></h3>
+										<p><?php esc_html_e( 'Connect your own broker. The current release supports HiveMQ Cloud only.', 'notificator-project' ); ?></p>
+									</div>
+								</div>
+								<span id="notificator-mqtt-status" class="notificator-section-status <?php echo esc_attr( $mqtt_status_class ); ?>"><?php echo esc_html( $mqtt_status_label ); ?></span>
+							</div>
+							<div class="card-body">
+								<div class="notificator-mqtt-provider-guide">
+									<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+									<div>
+										<strong><?php esc_html_e( 'HiveMQ Cloud setup', 'notificator-project' ); ?></strong>
+										<p><?php esc_html_e( 'HiveMQ offers a free Serverless plan. Create a cluster, copy its URL from the cluster overview, then create a username and password under Access Management.', 'notificator-project' ); ?></p>
+										<ol>
+											<li><?php esc_html_e( 'Choose Create Serverless Cluster.', 'notificator-project' ); ?></li>
+											<li><?php esc_html_e( 'Copy the cluster URL; enter only its hostname below.', 'notificator-project' ); ?></li>
+											<li><?php esc_html_e( 'Create a Publish Only credential for WordPress and a separate Publish and Subscribe credential for the device.', 'notificator-project' ); ?></li>
+										</ol>
+									</div>
+									<a href="https://console.hivemq.cloud/" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open HiveMQ Cloud', 'notificator-project' ); ?><span class="dashicons dashicons-external" aria-hidden="true"></span></a>
+								</div>
+								<div class="notificator-mqtt-mode">
+									<div>
+										<strong><?php esc_html_e( 'Enable MQTT delivery', 'notificator-project' ); ?></strong>
+										<p><?php esc_html_e( 'Use your own HiveMQ Cloud cluster for MQTT-enabled notifications.', 'notificator-project' ); ?></p>
+									</div>
+									<label class="notificator-switch">
+										<input type="hidden" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_custom_enabled]" value="0">
+										<input type="checkbox" id="notificator-mqtt-custom-enabled" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_custom_enabled]" value="1" <?php checked( ! empty( $mqtt_state['enabled'] ) ); ?> aria-describedby="notificator-mqtt-mode-help">
+										<span></span>
+										<em class="screen-reader-text"><?php esc_html_e( 'Enable MQTT delivery through your HiveMQ Cloud cluster', 'notificator-project' ); ?></em>
+									</label>
+								</div>
+								<p id="notificator-mqtt-mode-help" class="notificator-mqtt-help"><?php esc_html_e( 'Your device must use the same cluster and topic prefix. Use a separate publisher credential here when possible.', 'notificator-project' ); ?></p>
+
+								<div class="notificator-mqtt-fields" data-notificator-mqtt-fields>
+									<label>
+										<span><?php esc_html_e( 'Cluster hostname', 'notificator-project' ); ?></span>
+										<input type="text" id="notificator-mqtt-host" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_host]" value="<?php echo esc_attr( $mqtt_state['host'] ); ?>" maxlength="253" placeholder="abc123.s1.eu.hivemq.cloud" autocomplete="off" inputmode="url">
+										<small><?php esc_html_e( 'HiveMQ Cloud hostname only. Do not include https:// or a port.', 'notificator-project' ); ?></small>
+									</label>
+									<label>
+										<span><?php esc_html_e( 'Publisher username', 'notificator-project' ); ?></span>
+										<input type="text" id="notificator-mqtt-username" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_username]" value="<?php echo esc_attr( $mqtt_state['username'] ); ?>" maxlength="128" autocomplete="username">
+										<small><?php esc_html_e( 'Prefer a credential limited to publishing device messages and commands.', 'notificator-project' ); ?></small>
+									</label>
+									<label>
+										<span><?php esc_html_e( 'Publisher password', 'notificator-project' ); ?></span>
+										<input type="password" id="notificator-mqtt-password" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_password]" value="" maxlength="512" autocomplete="new-password" placeholder="<?php echo esc_attr( ! empty( $mqtt_state['password_configured'] ) ? __( 'Saved securely; leave blank to keep it', 'notificator-project' ) : __( 'Enter the HiveMQ password', 'notificator-project' ) ); ?>">
+										<small><?php esc_html_e( 'Encrypted with keys derived from this WordPress installation and never displayed again.', 'notificator-project' ); ?></small>
+									</label>
+									<label>
+										<span><?php esc_html_e( 'Topic prefix', 'notificator-project' ); ?></span>
+										<input type="text" id="notificator-mqtt-topic-prefix" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_topic_prefix]" value="<?php echo esc_attr( $mqtt_state['topic_prefix'] ); ?>" maxlength="128" placeholder="notificator-project" autocomplete="off">
+										<small><?php esc_html_e( 'The firmware must use this exact prefix. MQTT wildcards are not accepted.', 'notificator-project' ); ?></small>
+									</label>
+								</div>
+
+								<div class="notificator-mqtt-transport">
+									<span><strong><?php esc_html_e( 'API transport', 'notificator-project' ); ?></strong> WSS :<?php echo esc_html( (string) $mqtt_state['port'] ); ?><?php echo esc_html( $mqtt_state['path'] ); ?></span>
+									<span><strong><?php esc_html_e( 'Device transport', 'notificator-project' ); ?></strong> MQTT TLS :8883</span>
+								</div>
+
+								<input type="hidden" id="notificator-mqtt-forget" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_forget]" value="0">
+								<div class="notificator-mqtt-actions">
+								<button type="button" id="notificator-test-mqtt" class="btn-secondary" <?php disabled( empty( $mqtt_state['ready'] ) || 0 === $active_api_key_count ); ?>><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Test broker', 'notificator-project' ); ?></button>
+								<button type="button" id="notificator-forget-mqtt" class="btn-secondary btn-secondary--danger" <?php echo empty( $mqtt_state['configured'] ) && empty( $mqtt_state['host'] ) ? 'hidden' : ''; ?>><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Forget broker connection', 'notificator-project' ); ?></button>
+									<p class="notificator-mqtt-result" id="notificator-mqtt-result" role="status" aria-live="polite"></p>
+								</div>
+
+								<div class="notificator-mqtt-security-note">
+									<span class="dashicons dashicons-lock"></span>
+									<p><?php esc_html_e( 'The password is excluded from exports, logs, diagnostics, and the persisted delivery queue. It is decrypted only while preparing an HTTPS request.', 'notificator-project' ); ?></p>
+								</div>
+							</div>
+						</section>
+
+						<section class="scenario-section notificator-section notificator-preferences" id="notificator-preferences" data-notificator-settings-preferences data-notificator-workspace="settings" aria-labelledby="notificator-preferences-title">
 							<div class="notificator-scenario-head">
 								<div class="flex items-center gap-3">
 									<div class="notificator-section-icon"><span class="dashicons dashicons-admin-settings"></span></div>
 									<div>
-										<h3 id="notificator-preferences-title"><?php esc_html_e( 'Plugin preferences', 'notificator-project' ); ?></h3>
-										<p><?php esc_html_e( 'Control discovery, delivery safeguards, dashboard alerts, logging, and test data.', 'notificator-project' ); ?></p>
+										<h3 id="notificator-preferences-title" data-notificator-settings-panel-title><?php esc_html_e( 'Dashboard alerts', 'notificator-project' ); ?></h3>
+										<p data-notificator-settings-panel-description><?php esc_html_e( 'Choose when dashboard alerts appear and how administrators dismiss them.', 'notificator-project' ); ?></p>
 									</div>
 								</div>
 							</div>
 							<div class="card-body">
 								<div class="notificator-preferences-grid">
-									<section class="notificator-preference-card">
+									<section class="notificator-preference-card" data-notificator-settings-group="delivery">
 										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-search"></span><div><h4><?php esc_html_e( 'Event discovery', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Refresh events after installing or updating plugins.', 'notificator-project' ); ?></p></div><span class="notificator-card-status is-neutral"><?php esc_html_e( 'On demand', 'notificator-project' ); ?></span></div>
 										<button type="button" id="notificator-scan-plugins-tool" class="btn-secondary"><span class="dashicons dashicons-update"></span><?php esc_html_e( 'Scan active plugins', 'notificator-project' ); ?></button>
 										<label class="notificator-preference-field" for="notificator-scan-hook-limit"><span><?php esc_html_e( 'Per-plugin event limit', 'notificator-project' ); ?></span><input type="number" id="notificator-scan-hook-limit" name="<?php echo esc_attr( $this->option_name ); ?>[scan_hook_limit]" min="50" max="10000" value="<?php echo esc_attr( $scan_hook_limit ); ?>" title="<?php esc_attr_e( 'Applied separately to each plugin; the total scan can be higher.', 'notificator-project' ); ?>" /></label>
 										<small><?php esc_html_e( 'The overall result may be higher because this limit applies to each plugin separately.', 'notificator-project' ); ?></small>
 									</section>
 
-									<section class="notificator-preference-card">
+									<section class="notificator-preference-card" data-notificator-settings-group="delivery">
 										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-controls-repeat"></span><div><h4><?php esc_html_e( 'Notification safeguards', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Prevent the same event from sending too frequently.', 'notificator-project' ); ?></p></div><span class="notificator-card-status is-active" data-notificator-throttle-status data-disabled-label="<?php esc_attr_e( 'Off', 'notificator-project' ); ?>" data-current-template="<?php echo esc_attr( $throttle_duration_format ); ?>"><?php echo esc_html( $throttle_status ); ?></span></div>
 										<label class="notificator-preference-field" for="notificator-throttle-seconds"><span><?php esc_html_e( 'Throttle window', 'notificator-project' ); ?></span><span class="notificator-preference-input-suffix"><input type="number" id="notificator-throttle-seconds" name="<?php echo esc_attr( $this->option_name ); ?>[throttle_seconds]" min="0" max="3600" value="<?php echo esc_attr( $throttle_seconds ); ?>" /><em><?php esc_html_e( 'seconds', 'notificator-project' ); ?></em></span></label>
 										<small><?php esc_html_e( 'Use 0 to allow every matching event.', 'notificator-project' ); ?></small>
 									</section>
 
-									<section class="notificator-preference-card notificator-preference-card--wide notificator-preference-card--dashboard">
+									<section class="notificator-preference-card notificator-preference-card--wide notificator-preference-card--dashboard" data-notificator-settings-group="dashboard">
 										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-dashboard"></span><div><h4><?php esc_html_e( 'Dashboard alerts', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Choose how alerts appear inside WordPress.', 'notificator-project' ); ?></p></div><span id="notificator-dashboard-card-status" class="notificator-card-status <?php echo $admin_toasts_enabled ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $admin_toasts_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></span></div>
 										<div id="notificator-dashboard-alert-settings" class="notificator-dashboard-alert-settings <?php echo $admin_toasts_enabled ? 'is-enabled' : 'is-disabled'; ?>">
 											<div class="notificator-dashboard-alert-toggle">
@@ -726,13 +846,13 @@ class Notificator_Companion_Admin_Page {
 										</div>
 									</section>
 
-									<section class="notificator-preference-card">
+									<section class="notificator-preference-card" data-notificator-settings-group="data">
 										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-list-view"></span><div><h4><?php esc_html_e( 'Activity log', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Store delivery results for troubleshooting and reporting.', 'notificator-project' ); ?></p></div><span id="notificator-log-card-status" class="notificator-card-status <?php echo $log_enabled ? 'is-active' : 'is-neutral'; ?>"><?php echo esc_html( $log_enabled ? __( 'On', 'notificator-project' ) : __( 'Off', 'notificator-project' ) ); ?></span></div>
 										<div class="notificator-preference-actions"><button type="button" id="notificator-toggle-log" class="btn-secondary" data-log-enabled="<?php echo esc_attr( $log_enabled ? '1' : '0' ); ?>"><span class="dashicons <?php echo esc_attr( $log_enabled ? 'dashicons-no' : 'dashicons-yes' ); ?>"></span><?php echo esc_html( $log_enabled ? __( 'Disable activity log', 'notificator-project' ) : __( 'Enable activity log', 'notificator-project' ) ); ?></button><button type="button" id="notificator-export-log" class="btn-secondary"><span class="dashicons dashicons-media-spreadsheet"></span><?php esc_html_e( 'Export log CSV', 'notificator-project' ); ?></button></div>
 									</section>
 
-									<section class="notificator-preference-card notificator-preference-card--danger">
-										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-image-rotate"></span><div><h4><?php esc_html_e( 'Reset test data', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Remove notifications, activity, scan results, observation data, and preferences. API keys are always kept.', 'notificator-project' ); ?></p></div></div>
+									<section class="notificator-preference-card notificator-preference-card--danger" data-notificator-settings-group="data">
+										<div class="notificator-preference-card__heading"><span class="dashicons dashicons-image-rotate"></span><div><h4><?php esc_html_e( 'Reset test data', 'notificator-project' ); ?></h4><p><?php esc_html_e( 'Remove notifications, activity, scan results, observation data, and preferences. API keys and the MQTT connection are always kept.', 'notificator-project' ); ?></p></div></div>
 										<button type="button" id="notificator-reset-test-data" class="btn-secondary btn-secondary--danger"><span class="dashicons dashicons-image-rotate"></span><?php esc_html_e( 'Reset plugin data', 'notificator-project' ); ?></button>
 									</section>
 								</div>

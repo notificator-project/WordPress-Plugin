@@ -5,7 +5,7 @@ Tags: notifications, alerts, hooks, monitoring, mqtt
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.2
-Stable tag: 1.1.16
+Stable tag: 1.2
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -17,7 +17,7 @@ Notificator is the official WordPress plugin of the Notificator Project. It help
 
 Discover events exposed by WordPress and installed plugins, choose the events that matter, and decide how each notification should be delivered. Dashboard notifications work entirely inside WordPress and do not require an account or API key.
 
-For remote delivery, connect an optional Notificator API key. The Notificator mobile app can then receive push alerts and display notification details on your phone, while MQTT can deliver events to connected devices.
+For remote delivery, connect an optional Notificator API key. The Notificator mobile app can then receive push alerts and display notification details on your phone, while MQTT can deliver events to connected devices through your own HiveMQ Cloud cluster.
 
 = What you can do =
 
@@ -52,6 +52,7 @@ Scanning runs locally in resumable background batches, processes one plugin at a
 5. Keep **Dashboard** enabled to receive alerts inside WordPress.
 6. Optional: get the Notificator mobile app, create an account and API key, then add and enable that key in Settings.
 7. Enable Mobile push or MQTT on the notifications that need remote delivery.
+8. Optional: under Settings > MQTT broker, connect your own HiveMQ Cloud cluster and use the same topic prefix in your device firmware.
 
 No API key is required for setup, discovery, templates, activity, or dashboard notifications.
 
@@ -83,6 +84,16 @@ Search for **Notificator** in the [Apple App Store](https://apps.apple.com/) or 
 
 Install and sign in to the Notificator mobile app, create an API key from the app, and add that key in the plugin's Settings tab. Enable Mobile push on the notifications you want on your phone and make sure the app has notification permission.
 
+= Can I use my own HiveMQ Cloud account? =
+
+Yes. HiveMQ Cloud is the only MQTT provider supported by the current release. HiveMQ offers a free Serverless plan with no credit card required, subject to HiveMQ's current limits and terms.
+
+Create an account at https://console.hivemq.cloud/, choose Create Serverless Cluster, and open the cluster overview. Copy the cluster URL and enter only its hostname in Notificator. Under Access Management, create a Publish Only username and password for WordPress and a separate Publish and Subscribe credential for the device.
+
+Enable MQTT delivery under Settings > MQTT broker, then enter the hostname, publisher username, password, and topic prefix. New configurations default to `notificator-project`. The device must use the same cluster and topic prefix.
+
+The password is encrypted locally using keys derived from this WordPress installation. It is excluded from exports, logs, diagnostics, and saved retry payloads. For an MQTT-enabled delivery, the plugin decrypts it only while preparing the HTTPS request to the Notificator API.
+
 = Is there a Pro or paid version? =
 
 No. Notificator is free and open source, and we intend to keep its current features free. We may introduce optional new features or hosted services in the future, but they will not remove or place the functionality available today behind a paywall.
@@ -99,7 +110,7 @@ Yes. Export configured notifications as JSON from Tools and import them on anoth
 
 Deactivation keeps the configuration. Deleting the plugin through WordPress removes all plugin-owned settings, notifications, activity, scan caches, scheduled jobs, user metadata, and transients, including across multisite.
 
-The Tools dialog also provides a test reset that can keep saved API keys.
+The Tools dialog also provides a test reset that keeps saved API keys and the custom MQTT connection.
 
 == Support Development ==
 
@@ -124,20 +135,23 @@ For a triggered notification, the request can include:
 * Site URL and name, WordPress and plugin versions, and event timestamp.
 * Administrator-configured placeholder values.
 * For a configured website monitor, its name, URL, HTTP method, and enabled state.
+* If a HiveMQ Cloud connection is enabled, its hostname, WSS port and path, publisher username and password, and topic prefix. These values are sent only for MQTT-enabled requests so the API can connect to that broker.
 
 Raw hook arguments, WordPress database contents, and user exports are not sent wholesale.
 
 = How the service uses the data =
 
-The service validates the API key and allowed domains. Notification content may be encrypted with the account's public key and stored in Supabase for the Notificator app. Depending on account settings, it can use Expo for push, HiveMQ for MQTT, and Resend for email. Push previews may be generic while full content remains encrypted.
+The service validates the API key and allowed domains. Notification content may be encrypted with the account's public key and stored in Supabase for the Notificator app. Depending on account settings, it can use Expo for push, the administrator's HiveMQ cluster for MQTT, and Resend for email. Push previews may be generic while full content remains encrypted. HiveMQ credentials are used for the current request and are not stored in the Notificator account database.
 
 Use of the remote service is subject to the information published by [Notificator Project](https://notificator-project.com/), its [documentation](https://docs.notificator-project.com/), and its [privacy policy](https://notificator-project.com/privacy/).
+
+HiveMQ Cloud is an independent third-party service. Its plans, limits, terms, and availability are controlled by HiveMQ. See https://www.hivemq.com/products/mqtt-cloud-broker/ and https://docs.hivemq.com/hivemq-cloud/quick-start-guide.html.
 
 == Privacy ==
 
 Notificator does not add analytics or advertising tracking.
 
-The plugin stores configuration, discovery metadata, activity, dashboard-toast data, and temporary delivery jobs in the WordPress database. Scan caches may be stored in uploads. Observation stores counts and type metadata, not argument values.
+The plugin stores configuration, discovery metadata, activity, dashboard-toast data, and temporary delivery jobs in the WordPress database. A custom MQTT password is encrypted in a separate, non-autoloaded option. Scan caches may be stored in uploads. Observation stores counts and type metadata, not argument values.
 
 Remote delivery is opt-in per notification and requires an enabled API key. Administrators control the notification text and placeholders and are responsible for avoiding unnecessary personal or sensitive information.
 
@@ -157,6 +171,16 @@ The minified files in `assets/dist` are generated from `assets/js` and `assets/s
 4. Guided notification editor for choosing a source, event, message, and delivery channels.
 
 == Changelog ==
+
+= 1.2 =
+
+* Adds first-class support for connecting a user-owned HiveMQ Cloud cluster.
+* Encrypts the MQTT password locally and excludes it from exports, diagnostics, logs, and saved retry jobs.
+* Sends MQTT credentials only in memory for an enabled MQTT delivery or explicit connection test.
+* Adds an MQTT connection test and clearer delivery-readiness feedback.
+* Reorganizes Settings into consistent, more readable sections and tabs.
+* Improves settings typography, contrast, responsive behavior, and in-place controls.
+* Removes the implicit default MQTT broker and defaults new topic prefixes to `notificator-project`.
 
 = 1.1.16 =
 

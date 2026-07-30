@@ -1422,7 +1422,13 @@ type AnyFn = (...args: any[]) => any;
 							}
 							try {
 								window.dispatchEvent(
-									new CustomEvent('notificator:save:state', { detail: { state: 'saved', suppressToast: true } })
+									new CustomEvent('notificator:save:state', {
+										detail: {
+											state: 'saved',
+											suppressToast: true,
+											mqtt: data && data.data ? data.data.mqtt : null
+										}
+									})
 								);
 							} catch (e) {
 								// no-op
@@ -2209,6 +2215,11 @@ type AnyFn = (...args: any[]) => any;
 								if (resp.ok && data && data.success) {
 									setSaveStatus('saved');
 									maybeUnlockUi();
+									window.dispatchEvent(
+										new CustomEvent('notificator:save:state', {
+											detail: { state: 'saved', suppressToast: true, mqtt: data.data ? data.data.mqtt : null }
+										})
+									);
 									return;
 								}
 
@@ -2222,6 +2233,169 @@ type AnyFn = (...args: any[]) => any;
 			},
 			true
 		);
+	}
+
+	function initMqttSettings(): void {
+		var section = document.getElementById('notificator-mqtt');
+		var toggle = document.getElementById('notificator-mqtt-custom-enabled') as HTMLInputElement | null;
+		var fields = document.querySelector('[data-notificator-mqtt-fields]') as HTMLElement | null;
+		var host = document.getElementById('notificator-mqtt-host') as HTMLInputElement | null;
+		var username = document.getElementById('notificator-mqtt-username') as HTMLInputElement | null;
+		var password = document.getElementById('notificator-mqtt-password') as HTMLInputElement | null;
+		var topicPrefix = document.getElementById('notificator-mqtt-topic-prefix') as HTMLInputElement | null;
+		var forgetInput = document.getElementById('notificator-mqtt-forget') as HTMLInputElement | null;
+		var forgetButton = document.getElementById('notificator-forget-mqtt') as HTMLButtonElement | null;
+		var testButton = document.getElementById('notificator-test-mqtt') as HTMLButtonElement | null;
+		var result = document.getElementById('notificator-mqtt-result');
+		var status = document.getElementById('notificator-mqtt-status');
+		var summary = document.getElementById('notificator-mqtt-summary');
+		var summaryLabel = summary ? summary.querySelector('[data-notificator-mqtt-summary-label]') : null;
+		var summaryDetail = summary ? summary.querySelector('[data-notificator-mqtt-summary-detail]') : null;
+		if (!section || !toggle || !fields) return;
+
+		var defaultTopicPrefix = 'notificator-project';
+		var serverReady = section.getAttribute('data-mqtt-ready') === '1';
+
+		function hasActiveApiKey(): boolean {
+			var counter = document.getElementById('notificator-active-key-count');
+			return !!counter && parseInt(counter.textContent || '0', 10) > 0;
+		}
+
+		function setResult(message: string, state?: string): void {
+			if (!result) return;
+			result.textContent = message;
+			result.className = 'notificator-mqtt-result' + (state ? ' is-' + state : '');
+		}
+
+		function renderMode(): void {
+			var customEnabled = toggle.checked;
+			fields.classList.toggle('is-disabled', !customEnabled);
+			fields.setAttribute('aria-disabled', customEnabled ? 'false' : 'true');
+			Array.prototype.slice.call(fields.querySelectorAll('input')).forEach(function (input) {
+				input.disabled = !customEnabled;
+			});
+			if (testButton) {
+				testButton.disabled = !customEnabled || !serverReady || !hasActiveApiKey();
+			}
+			if (!customEnabled) {
+				setResult('');
+			}
+		}
+
+		function applySavedState(mqtt: AnyRecord): void {
+			if (!mqtt) return;
+			serverReady = !!mqtt.ready;
+			section.setAttribute('data-mqtt-ready', serverReady ? '1' : '0');
+			toggle.checked = !!mqtt.enabled;
+			if (host) host.value = mqtt.host || '';
+			if (username) username.value = mqtt.username || '';
+			if (topicPrefix) topicPrefix.value = mqtt.topic_prefix || defaultTopicPrefix;
+			if (password) {
+				password.value = '';
+				password.placeholder = mqtt.password_configured
+					? 'Saved securely; leave blank to keep it'
+					: 'Enter the HiveMQ password';
+			}
+			if (forgetInput) forgetInput.value = '0';
+			if (forgetButton) forgetButton.hidden = !mqtt.configured && !mqtt.host;
+
+			var isReady = !!mqtt.ready;
+			var needsSetup = !!mqtt.enabled && !isReady;
+			if (status) {
+				status.textContent = isReady ? 'Connected' : needsSetup ? 'Needs setup' : 'Not configured';
+				status.classList.toggle('is-active', isReady);
+				status.classList.toggle('is-warning', needsSetup);
+				status.classList.toggle('is-neutral', !isReady && !needsSetup);
+			}
+			if (summary) {
+				summary.classList.toggle('is-active', isReady);
+				summary.classList.toggle('is-warning', needsSetup);
+				summary.classList.toggle('is-neutral', !isReady && !needsSetup);
+			}
+			if (summaryLabel) {
+				summaryLabel.textContent = isReady ? 'Your broker' : needsSetup ? 'Incomplete' : 'Not configured';
+			}
+			if (summaryDetail) {
+				summaryDetail.textContent = isReady ? mqtt.host || '' : needsSetup ? 'MQTT paused' : 'Connect your broker';
+			}
+			renderMode();
+		}
+
+		toggle.addEventListener('change', renderMode);
+
+		if (forgetButton) {
+			forgetButton.addEventListener('click', function () {
+				if (!window.confirm('Forget the saved HiveMQ connection?')) return;
+				if (forgetInput) forgetInput.value = '1';
+				toggle.checked = false;
+				if (host) host.value = '';
+				if (username) username.value = '';
+				if (password) password.value = '';
+				if (topicPrefix) topicPrefix.value = defaultTopicPrefix;
+				renderMode();
+				var form = document.getElementById('notificator-settings-form') as HTMLFormElement | null;
+				if (form) form.requestSubmit();
+			});
+		}
+
+		if (testButton) {
+			testButton.addEventListener('click', function () {
+				var data = window.notificatorCompanionData;
+				var ajaxUrl = data && data.ajaxUrl ? data.ajaxUrl : '';
+				var action = data && data.actions ? data.actions.testMqtt : '';
+				var nonce = data && data.nonces ? data.nonces.testMqtt : '';
+				if (!ajaxUrl || !action || !nonce) {
+					setResult('The MQTT test is unavailable.', 'error');
+					return;
+				}
+
+				testButton.disabled = true;
+				testButton.setAttribute('aria-busy', 'true');
+				setResult('Testing the saved connection…', 'working');
+				var body = new URLSearchParams();
+				body.set('action', action);
+				body.set('nonce', nonce);
+
+				fetch(ajaxUrl, {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+					},
+					body: body.toString()
+				})
+					.then(function (response) {
+						return response.json().catch(function () {
+							return null;
+						});
+					})
+					.then(function (response) {
+						if (!response || !response.success) {
+							throw new Error(
+								response && response.data && response.data.message ? response.data.message : 'The broker test failed.'
+							);
+						}
+						setResult(response.data.message || 'Broker verified.', 'success');
+					})
+					.catch(function (error) {
+						setResult(error && error.message ? error.message : 'The broker test failed.', 'error');
+					})
+					.finally(function () {
+						testButton.removeAttribute('aria-busy');
+						renderMode();
+					});
+			});
+		}
+
+		window.addEventListener('notificator:save:state', function (event) {
+			var detail = event && (event as CustomEvent).detail ? (event as CustomEvent).detail : {};
+			if (detail.state === 'saved' && detail.mqtt) {
+				applySavedState(detail.mqtt);
+			}
+		});
+		document.addEventListener('notificator:api-keys:updated', renderMode);
+		renderMode();
 	}
 
 	function initTopBarScenarioButton(): void {
@@ -2535,6 +2709,7 @@ type AnyFn = (...args: any[]) => any;
 		initThrottleStatus();
 		initThemeToggle();
 		initGlobalSaveUx();
+		initMqttSettings();
 		initTopBarScenarioButton();
 		initScenarioImportExport();
 	});
