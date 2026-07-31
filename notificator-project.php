@@ -3049,6 +3049,7 @@ class Notificator_Companion {
 			'body'               => __( 'Your WordPress site connected to your HiveMQ Cloud cluster.', 'notificator-project' ),
 			'severity'           => 'info',
 			'source'             => 'wp_plugin',
+			'sendEmail'          => false,
 			'sendPush'           => false,
 			'sendMqtt'           => true,
 			'mqttConnectionTest' => true,
