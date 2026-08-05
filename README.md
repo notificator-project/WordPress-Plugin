@@ -80,13 +80,18 @@ Optional observation samples execution counts, argument types, and context witho
 
 ## Accounts and remote delivery
 
-Dashboard alerts do not require an account. To use mobile push or MQTT:
+Dashboard alerts do not require an account. To use mobile push, optional account email alerts, or MQTT:
 
 1. Search for **Notificator** in the [Apple App Store](https://apps.apple.com/) or [Google Play Store](https://play.google.com/store).
 2. Install the mobile app and create an account.
 3. Create an API key in the app.
 4. Add and enable the key under **Notificator → Settings**.
 5. Enable Mobile push or MQTT on the relevant notifications.
+
+Email alerts are an account-level preference enabled from the Notificator
+mobile app. They do not add a separate per-event checkbox to the WordPress
+notification editor; mobile push and MQTT remain the event-level remote
+delivery choices exposed by the plugin.
 
 The optional remote service endpoint is `https://wpnotif.notificator-project.com`. It is contacted only when an administrator tests a key, an enabled notification requests remote delivery, or a previously configured website monitor is sent to the service. The plugin does not load executable code or visual assets from a remote service.
 
