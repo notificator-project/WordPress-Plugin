@@ -84,7 +84,7 @@ Dashboard alerts do not require an account. To use mobile push, optional account
 
 1. Download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). Notificator is also coming to Google Play for Android, but that release is not publicly available yet.
 2. Install the mobile app and create an account.
-3. Create an API key in the app.
+3. Create a **WordPress Plugin** (`wordpress_server`) API key in the app.
 4. Add and enable the key under **Notificator → Settings**.
 5. Enable Mobile push or MQTT on the relevant notifications.
 

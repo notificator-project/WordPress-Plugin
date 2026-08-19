@@ -17,7 +17,7 @@ Notificator is the official WordPress plugin of the Notificator Project. It help
 
 Discover events exposed by WordPress and installed plugins, choose the events that matter, and decide how each notification should be delivered. Dashboard notifications work entirely inside WordPress and do not require an account or API key.
 
-For remote delivery, connect an optional Notificator API key. The Notificator mobile app can then receive push alerts and display notification details on your phone, while MQTT can deliver events to connected devices through your own HiveMQ Cloud cluster.
+For remote delivery, connect an optional Notificator API key. The [Notificator mobile app](https://apps.apple.com/app/notificator-project/id6758410275) can then receive push alerts and display notification details on your phone, while MQTT can deliver events to connected devices through your own HiveMQ Cloud cluster.
 
 Download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). The Android app is coming to Google Play and is not publicly available yet.
 
@@ -54,7 +54,7 @@ Scanning runs locally in resumable background batches, processes one plugin at a
 3. Select **Scan plugins** to discover available site events.
 4. Apply a template or create a notification from a discovered event.
 5. Keep **Dashboard** enabled to receive alerts inside WordPress.
-6. Optional: get the Notificator mobile app, create an account and API key, then add and enable that key in Settings.
+6. Optional: get the [Notificator mobile app](https://apps.apple.com/app/notificator-project/id6758410275), create an account and WordPress Plugin API key, then add and enable that key in Settings.
 7. Enable Mobile push or MQTT on the notifications that need remote delivery.
 8. Optional: under Settings > MQTT broker, connect your own HiveMQ Cloud cluster and use the same topic prefix in your device firmware.
 
@@ -86,7 +86,7 @@ Download **Notificator Project** for iPhone or iPad from the [Apple App Store](h
 
 = How do I receive notifications in the mobile app? =
 
-Install and sign in to the Notificator mobile app, create an API key from the app, and add that key in the plugin's Settings tab. Enable Mobile push on the notifications you want on your phone and make sure the app has notification permission.
+Install and sign in to the Notificator mobile app, create a WordPress Plugin API key, and add that key in the plugin's Settings tab. Enable Mobile push on the notifications you want on your phone and make sure the app has notification permission.
 
 = Can I use my own HiveMQ Cloud account? =
 
