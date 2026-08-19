@@ -116,6 +116,24 @@ jobs:
 
           mv "${SOURCE_ZIP}" "${TARGET_ZIP}"
 
+      - name: Install Subversion client
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v svn >/dev/null 2>&1; then
+            sudo apt-get install --no-install-recommends --yes subversion || {
+              sudo apt-get update \
+                -o Acquire::Retries=3 \
+                -o Acquire::http::Timeout=20 \
+                -o Acquire::https::Timeout=20
+              sudo apt-get install --no-install-recommends --yes subversion
+            }
+          fi
+
+          svn --version --quiet
+
       - name: Check whether the release already exists
         if: github.event_name == 'push'
         id: release
