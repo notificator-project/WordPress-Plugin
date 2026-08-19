@@ -5,6 +5,17 @@ on:
     tags:
       - 'v*.*'
       - '!v*-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable Git tag to deploy (for example, v1.2)
+        required: true
+        type: string
+      dry_run:
+        description: Build and validate without committing to WordPress.org SVN
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -15,12 +26,15 @@ concurrency:
 
 jobs:
   release:
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    if: github.event_name == 'workflow_dispatch' || (startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-'))
     runs-on: ubuntu-latest
+    environment: wordpress-org
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -36,11 +50,19 @@ jobs:
           coverage: none
 
       - name: Validate tag against plugin/readme versions
+        id: package
         shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
 
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [[ ! "${RELEASE_TAG}" =~ ^v[0-9]+(\.[0-9]+)+$ ]]; then
+            echo "ERROR: Stable release tags must use v followed by numbers and periods."
+            exit 1
+          fi
+
+          TAG_VERSION="${RELEASE_TAG#v}"
           PLUGIN_VERSION="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*' notificator-project.php | sed -E 's/.*Version:[[:space:]]*([^[:space:]]+).*/\1/')"
           STABLE_TAG="$(grep -m1 -E '^Stable tag:[[:space:]]*' readme.txt | sed -E 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/')"
 
@@ -58,6 +80,9 @@ jobs:
             exit 1
           fi
 
+          echo "tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         run: |
           npm ci
@@ -67,12 +92,11 @@ jobs:
         run: npm run build:release
 
       - name: Prepare versioned zip name
-        id: package
         shell: bash
         run: |
           set -euo pipefail
 
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          TAG_VERSION="${{ steps.package.outputs.version }}"
           SOURCE_ZIP="dist/notificator-project.zip"
           TARGET_ZIP="dist/notificator-project-${TAG_VERSION}.zip"
 
@@ -83,26 +107,37 @@ jobs:
 
           mv "${SOURCE_ZIP}" "${TARGET_ZIP}"
 
-          echo "zip_path=${TARGET_ZIP}" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG_VERSION}" >> "$GITHUB_OUTPUT"
-
       - name: Check whether the release already exists
+        if: github.event_name == 'push'
         id: release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+          if gh release view "${{ steps.package.outputs.tag }}" >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create GitHub release and upload zip
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ steps.package.outputs.tag }}
           name: Notificator v${{ steps.package.outputs.version }}
           generate_release_notes: ${{ steps.release.outputs.exists != 'true' }}
           files: |
-            ${{ steps.package.outputs.zip_path }}
+            dist/notificator-project-${{ steps.package.outputs.version }}.zip
+
+      - name: Deploy stable release to WordPress.org SVN
+        uses: 10up/action-wordpress-plugin-deploy@54bd289b8525fd23a5c365ec369185f2966529c2 # 2.3.0
+        with:
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: notificator-project
+          VERSION: ${{ steps.package.outputs.version }}
+          BUILD_DIR: dist/notificator-project
+          ASSETS_DIR: .wordpress-org
