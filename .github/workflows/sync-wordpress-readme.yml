@@ -1,0 +1,93 @@
+name: Sync WordPress.org Readme
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate the readme update without committing it to WordPress.org SVN
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wordpress-org-readme
+  cancel-in-progress: false
+
+jobs:
+  sync-readme:
+    runs-on: ubuntu-latest
+    environment: wordpress-org
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate readme release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PLUGIN_VERSION="$(grep -m1 -E '^[[:space:]]*\*[[:space:]]*Version:[[:space:]]*' notificator-project.php | sed -E 's/.*Version:[[:space:]]*([^[:space:]]+).*/\1/')"
+          STABLE_TAG="$(grep -m1 -E '^Stable tag:[[:space:]]*' readme.txt | sed -E 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/')"
+
+          if [[ "${PLUGIN_VERSION}" != "${STABLE_TAG}" ]]; then
+            echo "ERROR: Plugin version (${PLUGIN_VERSION}) does not match readme stable tag (${STABLE_TAG})."
+            exit 1
+          fi
+
+      - name: Install Subversion client
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v svn >/dev/null 2>&1; then
+            sudo apt-get install --no-install-recommends --yes subversion || {
+              sudo apt-get update \
+                -o Acquire::Retries=3 \
+                -o Acquire::http::Timeout=20 \
+                -o Acquire::https::Timeout=20
+              sudo apt-get install --no-install-recommends --yes subversion
+            }
+          fi
+
+          svn --version --quiet
+
+      - name: Sync readme to WordPress.org SVN
+        shell: bash
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+        run: |
+          set -euo pipefail
+
+          SVN_DIR="${RUNNER_TEMP}/notificator-project-svn"
+          SVN_URL="https://plugins.svn.wordpress.org/notificator-project"
+
+          svn checkout --depth immediates "${SVN_URL}" "${SVN_DIR}"
+          svn update --set-depth files "${SVN_DIR}/trunk"
+          cp readme.txt "${SVN_DIR}/trunk/readme.txt"
+
+          if [[ -z "$(svn status "${SVN_DIR}/trunk/readme.txt")" ]]; then
+            echo "WordPress.org already has the current readme."
+            exit 0
+          fi
+
+          svn diff "${SVN_DIR}/trunk/readme.txt"
+
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            echo "Dry run complete. No SVN changes were committed."
+            exit 0
+          fi
+
+          svn commit "${SVN_DIR}/trunk/readme.txt" \
+            --username "${SVN_USERNAME}" \
+            --password "${SVN_PASSWORD}" \
+            --non-interactive \
+            --no-auth-cache \
+            --message "Update Notificator Project directory readme"

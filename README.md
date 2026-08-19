@@ -82,7 +82,7 @@ Optional observation samples execution counts, argument types, and context witho
 
 Dashboard alerts do not require an account. To use mobile push, optional account email alerts, or MQTT:
 
-1. Search for **Notificator** in the [Apple App Store](https://apps.apple.com/) or [Google Play Store](https://play.google.com/store).
+1. Download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). Notificator is also coming to Google Play for Android, but that release is not publicly available yet.
 2. Install the mobile app and create an account.
 3. Create an API key in the app.
 4. Add and enable the key under **Notificator → Settings**.

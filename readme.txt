@@ -80,7 +80,7 @@ Rendered placeholder values become part of the notification and may contain pers
 
 = How do I get a Notificator account? =
 
-Search for **Notificator** in the [Apple App Store](https://apps.apple.com/) or [Google Play Store](https://play.google.com/store). Install the app and select the option to create an account. Registration is completed in the mobile app.
+Download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). Install the app and select the option to create an account. Registration is completed in the mobile app. Notificator is also coming to Google Play for Android, but that release is not publicly available yet.
 
 = How do I receive notifications in the mobile app? =
 
