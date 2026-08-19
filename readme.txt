@@ -19,6 +19,8 @@ Discover events exposed by WordPress and installed plugins, choose the events th
 
 For remote delivery, connect an optional Notificator API key. The Notificator mobile app can then receive push alerts and display notification details on your phone, while MQTT can deliver events to connected devices through your own HiveMQ Cloud cluster.
 
+Download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). The Android app is coming to Google Play and is not publicly available yet.
+
 Optional email alerts are controlled as an account preference from the mobile app. Mobile push and MQTT remain the per-notification remote delivery choices in WordPress.
 
 = What you can do =
