@@ -36,6 +36,15 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
+      - name: Load current WordPress.org listing assets
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --depth=1 origin main
+          git checkout FETCH_HEAD -- .wordpress-org
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
