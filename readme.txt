@@ -3,7 +3,7 @@ Contributors: eboxnet
 Donate link: https://buymeacoffee.com/vagelis
 Tags: notifications, alerts, hooks, monitoring, mqtt
 Requires at least: 5.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.2
 Stable tag: 1.2
 License: GPL-3.0-or-later
