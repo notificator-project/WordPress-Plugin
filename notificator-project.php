@@ -3,7 +3,7 @@
  * Plugin Name: Notificator – Alerts & Notifications
  * Plugin URI: https://github.com/notificator-project/WordPress-Plugin
  * Description: Turn WordPress events into dashboard alerts, with optional mobile push and MQTT delivery.
- * Version: 1.2
+ * Version: 1.2.1
  * Author: Notificator Project
  * Author URI: https://notificator-project.com/
  * License: GPL-3.0-or-later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'NOTIFICATOR_COMPANION_VERSION', '1.2' );
+define( 'NOTIFICATOR_COMPANION_VERSION', '1.2.1' );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_FILE', __FILE__ );

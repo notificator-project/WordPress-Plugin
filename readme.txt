@@ -5,7 +5,7 @@ Tags: notifications, alerts, hooks, monitoring, mqtt
 Requires at least: 5.0
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.2
+Stable tag: 1.2.1
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -175,6 +175,11 @@ The minified files in `assets/dist` are generated from `assets/js` and `assets/s
 4. Guided notification editor for choosing a source, event, message, and delivery channels.
 
 == Changelog ==
+
+= 1.2.1 =
+
+* Declares compatibility with WordPress 7.1.
+* Adds official App Store links and clearer WordPress Plugin API key guidance.
 
 = 1.2 =
 
