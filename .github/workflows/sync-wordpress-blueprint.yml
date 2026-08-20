@@ -1,0 +1,95 @@
+name: Sync WordPress.org Playground Blueprint
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate the Blueprint update without committing it to WordPress.org SVN
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wordpress-org-blueprint
+  cancel-in-progress: false
+
+jobs:
+  sync-blueprint:
+    runs-on: ubuntu-latest
+    environment: wordpress-org
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Blueprint JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BLUEPRINT=".wordpress-org/blueprints/blueprint.json"
+          jq empty "${BLUEPRINT}"
+          jq -e '."$schema" == "https://playground.wordpress.net/blueprint-schema.json"' "${BLUEPRINT}" >/dev/null
+          jq -e '.landingPage == "/wp-admin/admin.php?page=notificator"' "${BLUEPRINT}" >/dev/null
+          jq -e '.plugins | any(.slug == "notificator-project")' "${BLUEPRINT}" >/dev/null
+
+      - name: Install Subversion client
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! command -v svn >/dev/null 2>&1; then
+            sudo apt-get install --no-install-recommends --yes subversion || {
+              sudo apt-get update \
+                -o Acquire::Retries=3 \
+                -o Acquire::http::Timeout=20 \
+                -o Acquire::https::Timeout=20
+              sudo apt-get install --no-install-recommends --yes subversion
+            }
+          fi
+
+          svn --version --quiet
+
+      - name: Sync Blueprint to WordPress.org SVN
+        shell: bash
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+        run: |
+          set -euo pipefail
+
+          SVN_DIR="${RUNNER_TEMP}/notificator-project-svn"
+          SVN_URL="https://plugins.svn.wordpress.org/notificator-project"
+          SOURCE_DIR=".wordpress-org/blueprints"
+          TARGET_DIR="${SVN_DIR}/assets/blueprints"
+
+          svn checkout --depth immediates "${SVN_URL}" "${SVN_DIR}"
+          svn update --set-depth infinity "${SVN_DIR}/assets"
+          mkdir -p "${TARGET_DIR}"
+          cp "${SOURCE_DIR}/blueprint.json" "${TARGET_DIR}/blueprint.json"
+          svn add --force "${TARGET_DIR}" >/dev/null
+
+          if [[ -z "$(svn status "${TARGET_DIR}")" ]]; then
+            echo "WordPress.org already has the current Playground Blueprint."
+            exit 0
+          fi
+
+          svn diff "${TARGET_DIR}"
+
+          if [[ "${DRY_RUN}" == "true" ]]; then
+            echo "Dry run complete. No SVN changes were committed."
+            exit 0
+          fi
+
+          svn commit "${TARGET_DIR}" \
+            --username "${SVN_USERNAME}" \
+            --password "${SVN_PASSWORD}" \
+            --non-interactive \
+            --no-auth-cache \
+            --message "Add Notificator Playground preview Blueprint"

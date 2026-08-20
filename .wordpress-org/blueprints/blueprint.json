@@ -1,0 +1,21 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"landingPage": "/wp-admin/admin.php?page=notificator",
+	"preferredVersions": {
+		"php": "8.2",
+		"wp": "latest"
+	},
+	"phpExtensionBundles": ["kitchen-sink"],
+	"plugins": [
+		{
+			"resource": "wordpress.org/plugins",
+			"slug": "notificator-project"
+		}
+	],
+	"steps": [
+		{
+			"step": "login",
+			"username": "admin"
+		}
+	]
+}
