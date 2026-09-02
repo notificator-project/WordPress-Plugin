@@ -39,6 +39,12 @@ jobs:
             exit 1
           fi
 
+          if [[ ! "${STABLE_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "ERROR: Readme sync requires a numeric stable release tag."
+            exit 1
+          fi
+          echo "STABLE_TAG=${STABLE_TAG}" >> "${GITHUB_ENV}"
+
       - name: Install Subversion client
         timeout-minutes: 5
         shell: bash
@@ -71,21 +77,35 @@ jobs:
 
           svn checkout --depth immediates "${SVN_URL}" "${SVN_DIR}"
           svn update --set-depth files "${SVN_DIR}/trunk"
-          cp readme.txt "${SVN_DIR}/trunk/readme.txt"
 
-          if [[ -z "$(svn status "${SVN_DIR}/trunk/readme.txt")" ]]; then
+          # Refuse to move the directory to a different release during a text-only sync.
+          LIVE_STABLE_TAG="$(grep -m1 -E '^Stable tag:[[:space:]]*' "${SVN_DIR}/trunk/readme.txt" | sed -E 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/')"
+          if [[ "${LIVE_STABLE_TAG}" != "${STABLE_TAG}" ]]; then
+            echo "ERROR: Live stable tag differs from this checkout; use the release workflow instead."
+            exit 1
+          fi
+
+          # WordPress.org uses the stable tag's readme for the public listing.
+          svn update --set-depth immediates "${SVN_DIR}/tags"
+          svn update --set-depth files "${SVN_DIR}/tags/${STABLE_TAG}"
+          STABLE_README="${SVN_DIR}/tags/${STABLE_TAG}/readme.txt"
+          test -f "${STABLE_README}"
+          cp readme.txt "${SVN_DIR}/trunk/readme.txt"
+          cp readme.txt "${STABLE_README}"
+
+          if [[ -z "$(svn status "${SVN_DIR}/trunk/readme.txt" "${STABLE_README}")" ]]; then
             echo "WordPress.org already has the current readme."
             exit 0
           fi
 
-          svn diff "${SVN_DIR}/trunk/readme.txt"
+          svn diff "${SVN_DIR}/trunk/readme.txt" "${STABLE_README}"
 
           if [[ "${DRY_RUN}" == "true" ]]; then
             echo "Dry run complete. No SVN changes were committed."
             exit 0
           fi
 
-          svn commit "${SVN_DIR}/trunk/readme.txt" \
+          svn commit "${SVN_DIR}/trunk/readme.txt" "${STABLE_README}" \
             --username "${SVN_USERNAME}" \
             --password "${SVN_PASSWORD}" \
             --non-interactive \
