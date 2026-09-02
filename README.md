@@ -82,13 +82,17 @@ Optional observation samples execution counts, argument types, and context witho
 
 Dashboard alerts do not require an account. To use mobile push, optional account email alerts, or MQTT:
 
-1. Download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). Notificator is also coming to Google Play for Android, but that release is not publicly available yet.
-2. Install the mobile app and create an account.
-3. Create a **WordPress Plugin** (`wordpress_server`) API key in the app.
+1. Open the [web dashboard (beta)](https://dashboard.notificator-project.com), or get **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). Android is coming to Google Play and is not publicly available yet.
+2. Create an account or sign in with your existing credentials. The dashboard and app share the same account.
+3. Create a **WordPress Plugin** (`wordpress_server`) API key in either client.
 4. Add and enable the key under **Notificator → Settings**.
 5. Enable Mobile push or MQTT on the relevant notifications.
 
-Email alerts are an account-level preference enabled from the Notificator
+Use the dashboard or app to read connected notifications and monitor devices.
+Mobile push still requires the app and notification permission. Local WordPress
+dashboard alerts are separate from the Notificator web inbox.
+
+Email alerts are an account-level preference enabled from the web dashboard or
 mobile app. They do not add a separate per-event checkbox to the WordPress
 notification editor; mobile push and MQTT remain the event-level remote
 delivery choices exposed by the plugin.
