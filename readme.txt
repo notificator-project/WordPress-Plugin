@@ -5,7 +5,7 @@ Tags: notifications, alerts, hooks, monitoring, mqtt
 Requires at least: 5.0
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -19,7 +19,7 @@ Discover events exposed by WordPress and installed plugins, choose the events th
 
 For remote delivery, connect an optional Notificator API key. The [Notificator mobile app](https://apps.apple.com/app/notificator-project/id6758410275) can then receive push alerts and display notification details on your phone, while MQTT can deliver events to connected devices through your own HiveMQ Cloud cluster.
 
-Prefer a browser? Use the [Notificator web dashboard (beta)](https://dashboard.notificator-project.com) to create an account and API keys, read connected notifications, and monitor supported devices. It shares your account with the app. Mobile push still needs the mobile app; local WordPress dashboard alerts remain inside wp-admin.
+Prefer a browser? The [Notificator web dashboard (beta)](https://dashboard.notificator-project.com) is the central place to create your account, manage WordPress Plugin API keys, read connected notifications, monitor supported devices, and manage your saved MQTT connection. It shares your account with the mobile app, so you can use the same credentials everywhere. Mobile push still needs the mobile app; local WordPress dashboard alerts remain inside wp-admin.
 
 Download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275). The Android app is coming to Google Play and is not publicly available yet.
 
@@ -36,6 +36,7 @@ Optional email alerts are controlled as an account preference from the web dashb
 * Export notification configurations as JSON and reuse them across WordPress sites.
 * Manage notifications and review delivery status from one activity workspace.
 * Register well-described events and templates from another plugin or theme.
+* Use the [Notificator web dashboard (beta)](https://dashboard.notificator-project.com) to manage your account, API keys, connected notifications, devices, and account-level delivery settings.
 
 = Events, templates, and notifications =
 
@@ -56,9 +57,9 @@ Scanning runs locally in resumable background batches, processes one plugin at a
 3. Select **Scan plugins** to discover available site events.
 4. Apply a template or create a notification from a discovered event.
 5. Keep **Dashboard** enabled to receive alerts inside WordPress.
-6. Optional: use the [web dashboard (beta)](https://dashboard.notificator-project.com) or [Notificator mobile app](https://apps.apple.com/app/notificator-project/id6758410275) to create an account and WordPress Plugin API key, then add and enable that key in Settings.
+6. Use the [web dashboard (beta)](https://dashboard.notificator-project.com) or [Notificator mobile app](https://apps.apple.com/app/notificator-project/id6758410275) to create an account and WordPress Plugin API key, then add and enable that key in Settings.
 7. Enable Mobile push or MQTT on the notifications that need remote delivery.
-8. Optional: under Settings > MQTT broker, connect your own HiveMQ Cloud cluster and use the same topic prefix in your device firmware.
+8. Optional: under Settings > MQTT broker, use the saved HiveMQ Cloud connection from your Notificator account or connect a local HiveMQ Cloud cluster and use the same topic prefix in your device firmware.
 
 No API key is required for setup, discovery, templates, activity, or dashboard notifications.
 
@@ -84,7 +85,7 @@ Rendered placeholder values become part of the notification and may contain pers
 
 = How do I get a Notificator account? =
 
-Create an account in the [web dashboard (beta)](https://dashboard.notificator-project.com/register), or download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275) and register in the app. Use the same credentials on both. No app installation is required for a web account, API keys, or the shared inbox. Notificator is also coming to Google Play for Android, but that release is not publicly available yet.
+Create an account in the [Notificator web dashboard (beta)](https://dashboard.notificator-project.com/register), or download **Notificator Project** for iPhone or iPad from the [Apple App Store](https://apps.apple.com/app/notificator-project/id6758410275) and register in the app. The dashboard is the quickest way to manage API keys, review connected notifications, monitor devices, and configure account-level delivery settings. Use the same credentials on both. No app installation is required for a web account, API keys, or the shared inbox. Notificator is also coming to Google Play for Android, but that release is not publicly available yet.
 
 = How do I receive notifications in the mobile app? =
 
@@ -97,6 +98,8 @@ Yes. HiveMQ Cloud is the only MQTT provider supported by the current release. Hi
 Create an account at https://console.hivemq.cloud/, choose Create Serverless Cluster, and open the cluster overview. Copy the cluster URL and enter only its hostname in Notificator. Under Access Management, create a Publish Only username and password for WordPress and a separate Publish and Subscribe credential for the device.
 
 Enable MQTT delivery under Settings > MQTT broker, then enter the hostname, publisher username, password, and topic prefix. New configurations default to `notificator-project`. The device must use the same cluster and topic prefix.
+
+If your Notificator account already has a saved MQTT connection, the plugin detects it after an API key is enabled and uses it automatically. The saved password remains in the hosted service and is never returned to WordPress. Choose **Use a different broker** when you want to configure a local connection instead.
 
 The password is encrypted locally using keys derived from this WordPress installation. It is excluded from exports, logs, diagnostics, and saved retry payloads. For an MQTT-enabled delivery, the plugin decrypts it only while preparing the HTTPS request to the Notificator API.
 
@@ -177,6 +180,14 @@ The minified files in `assets/dist` are generated from `assets/js` and `assets/s
 4. Guided notification editor for choosing a source, event, message, and delivery channels.
 
 == Changelog ==
+
+= 1.3.0 =
+
+* Adds a redesigned dashboard with consistent panels, controls, settings pages, discovery views, and notification workflows.
+* Adds account-managed MQTT connections: saved HiveMQ credentials are detected and used automatically when an API key is enabled.
+* Adds an account MQTT status check, account connection testing, clearer connection states, and a local broker fallback.
+* Improves event discovery, ranked recommendations, plugin filtering, AJAX scanning, and notification creation.
+* Improves accessibility, responsive layout, light and dark theme styling, and release documentation.
 
 = 1.2.1 =
 
