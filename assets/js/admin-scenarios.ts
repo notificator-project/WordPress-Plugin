@@ -223,7 +223,11 @@ type AnyFn = (...args: any[]) => any;
 					'#created-notifications': 'created',
 					'#notificator-builder': 'created'
 				};
-				this.notificationView = viewByHash[window.location.hash] || 'created';
+				const requestedView = new URLSearchParams(window.location.search).get('view') || '';
+				this.notificationView =
+					requestedView === 'templates' || requestedView === 'discover'
+						? requestedView
+						: viewByHash[window.location.hash] || 'created';
 				this.templatePluginFilter = '__all__';
 				this.templateCategoryFilter = '__all__';
 				this.templateReadinessFilter = '__all__';
@@ -239,6 +243,7 @@ type AnyFn = (...args: any[]) => any;
 			searchQuery: '',
 			hookSearchQuery: '',
 			hookResultsLimit: 50,
+			notificationSavePending: false,
 			templateSearchQuery: '',
 			templatePluginFilter: '__all__',
 			templateCategoryFilter: '__all__',
@@ -1320,6 +1325,7 @@ type AnyFn = (...args: any[]) => any;
 				} else {
 					this.hooks.push(sanitizedScenario);
 				}
+				this.notificationSavePending = true;
 
 				this.modalOpen = false;
 
@@ -1394,8 +1400,6 @@ type AnyFn = (...args: any[]) => any;
 					return;
 				}
 
-				var toast = window.notificatorShowToast ? window.notificatorShowToast('Saving…', 'info', 0) : null;
-
 				const formData = new FormData(form);
 				formData.append('action', ajaxAction);
 				formData.append('nonce', ajaxNonce);
@@ -1415,11 +1419,11 @@ type AnyFn = (...args: any[]) => any;
 						}
 
 						if (response.ok && data && data.success) {
-							if (window.notificatorUpdateToast) {
-								window.notificatorUpdateToast(toast, 'Saved', 'success', 1500);
-							} else {
-								window.notificatorShowToast && window.notificatorShowToast('Saved', 'success', 1500);
+							if (this.notificationSavePending) {
+								this.notificationSavePending = false;
+								window.dispatchEvent(new CustomEvent('notificator:notification:saved'));
 							}
+							window.notificatorShowToast && window.notificatorShowToast('Saved', 'success', 1500);
 							try {
 								window.dispatchEvent(
 									new CustomEvent('notificator:save:state', {
@@ -1437,11 +1441,7 @@ type AnyFn = (...args: any[]) => any;
 						}
 
 						const message = data && data.data && data.data.message ? data.data.message : 'Save failed';
-						if (window.notificatorUpdateToast) {
-							window.notificatorUpdateToast(toast, 'Error: ' + message, 'error', 2500);
-						} else {
-							window.notificatorShowToast && window.notificatorShowToast('Error: ' + message, 'error', 2500);
-						}
+						window.notificatorShowToast && window.notificatorShowToast('Error: ' + message, 'error', 2500);
 						try {
 							window.dispatchEvent(
 								new CustomEvent('notificator:save:state', { detail: { state: 'error', message, suppressToast: true } })
@@ -1452,11 +1452,7 @@ type AnyFn = (...args: any[]) => any;
 					})
 					.catch((error) => {
 						console.error('Save error:', error);
-						if (window.notificatorUpdateToast) {
-							window.notificatorUpdateToast(toast, 'Error: Save failed', 'error', 2500);
-						} else {
-							window.notificatorShowToast && window.notificatorShowToast('Error: Save failed', 'error', 2500);
-						}
+						window.notificatorShowToast && window.notificatorShowToast('Error: Save failed', 'error', 2500);
 						try {
 							window.dispatchEvent(
 								new CustomEvent('notificator:save:state', {
@@ -1510,6 +1506,28 @@ type AnyFn = (...args: any[]) => any;
 		return builder;
 	};
 
+	window.addEventListener('notificator:notification:saved', () => {
+		const onboarding = document.getElementById('notificator-onboarding');
+		const notificationStep = onboarding?.querySelector<HTMLElement>('.notificator-onboarding-steps li:nth-child(2)');
+		if (onboarding && notificationStep) {
+			onboarding.classList.add('is-complete');
+			notificationStep.classList.add('is-complete');
+			notificationStep.classList.remove('is-current');
+			const icon = notificationStep.querySelector('.dashicons');
+			if (icon) {
+				icon.classList.remove('dashicons-marker');
+				icon.classList.add('dashicons-yes-alt');
+			}
+			const progress = document.getElementById('notificator-onboarding-progress');
+			if (progress) progress.textContent = '2 of 2 complete';
+			const description = onboarding.querySelector<HTMLElement>('.notificator-onboarding-heading p');
+			if (description) description.textContent = 'Your notification workspace is ready.';
+		}
+		const configuredCount = document.getElementById('notificator-overview-configured-notifications');
+		const hooks = window.notificatorScenarioBuilder?.hooks;
+		if (configuredCount && Array.isArray(hooks)) configuredCount.textContent = String(hooks.length);
+	});
+
 	/**
 	 * Plugin Scanner
 	 */
@@ -1561,6 +1579,7 @@ type AnyFn = (...args: any[]) => any;
 			const overviewStep = document.getElementById('notificator-overview-scan-step');
 			if (overviewStep) {
 				overviewStep.classList.add('is-complete');
+				overviewStep.classList.remove('is-current');
 				const overviewIcon = overviewStep.querySelector('.dashicons');
 				if (overviewIcon) {
 					overviewIcon.classList.remove('dashicons-marker');
@@ -1574,6 +1593,17 @@ type AnyFn = (...args: any[]) => any;
 				if (overviewDescription && overviewStep.dataset.scanCompleteDescription) {
 					overviewDescription.textContent = overviewStep.dataset.scanCompleteDescription;
 				}
+			}
+
+			const onboardingProgress = document.getElementById('notificator-onboarding-progress');
+			if (onboardingProgress && onboardingProgress.dataset.afterScanProgress) {
+				onboardingProgress.textContent = onboardingProgress.dataset.afterScanProgress;
+			}
+
+			const onboarding = document.getElementById('notificator-onboarding');
+			if (onboarding) {
+				const nextStep = onboarding.querySelector<HTMLElement>('.notificator-onboarding-steps li:not(.is-complete)');
+				nextStep?.classList.add('is-current');
 			}
 
 			const overviewStatus = document.getElementById('notificator-overview-scan-status');
@@ -1843,12 +1873,7 @@ type AnyFn = (...args: any[]) => any;
 		return null;
 	}
 
-	function updateToast(_toast: unknown, message: string, type?: string, _duration?: number): unknown {
-		return showToast(message, type || 'info');
-	}
-
 	window.notificatorShowToast = showToast;
-	window.notificatorUpdateToast = updateToast;
 
 	function setWpAdminBarHeightVar(): void {
 		var bar = document.getElementById('wpadminbar');
@@ -2106,7 +2131,6 @@ type AnyFn = (...args: any[]) => any;
 		function setSaveStatus(state: string, message?: string): void {
 			var nextState = state || 'idle';
 			if (nextState === 'saving') {
-				showToast('Saving…', 'info', 1200);
 				return;
 			}
 			if (nextState === 'saved') {
@@ -2235,6 +2259,22 @@ type AnyFn = (...args: any[]) => any;
 		);
 	}
 
+	function initConnectionDisclosures(): void {
+		var remoteToggle = document.getElementById('notificator-remote-settings-enabled') as HTMLInputElement | null;
+		var remoteDetails = document.querySelector('[data-notificator-connection-details="remote"]') as HTMLElement | null;
+		if (!remoteToggle || !remoteDetails) return;
+
+		function renderRemoteDetails(): void {
+			remoteDetails.hidden = !remoteToggle.checked;
+			remoteToggle.setAttribute('aria-expanded', remoteToggle.checked ? 'true' : 'false');
+			var label = remoteToggle.parentElement ? remoteToggle.parentElement.querySelector('strong') : null;
+			if (label) label.textContent = remoteToggle.checked ? 'Hide' : 'Set up';
+		}
+
+		remoteToggle.addEventListener('change', renderRemoteDetails);
+		renderRemoteDetails();
+	}
+
 	function initMqttSettings(): void {
 		var section = document.getElementById('notificator-mqtt');
 		var toggle = document.getElementById('notificator-mqtt-custom-enabled') as HTMLInputElement | null;
@@ -2251,6 +2291,7 @@ type AnyFn = (...args: any[]) => any;
 		var summary = document.getElementById('notificator-mqtt-summary');
 		var summaryLabel = summary ? summary.querySelector('[data-notificator-mqtt-summary-label]') : null;
 		var summaryDetail = summary ? summary.querySelector('[data-notificator-mqtt-summary-detail]') : null;
+		var details = document.querySelector('[data-notificator-connection-details="mqtt"]') as HTMLElement | null;
 		if (!section || !toggle || !fields) return;
 
 		var defaultTopicPrefix = 'notificator-project';
@@ -2269,6 +2310,10 @@ type AnyFn = (...args: any[]) => any;
 
 		function renderMode(): void {
 			var customEnabled = toggle.checked;
+			if (details) details.hidden = !customEnabled;
+			toggle.setAttribute('aria-expanded', customEnabled ? 'true' : 'false');
+			var toggleLabel = toggle.parentElement ? toggle.parentElement.querySelector('strong') : null;
+			if (toggleLabel) toggleLabel.textContent = customEnabled ? 'Enabled' : 'Enable';
 			fields.classList.toggle('is-disabled', !customEnabled);
 			fields.setAttribute('aria-disabled', customEnabled ? 'false' : 'true');
 			Array.prototype.slice.call(fields.querySelectorAll('input')).forEach(function (input) {
@@ -2709,6 +2754,7 @@ type AnyFn = (...args: any[]) => any;
 		initThrottleStatus();
 		initThemeToggle();
 		initGlobalSaveUx();
+		initConnectionDisclosures();
 		initMqttSettings();
 		initTopBarScenarioButton();
 		initScenarioImportExport();

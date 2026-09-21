@@ -330,6 +330,10 @@ function initPreferenceToggles(): void {
 			const settings = document.getElementById('notificator-dashboard-alert-settings');
 			settings?.classList.toggle('is-enabled', enabled);
 			settings?.classList.toggle('is-disabled', !enabled);
+		} else {
+			const settings = document.getElementById('notificator-log-settings');
+			settings?.classList.toggle('is-enabled', enabled);
+			settings?.classList.toggle('is-disabled', !enabled);
 		}
 		const cardStatus = document.getElementById(
 			isLog ? 'notificator-log-card-status' : 'notificator-dashboard-card-status'
@@ -494,8 +498,6 @@ function initLogTools(): void {
 /** Manage the tools dialog, including keyboard and backdrop dismissal. */
 function initToolsModal(): void {
 	const details = document.getElementById('notificator-scenarios-menu') as HTMLDetailsElement | null;
-	const overviewTrigger = document.getElementById('notificator-overview-tools') as HTMLButtonElement | null;
-	const headerTrigger = document.getElementById('notificator-header-tools') as HTMLButtonElement | null;
 	const resetTestData = document.getElementById('notificator-reset-test-data') as HTMLButtonElement | null;
 	if (!details) return;
 	const data = window.notificatorCompanionData || {};
@@ -505,27 +507,7 @@ function initToolsModal(): void {
 	const close = (): void => {
 		details.open = false;
 		document.body.classList.remove('notificator-modal-open');
-		overviewTrigger?.setAttribute('aria-expanded', 'false');
-		headerTrigger?.setAttribute('aria-expanded', 'false');
 	};
-	const open = (): void => {
-		if (details.dataset.notificatorDisabled === '1') return;
-		details.open = true;
-		document.body.classList.add('notificator-modal-open');
-		overviewTrigger?.setAttribute('aria-expanded', 'true');
-		headerTrigger?.setAttribute('aria-expanded', 'true');
-		window.setTimeout(
-			() =>
-				details.querySelector<HTMLElement>('.notificator-tools-modal button, .notificator-tools-modal input')?.focus(),
-			0
-		);
-	};
-	const openFromTrigger = (event: Event): void => {
-		event.preventDefault();
-		event.stopPropagation();
-		open();
-	};
-
 	details.addEventListener('toggle', () => {
 		document.body.classList.toggle('notificator-modal-open', details.open);
 	});
@@ -535,12 +517,6 @@ function initToolsModal(): void {
 	details
 		.querySelectorAll<HTMLElement>('#notificator-import-scenarios')
 		.forEach((button) => button.addEventListener('click', () => window.setTimeout(close, 0)));
-	overviewTrigger?.setAttribute('aria-controls', details.id);
-	headerTrigger?.setAttribute('aria-controls', details.id);
-	overviewTrigger?.setAttribute('aria-expanded', 'false');
-	headerTrigger?.setAttribute('aria-expanded', 'false');
-	overviewTrigger?.addEventListener('click', openFromTrigger);
-	headerTrigger?.addEventListener('click', openFromTrigger);
 	resetTestData?.addEventListener('click', () => {
 		if (!actions.resetTestData || !nonces.resetTestData) return;
 		if (
@@ -600,17 +576,23 @@ function initDiscoveryInbox(): void {
 	const list = document.getElementById('notificator-discovery-list');
 	const search = document.getElementById('notificator-discovery-search') as HTMLInputElement | null;
 	const filter = document.getElementById('notificator-discovery-filter') as HTMLSelectElement | null;
+	const pluginFilter = document.getElementById('notificator-discovery-plugin-filter') as HTMLSelectElement | null;
 	const empty = document.getElementById('notificator-discovery-empty') as HTMLElement | null;
 	const observationToggle = document.getElementById('notificator-observation-toggle') as HTMLButtonElement | null;
+	const observationStatus = document.getElementById('notificator-observation-status');
 	const browseAll = document.getElementById('notificator-browse-all-events') as HTMLButtonElement | null;
-	if (!list || !search || !filter) return;
+	if (!list || !search || !filter || !pluginFilter) return;
 	const data = window.notificatorCompanionData || {};
 	const actions = (data.actions || {}) as Record<string, string>;
 	const nonces = (data.nonces || {}) as Record<string, string>;
 
 	type DiscoveryResponse = {
 		success?: boolean;
-		data?: { ignored?: boolean; message?: string };
+		data?: {
+			ignored?: boolean;
+			message?: string;
+			observation?: { active?: boolean; ends_at?: number };
+		};
 	};
 	const post = (action: string, nonce: string, payload: Record<string, string> = {}): Promise<DiscoveryResponse> => {
 		const body = new URLSearchParams({ action, nonce, ...payload });
@@ -643,10 +625,23 @@ function initDiscoveryInbox(): void {
 			option.disabled = count === 0 && option.value !== 'ignored';
 		});
 	};
+	const updateSearchContext = (): void => {
+		const modeOption = filter.selectedOptions[0];
+		const modeLabel = (modeOption?.dataset.filterLabel || modeOption?.textContent || 'findings')
+			.replace(/\s*\(\d+\)\s*$/, '')
+			.trim()
+			.toLocaleLowerCase();
+		const pluginLabel =
+			pluginFilter.value === '__all__' ? '' : pluginFilter.selectedOptions[0]?.textContent?.trim() || '';
+		const context = pluginLabel ? `${modeLabel} for ${pluginLabel}` : modeLabel;
+		search.placeholder = `Search ${context}…`;
+		search.setAttribute('aria-label', `Search ${context}`);
+	};
 
 	const apply = (): void => {
 		const query = search.value.trim().toLocaleLowerCase();
 		const mode = filter.value;
+		const plugin = pluginFilter.value;
 		let visible = 0;
 		list.querySelectorAll<HTMLElement>('[data-discovery-item]').forEach((item, index) => {
 			const rank = Number(item.dataset.discoveryRank ?? index);
@@ -654,19 +649,43 @@ function initDiscoveryInbox(): void {
 			item.dataset.discoveryRank = String(rank);
 			item.style.order = String(mode === 'recommended' ? priority * 10000 + rank : rank);
 			const matchesQuery = !query || (item.dataset.search || '').includes(query);
-			item.hidden = !(matchesQuery && matchesMode(item, mode));
+			const matchesPlugin = plugin === '__all__' || item.dataset.plugin === plugin;
+			item.hidden = !(matchesQuery && matchesPlugin && matchesMode(item, mode));
 			if (!item.hidden) visible += 1;
 		});
 		if (empty) empty.hidden = visible > 0;
 	};
 
 	search.addEventListener('input', apply);
-	filter.addEventListener('change', apply);
-	browseAll?.addEventListener('click', () => {
-		const builder = window.notificatorScenarioBuilder;
-		if (!builder || typeof builder.openAddModal !== 'function') return;
-		builder.openAddModal?.();
+	filter.addEventListener('change', () => {
+		updateSearchContext();
+		apply();
 	});
+	pluginFilter.addEventListener('change', () => {
+		if (pluginFilter.value !== '__all__') filter.value = 'all';
+		updateSearchContext();
+		apply();
+	});
+	browseAll?.addEventListener('click', () => {
+		search.value = '';
+		filter.value = 'all';
+		pluginFilter.value = '__all__';
+		updateSearchContext();
+		apply();
+		filter.focus();
+	});
+	const updateObservationUi = (observing: boolean): void => {
+		if (!observationToggle) return;
+		observationToggle.dataset.observing = observing ? '1' : '0';
+		observationToggle.innerHTML = observing
+			? '<span class="dashicons dashicons-controls-pause"></span>Stop observing'
+			: '<span class="dashicons dashicons-visibility"></span>Observe for 10 min';
+		if (observationStatus) {
+			observationStatus.classList.toggle('badge-success', observing);
+			observationStatus.classList.toggle('badge-info', !observing);
+			observationStatus.textContent = observing ? 'Observing' : 'Observation off';
+		}
+	};
 	list.addEventListener('click', (event) => {
 		const target = event.target instanceof Element ? event.target : null;
 		const create = target?.closest<HTMLButtonElement>('[data-discovery-create]');
@@ -709,14 +728,22 @@ function initDiscoveryInbox(): void {
 		post(action, nonces.observation, observing ? {} : { duration: '600' })
 			.then((json) => {
 				if (!json?.success) throw new Error(json?.data?.message || 'Unable to update observation.');
-				window.location.reload();
+				const nowObserving = !!json.data?.observation?.active;
+				updateObservationUi(nowObserving);
+				window.notificatorToast?.show(
+					nowObserving ? 'Observation is active for the next 10 minutes.' : 'Observation stopped.',
+					'success'
+				);
 			})
 			.catch((error) => {
 				window.notificatorToast?.show(error.message, 'error');
+			})
+			.finally(() => {
 				observationToggle.disabled = false;
 			});
 	});
 	updateFilterCounts();
+	updateSearchContext();
 	apply();
 }
 
@@ -1068,6 +1095,7 @@ if (document.readyState === 'loading') {
 /** Present the settings form as focused categories without changing its fields. */
 function initSettingsNavigation(): void {
 	const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-notificator-settings-tab]'));
+	const sidebarTabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-notificator-settings-view]'));
 	const groups = Array.from(document.querySelectorAll<HTMLElement>('[data-notificator-settings-group]'));
 	const preferences = document.querySelector<HTMLElement>('[data-notificator-settings-preferences]');
 	const panelTitle = document.querySelector<HTMLElement>('[data-notificator-settings-panel-title]');
@@ -1089,6 +1117,11 @@ function initSettingsNavigation(): void {
 			const active = tab.dataset.notificatorSettingsTab === activeCategory;
 			tab.classList.toggle('is-active', active);
 			tab.setAttribute('aria-pressed', active ? 'true' : 'false');
+		});
+		sidebarTabs.forEach((tab) => {
+			const active = tab.dataset.notificatorSettingsView === activeCategory;
+			tab.classList.toggle('is-active', active);
+			tab.setAttribute('aria-current', active ? 'page' : 'false');
 		});
 
 		groups.forEach((group) => {
@@ -1141,6 +1174,48 @@ function initSettingsNavigation(): void {
 	shell?.classList.add('notificator-settings-tabs-ready');
 	activeCategory = getRequestedCategory();
 	activate(activeCategory, false);
+}
+
+/** Keep sidebar sub-navigation connected to the existing Alpine view tabs. */
+function initWorkspaceSubnavigation(): void {
+	const syncNotificationView = (): void => {
+		const active = document.querySelector<HTMLElement>(
+			'.notificator-notification-tabs button.is-active, .notificator-notification-tabs button[aria-current="page"]'
+		);
+		const view = active?.dataset.notificatorNotificationView || '';
+		document.querySelectorAll<HTMLButtonElement>('[data-notificator-notification-view]').forEach((button) => {
+			if (button.closest('.notificator-notification-tabs')) return;
+			const isActive = Boolean(view) && button.dataset.notificatorNotificationView === view;
+			button.classList.toggle('is-active', isActive);
+			button.setAttribute('aria-current', isActive ? 'page' : 'false');
+		});
+	};
+
+	document.addEventListener('click', (event) => {
+		const target =
+			event.target instanceof Element
+				? event.target.closest<HTMLButtonElement>(
+						'[data-notificator-notification-view], [data-notificator-settings-view]'
+					)
+				: null;
+		if (!target || target.closest('.notificator-notification-tabs')) return;
+		event.preventDefault();
+
+		const workspace = target.dataset.notificatorNotificationView ? 'notifications' : 'settings';
+		document.querySelector<HTMLElement>(`[data-notificator-workspace-tab="${workspace}"]`)?.click();
+		const selector = target.dataset.notificatorNotificationView
+			? `.notificator-notification-tabs [data-notificator-notification-view="${target.dataset.notificatorNotificationView}"]`
+			: `[data-notificator-settings-tab="${target.dataset.notificatorSettingsView}"]`;
+		document.querySelector<HTMLButtonElement>(selector)?.click();
+		if (target.dataset.notificatorNotificationView) window.requestAnimationFrame(syncNotificationView);
+	});
+
+	document.addEventListener('click', (event) => {
+		if (!(event.target instanceof Element) || !event.target.closest('.notificator-notification-tabs button')) return;
+		window.requestAnimationFrame(syncNotificationView);
+	});
+
+	syncNotificationView();
 }
 
 /**
@@ -1234,4 +1309,10 @@ if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', initSettingsNavigation);
 } else {
 	initSettingsNavigation();
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', initWorkspaceSubnavigation);
+} else {
+	initWorkspaceSubnavigation();
 }

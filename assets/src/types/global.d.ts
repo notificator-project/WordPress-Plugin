@@ -79,7 +79,6 @@ declare global {
 		startPluginScan?: () => void;
 		closeScanModal?: () => void;
 		notificatorShowToast?: (message: string, type?: string, duration?: number) => unknown;
-		notificatorUpdateToast?: (toast: unknown, message: string, type?: string, duration?: number) => unknown;
 	}
 }
 

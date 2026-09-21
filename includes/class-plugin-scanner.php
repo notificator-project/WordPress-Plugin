@@ -683,11 +683,13 @@ class Notificator_Companion_Plugin_Scanner {
 			$risk      = 'dynamic';
 			$reasons[] = 'Dynamic name requires a concrete runtime value';
 		}
+		// Keep this in sync with the curated Recommended view: the flag means the
+		// event is strong enough to be surfaced there, not merely worth reviewing.
 		$score               = max( 0, min( 100, $score ) );
 		$meta['score']       = $score;
 		$meta['confidence']  = $score >= 75 ? 'high' : ( $score >= 45 ? 'medium' : 'low' );
 		$meta['risk']        = $risk;
-		$meta['recommended'] = $score >= 65 && 'registration' !== $meta['arg_mode'] && empty( $meta['dynamic'] );
+		$meta['recommended'] = $score >= 80 && 'registration' !== $meta['arg_mode'] && empty( $meta['dynamic'] );
 		$meta['reason']      = implode( '. ', array_unique( $reasons ) ) . '.';
 		$meta['description'] = $this->build_plain_language_description( $hook_name, $meta );
 		return $meta;

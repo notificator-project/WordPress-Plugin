@@ -330,7 +330,7 @@
 
 .notificator-layout {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr);
+	grid-template-columns: 216px minmax(0, 1fr);
 	gap: 0;
 	align-items: start;
 
@@ -1215,11 +1215,6 @@
 	color: #475569;
 	font-size: 0.68rem;
 }
-.notificator-discovery-title > span {
-	color: #64748b;
-	font-size: 0.68rem;
-	white-space: nowrap;
-}
 .notificator-discovery-content > p {
 	margin: 0.35rem 0;
 	color: #64748b;
@@ -1295,7 +1290,7 @@
 		grid-template-columns: 3.2rem minmax(0, 1fr);
 	}
 	.notificator-discovery-actions {
-		grid-column: 1 / -1;
+		grid-column: 2;
 	}
 	.notificator-discovery-title {
 		align-items: flex-start;
@@ -1399,6 +1394,59 @@
 	.modal-backdrop > .flex > .relative {
 		background: #111827;
 		border: 1px solid #334155;
+	}
+}
+
+/* Keep the template title and its filters on one desktop control line. */
+@media (min-width: 901px) {
+	.notificator-companion-wrap #notificator-templates .notificator-scenario-head > .flex:first-child {
+		flex-wrap: nowrap !important;
+		align-items: center;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-scenario-head > .flex:first-child > div:first-child {
+		flex: 0 1 15rem;
+		min-width: 12rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-controls {
+		flex: 1 1 auto;
+		flex-wrap: nowrap !important;
+		gap: 0.5rem;
+		min-width: 0;
+		justify-content: flex-end;
+	}
+
+	.notificator-companion-wrap
+		#notificator-templates
+		.notificator-templates-controls
+		> div:not(.notificator-templates-search) {
+		min-width: 0;
+		flex: 0 1 9rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-filter-select {
+		width: 100% !important;
+		min-width: 0 !important;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search {
+		flex: 1 1 12rem;
+		min-width: 10rem;
+		max-width: 16rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search-input {
+		width: 100% !important;
+		min-width: 0 !important;
+	}
+}
+
+/* Desktop uses the sidebar sub-navigation as the single source of navigation. */
+@media (min-width: 901px) {
+	.notificator-companion-wrap .notificator-notification-tabs,
+	.notificator-companion-wrap .notificator-settings-tabs {
+		display: none !important;
 	}
 }
 
@@ -2267,49 +2315,168 @@
 }
 
 .notificator-modal-head.notificator-scenario-head--builder {
-	background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%);
-	border-bottom: 1px solid #2563eb;
-
-	.text-white {
-		color: #ffffff !important;
-	}
-
-	.text-white\/90,
-	.text-white\/70 {
-		color: rgba(255, 255, 255, 0.78) !important;
-	}
+	padding: 1.15rem 1.5rem;
+	border-bottom: 1px solid #dfe4ee;
+	background: #ffffff;
 }
 
 .notificator-create-modal {
+	--notificator-modal-blue: #1f56db;
+	--notificator-modal-blue-hover: #1747bd;
+	--notificator-modal-blue-subtle: #eaf0ff;
+	--notificator-modal-blue-line: #b9caff;
+
 	.modal-body-scrollable {
 		padding: 1.5rem 1.75rem;
 	}
 
+	.notificator-modal-title-group {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+
+		h3 {
+			margin: 0;
+			color: #0b1020;
+			letter-spacing: -0.02em;
+		}
+
+		p {
+			margin: 0.18rem 0 0;
+			color: #667088;
+		}
+	}
+
+	.notificator-modal-title-icon {
+		display: grid;
+		place-items: center;
+		width: 2.35rem;
+		height: 2.35rem;
+		border: 1px solid var(--notificator-modal-blue-line);
+		border-radius: 0.7rem;
+		background: var(--notificator-modal-blue-subtle);
+		color: var(--notificator-modal-blue);
+	}
+
+	.notificator-modal-close {
+		width: 2.25rem;
+		height: 2.25rem;
+		border: 1px solid #dfe4ee;
+		background: #ffffff;
+		color: #667088;
+
+		&:hover {
+			border-color: var(--notificator-modal-blue-line);
+			background: var(--notificator-modal-blue-subtle);
+			color: var(--notificator-modal-blue);
+		}
+
+		&:focus-visible {
+			box-shadow: 0 0 0 3px rgba(31, 86, 219, 0.15);
+		}
+	}
+
+	.notificator-modal-step-indicator {
+		border-color: #dfe4ee !important;
+		background: #f7f9fd !important;
+	}
+
 	.notificator-plugin-select {
-		min-height: 5rem;
+		min-height: 5.5rem;
+		border-color: #dfe4ee !important;
+		background: #ffffff;
+		box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+
+		> div > div:first-child {
+			background: #f3f6fc !important;
+			color: #52647f;
+		}
+
+		&:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 8px 16px rgba(31, 86, 219, 0.08);
+
+			> div > div:first-child {
+				background: var(--notificator-modal-blue-subtle) !important;
+				color: var(--notificator-modal-blue);
+			}
+		}
+	}
+
+	.notificator-modal-section-intro {
+		margin-bottom: 0.85rem;
+
+		h3 {
+			margin: 0;
+			color: #0b1020;
+			font-size: 0.9rem;
+		}
+
+		p {
+			margin: 0.25rem 0 0;
+			color: #667088;
+			font-size: 0.78rem;
+			line-height: 1.45;
+		}
 	}
 
 	.btn-primary {
-		background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+		background: var(--notificator-modal-blue);
+
+		&:hover {
+			background: var(--notificator-modal-blue-hover);
+		}
 	}
 	.notificator-note-tag-btn {
-		color: #1d4ed8;
-		background: #eff6ff;
-		border-color: #bfdbfe;
+		color: var(--notificator-modal-blue);
+		background: var(--notificator-modal-blue-subtle);
+		border-color: var(--notificator-modal-blue-line);
+
+		&:hover {
+			border-color: var(--notificator-modal-blue);
+		}
 	}
 	.bg-indigo-500 {
-		background-color: #3b82f6 !important;
+		background-color: var(--notificator-modal-blue) !important;
 	}
 	.text-indigo-600,
 	.text-indigo-700 {
-		color: #2563eb !important;
+		color: var(--notificator-modal-blue) !important;
 	}
 	.notificator-review-card {
-		border-color: #bfdbfe;
-		background: linear-gradient(135deg, #eff6ff, #dbeafe);
+		border-color: var(--notificator-modal-blue-line);
+		background: linear-gradient(135deg, #f7f9ff, var(--notificator-modal-blue-subtle));
 	}
 	.notificator-review-card__label {
-		color: #2563eb;
+		color: var(--notificator-modal-blue);
+	}
+
+	.notificator-plugin-select:not(.opacity-40):hover,
+	.hook-list-scrollable > button:hover {
+		border-color: var(--notificator-modal-blue-line) !important;
+		background: #f7f9ff !important;
+	}
+
+	.notificator-plugin-select:focus-visible,
+	.hook-list-scrollable > button:focus-visible,
+	input:focus,
+	select:focus,
+	textarea:focus,
+	.notificator-condition-row:focus-within {
+		border-color: var(--notificator-modal-blue) !important;
+		box-shadow: 0 0 0 3px rgba(31, 86, 219, 0.15) !important;
+		outline: none;
+	}
+
+	input[type='checkbox'] {
+		accent-color: var(--notificator-modal-blue);
+	}
+
+	.notificator-modal-footer-hint {
+		margin: 0;
+		color: #667088;
+		font-size: 0.78rem;
+		font-weight: 600;
 	}
 	.notificator-technical-details code,
 	.notificator-technical-hook {
@@ -2507,8 +2674,61 @@
 
 .notificator-theme-dark {
 	.notificator-modal-head.notificator-scenario-head--builder {
-		background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-		border-bottom-color: #3b82f6;
+		border-bottom-color: #273449;
+		background: #11192e;
+	}
+
+	.notificator-create-modal {
+		.notificator-modal-title-group h3 {
+			color: #f8fafc;
+		}
+
+		.notificator-modal-title-group p,
+		.notificator-modal-footer-hint {
+			color: #aab7cf;
+		}
+
+		.notificator-modal-close {
+			border-color: #2a3653;
+			background: #11192e;
+			color: #aab7cf;
+		}
+
+		.notificator-modal-step-indicator {
+			border-color: #273449 !important;
+			background: #0c1425 !important;
+		}
+
+		.notificator-plugin-select {
+			border-color: #273449 !important;
+			background: #11192e;
+
+			> div > div:first-child {
+				background: #18243b !important;
+				color: #aab7cf;
+			}
+		}
+
+		.notificator-plugin-select:not(.opacity-40):hover,
+		.notificator-plugin-select:focus,
+		.notificator-plugin-select:focus-visible {
+			border-color: #5e8fff !important;
+			background: #14234b !important;
+			box-shadow: 0 0 0 3px rgba(94, 143, 255, 0.18) !important;
+
+			> div > div:first-child {
+				background: rgba(31, 86, 219, 0.28) !important;
+				color: #c9d8ff;
+			}
+		}
+
+		.notificator-plugin-select .text-gray-900 {
+			color: #f8fafc !important;
+		}
+
+		.notificator-plugin-select .text-gray-500 {
+			color: #aab7cf !important;
+		}
 	}
 	.notificator-modal-step span,
 	.notificator-modal-step__line {
@@ -2672,16 +2892,6 @@ input[type='checkbox'].toggle {
 @media (max-width: 768px) {
 	.notificator-companion-wrap {
 		padding: 1rem;
-	}
-
-	.notificator-log-header-controls {
-		width: 100%;
-		justify-content: flex-start;
-	}
-
-	.notificator-log-header-controls .notificator-log-meta {
-		width: 100%;
-		justify-content: space-between;
 	}
 
 	.notificator-log-search-header {
@@ -3808,35 +4018,6 @@ input[type='checkbox'].toggle {
 	}
 }
 
-.notificator-integration-install {
-	margin-top: 0.65rem;
-	overflow: hidden;
-	border: 1px solid #dbe3ee;
-	border-radius: 0.75rem;
-	background: #fff;
-
-	summary {
-		padding: 0.8rem 0.95rem;
-		color: #334155;
-		font-size: 0.78rem;
-		font-weight: 700;
-		cursor: pointer;
-	}
-
-	ol {
-		margin: 0;
-		padding: 0.2rem 1.25rem 1rem 2.25rem;
-		border-top: 1px solid #e2e8f0;
-		color: #475569;
-		font-size: 0.74rem;
-		line-height: 1.55;
-	}
-
-	li {
-		margin-top: 0.55rem;
-	}
-}
-
 .notificator-theme-dark .notificator-companion-wrap #notificator-integrations .notificator-integration-card,
 [data-theme='dark'] .notificator-companion-wrap #notificator-integrations .notificator-integration-card {
 	border-color: #334155 !important;
@@ -3895,18 +4076,6 @@ input[type='checkbox'].toggle {
 			border-color: #334155;
 			background: #020617;
 			color: #e2e8f0;
-		}
-	}
-
-	.notificator-integration-install {
-		border-color: #334155;
-		background: #0f172a;
-		summary {
-			color: #e2e8f0;
-		}
-		ol {
-			border-color: #334155;
-			color: #cbd5e1;
 		}
 	}
 }
@@ -5008,29 +5177,6 @@ body.notificator-modal-open {
 	background: #f8fafc;
 }
 
-.notificator-mqtt-mode {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-	padding: 1rem;
-	border: 1px solid #dbeafe;
-	border-radius: 0.85rem;
-	background: #eff6ff;
-
-	strong {
-		display: block;
-		color: #172554;
-		font-size: 0.95rem;
-	}
-
-	p {
-		margin: 0.2rem 0 0;
-		color: #475569;
-		font-size: 0.82rem;
-	}
-}
-
 .notificator-mqtt-help {
 	margin: -0.35rem 0 0;
 	color: #64748b;
@@ -5692,15 +5838,9 @@ body.notificator-modal-open {
 	.notificator-mqtt-provider-guide ol {
 		color: #cbd5e1;
 	}
-	.notificator-mqtt-mode {
-		border-color: #1e3a8a;
-		background: rgba(30, 58, 138, 0.28);
-	}
-	.notificator-mqtt-mode strong,
 	.notificator-mqtt-fields label > span {
 		color: #dbeafe;
 	}
-	.notificator-mqtt-mode p,
 	.notificator-mqtt-help,
 	.notificator-mqtt-fields small {
 		color: #94a3b8;
@@ -5890,9 +6030,6 @@ body.notificator-modal-open {
 	.notificator-mqtt-fields {
 		grid-template-columns: 1fr;
 	}
-	.notificator-mqtt-mode {
-		align-items: flex-start;
-	}
 	.notificator-mqtt-actions > button {
 		width: 100%;
 		justify-content: center;
@@ -5978,5 +6115,1697 @@ body.notificator-modal-open {
 
 	.notificator-page-hero .notificator-overview-actions {
 		justify-content: flex-start;
+	}
+}
+
+/* -------------------------------------------------
+   Dashboard-aligned application shell
+
+   The plugin uses the existing workspace links as a compact navigation rail,
+   matching the dashboard's dark sidebar and light content canvas. This is a
+   layout-only change: the links, forms, modals, and workspace state remain
+   exactly the same.
+-------------------------------------------------- */
+
+.notificator-companion-wrap {
+	--nc-primary: #1f56db;
+	--nc-primary-rgb: 31, 86, 219;
+	--nc-bg: #f5f7fb;
+	--nc-text: #0b1020;
+	--nc-muted: #667088;
+	--nc-border: #dfe4ee;
+
+	display: grid;
+	grid-template-columns: 216px minmax(0, 1fr);
+	grid-template-rows: auto auto minmax(0, 1fr);
+	align-items: start;
+	gap: 0;
+	max-width: 1420px;
+	margin: 1.25rem 1.5rem 0 0;
+	background: #f5f7fb;
+	color: #0b1020;
+	border: 1px solid #dfe4ee;
+	border-radius: 1.25rem;
+	box-shadow: 0 18px 46px rgba(24, 39, 75, 0.07);
+	overflow: hidden;
+
+	> .notificator-page-hero {
+		grid-column: 1 / -1;
+		grid-row: 1;
+		margin: 0;
+		border: 0;
+		border-radius: 0;
+		background: #ffffff;
+		box-shadow: none;
+		color: #0b1020;
+		padding: 1.55rem clamp(1.5rem, 3vw, 2.75rem) 1.35rem;
+
+		h1,
+		h2 {
+			color: #0b1020;
+		}
+
+		p {
+			color: #667088;
+		}
+
+		.notificator-eyebrow {
+			color: #1f56db;
+		}
+	}
+
+	> #notificator-admin-notices {
+		grid-column: 1 / -1;
+		grid-row: 2;
+		margin: 0;
+		padding: 0 1.5rem;
+	}
+
+	> .notificator-workspace-tabs {
+		grid-column: 1;
+		grid-row: 3;
+		display: flex;
+		align-self: stretch;
+		align-items: stretch;
+		flex-direction: column;
+		gap: 0.35rem;
+		min-height: 44rem;
+		margin: 0;
+		padding: 1.25rem 0.8rem;
+		border: 0;
+		border-radius: 0;
+		background: #0b1020;
+		box-shadow: none;
+		overflow: visible;
+
+		a {
+			justify-content: flex-start;
+			flex: 0 0 auto;
+			gap: 0.7rem;
+			min-width: 0;
+			min-height: 2.7rem;
+			padding: 0.7rem 0.85rem;
+			border: 1px solid transparent;
+			border-radius: 0.65rem;
+			color: #aebbd5;
+			font-size: 0.8rem;
+			font-weight: 650;
+			text-align: left;
+
+			&::after {
+				display: none;
+			}
+
+			&:hover {
+				background: #121b33;
+				color: #ffffff;
+			}
+
+			&.is-active,
+			&[aria-current='page'] {
+				border-color: #2d4f9f;
+				background: #14234b;
+				color: #ffffff;
+			}
+
+			&.is-active .dashicons,
+			&[aria-current='page'] .dashicons {
+				color: #7ea7ff;
+			}
+		}
+
+		.dashicons {
+			width: 1.15rem;
+			height: 1.15rem;
+			color: #8290ad;
+			font-size: 1.15rem;
+			line-height: 1.15rem;
+		}
+	}
+
+	.notificator-workspace-nav-group {
+		display: grid;
+		gap: 0.2rem;
+	}
+
+	.notificator-workspace-subnav {
+		display: none;
+		gap: 0.1rem;
+		margin: 0.1rem 0 0.45rem 1.5rem;
+		padding: 0.15rem 0 0.15rem 0.5rem;
+		border-left: 1px solid #344362;
+
+		button {
+			display: flex;
+			align-items: center;
+			gap: 0.55rem;
+			width: 100%;
+			min-width: 0;
+			min-height: 2.15rem;
+			padding: 0.5rem 0.65rem;
+			border: 1px solid transparent;
+			border-radius: 0.45rem;
+			background: transparent;
+			color: #8290ad;
+			font-size: 0.74rem;
+			font-weight: 600;
+			line-height: 1.25;
+			text-align: left;
+			cursor: pointer;
+
+			&:hover {
+				border-color: #2a3653;
+				background: #11192e;
+				color: #dce4fa;
+			}
+
+			&.is-active {
+				border-color: #354a76;
+				background: #18223b;
+				box-shadow: inset 2px 0 0 #7ea7ff;
+				color: #ffffff;
+			}
+		}
+
+		.dashicons {
+			width: 0.9rem;
+			height: 0.9rem;
+			color: currentcolor;
+			font-size: 0.9rem;
+			line-height: 0.9rem;
+		}
+
+		button > span:last-child {
+			min-width: 0;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	&[data-notificator-current-workspace='notifications']
+		[data-notificator-workspace-group='notifications']
+		.notificator-workspace-subnav,
+	&[data-notificator-current-workspace='settings']
+		[data-notificator-workspace-group='settings']
+		.notificator-workspace-subnav {
+		display: grid;
+	}
+
+	> .notificator-settings-form {
+		grid-column: 2;
+		grid-row: 3;
+		min-width: 0;
+		padding: 1.25rem clamp(1rem, 2vw, 1.5rem) 3rem;
+		background: #f5f7fb;
+	}
+
+	.notificator-tools-host {
+		display: none;
+	}
+
+	.notificator-overview,
+	.notificator-settings-intro,
+	.notificator-settings-tabs,
+	.notificator-settings-panel,
+	.scenario-section,
+	.notificator-discovery {
+		width: 100%;
+		max-width: none;
+		margin-right: 0;
+		margin-left: 0;
+	}
+
+	.notificator-settings-panel {
+		display: grid;
+		gap: 0.9rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.notificator-settings-panel--connections > .scenario-section {
+		width: 100% !important;
+		margin-right: 0 !important;
+		margin-left: 0 !important;
+	}
+
+	.notificator-settings-panel-heading {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.35rem 0.15rem 0.15rem;
+
+		.notificator-eyebrow {
+			margin-bottom: 0.3rem;
+			font-size: 0.67rem;
+		}
+
+		h3 {
+			margin: 0;
+			color: #0b1020;
+			font-size: 1.2rem;
+			letter-spacing: -0.025em;
+		}
+
+		p:last-child {
+			max-width: 44rem;
+			margin: 0.25rem 0 0;
+			color: #667088;
+			font-size: 0.82rem;
+		}
+	}
+
+	.notificator-settings-panel-count {
+		flex: 0 0 auto;
+		padding: 0.35rem 0.65rem;
+		border: 1px solid #dfe4ee;
+		border-radius: 999px;
+		background: #ffffff;
+		color: #667088;
+		font-family: var(--font-mono, monospace);
+		font-size: 0.65rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		white-space: nowrap;
+	}
+
+	/* Each workspace starts at the same point below the shared page header. */
+	.notificator-main-content > [data-notificator-workspace='notifications'] > div[x-data] {
+		margin-top: 0 !important;
+	}
+
+	/* The Alpine view wrappers inherit the legacy space-y stack. With the
+	   sidebar now handling navigation, the visible view should begin at the
+	   shared workspace baseline instead of adding another top offset. */
+	.notificator-main-content > [data-notificator-workspace='notifications'] > div[x-data] > div[x-show] {
+		margin-top: 0 !important;
+	}
+
+	.notificator-main-content .notificator-discovery {
+		margin-top: 0 !important;
+	}
+
+	/* Settings are the primary workspace; use the full content canvas. */
+	.notificator-settings-intro,
+	.notificator-settings-tabs,
+	.notificator-settings-panel,
+	.notificator-preferences {
+		max-width: none;
+	}
+}
+
+@media (max-width: 900px) {
+	.notificator-companion-wrap {
+		display: block;
+		margin-right: 0.75rem;
+		border-radius: 1rem;
+
+		> .notificator-page-hero {
+			padding: 1.25rem 1rem;
+		}
+
+		> .notificator-workspace-tabs {
+			display: flex;
+			min-height: 0;
+			flex-direction: row;
+			gap: 0;
+			padding: 0;
+			border-top: 1px solid #202c46;
+			overflow-x: auto;
+
+			a {
+				justify-content: center;
+				min-width: 7.4rem;
+				border-radius: 0;
+				padding: 0.8rem 0.7rem;
+			}
+
+			.notificator-workspace-nav-group {
+				display: contents;
+			}
+
+			.notificator-workspace-subnav {
+				display: none !important;
+			}
+		}
+
+		> .notificator-settings-form {
+			padding: 0 0.9rem 2rem;
+		}
+
+		.notificator-settings-panel-heading {
+			align-items: flex-start;
+			flex-direction: column;
+		}
+
+		.notificator-tools-host {
+			position: static;
+			margin: 0 0 1rem;
+			padding: 0.75rem 0;
+		}
+	}
+}
+
+.notificator-theme-dark .notificator-companion-wrap {
+	--nc-bg: #0b1220;
+	--nc-text: #f1f5f9;
+	--nc-muted: #94a3b8;
+	--nc-border: #334155;
+
+	background: #0b1220;
+	border-color: #273449;
+
+	> .notificator-page-hero {
+		background: #111827;
+
+		h1,
+		h2 {
+			color: #f8fafc;
+		}
+
+		p {
+			color: #94a3b8;
+		}
+	}
+
+	> .notificator-settings-form {
+		background: #0b1220;
+	}
+
+	.notificator-settings-panel-heading h3 {
+		color: #f8fafc;
+	}
+
+	.notificator-settings-panel-heading p:last-child {
+		color: #94a3b8;
+	}
+
+	.notificator-settings-panel-count {
+		border-color: #334155;
+		background: #111827;
+		color: #94a3b8;
+	}
+
+	.notificator-tools-host {
+		background: rgba(11, 18, 32, 0.94);
+	}
+}
+
+/* -------------------------------------------------
+   Settings workspace polish
+
+   Keep the settings markup and interactions intact while making the page
+   feel like one calm workspace instead of a stack of nested admin panels.
+-------------------------------------------------- */
+
+.notificator-companion-wrap[data-notificator-current-workspace='settings'] {
+	--settings-surface: #ffffff;
+	--settings-subtle: #f8fafc;
+	--settings-line: #dbe3ee;
+	--settings-ink: #0f172a;
+	--settings-muted: #64748b;
+
+	.notificator-settings-intro {
+		margin: 0 0 1rem;
+		padding: 1.5rem;
+		border-color: var(--settings-line);
+		background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+		box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+
+		h2 {
+			font-size: clamp(1.4rem, 2vw, 1.75rem);
+			letter-spacing: -0.03em;
+		}
+
+		> div:first-child > p:last-child {
+			max-width: 34rem;
+			font-size: 0.9rem;
+		}
+	}
+
+	.notificator-settings-summary {
+		gap: 0.75rem;
+
+		span {
+			min-height: 4.35rem;
+			justify-content: center;
+			padding: 0.75rem 0.9rem;
+			border-color: var(--settings-line);
+			background: rgba(248, 250, 252, 0.8);
+		}
+	}
+
+	.notificator-settings-tabs {
+		gap: 0.75rem;
+		margin-bottom: 1.25rem;
+		padding: 0;
+		border: 0;
+		background: transparent;
+
+		button {
+			min-height: 4.25rem;
+			padding: 0.85rem 1rem;
+			border-color: var(--settings-line);
+			background: var(--settings-surface);
+			box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+		}
+
+		button:hover {
+			border-color: #93c5fd;
+			background: #ffffff;
+			transform: translateY(-1px);
+		}
+
+		button.is-active {
+			border-color: #93c5fd;
+			background: #eff6ff;
+			box-shadow:
+				inset 3px 0 0 #2563eb,
+				0 4px 12px rgba(37, 99, 235, 0.08);
+		}
+	}
+
+	.scenario-section {
+		margin-bottom: 1.25rem;
+		border-color: var(--settings-line);
+		border-radius: 1rem;
+		box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+
+		&:hover {
+			box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+		}
+	}
+
+	.scenario-section > .notificator-scenario-head {
+		min-height: 4.6rem;
+		padding: 1rem 1.35rem !important;
+		background: var(--settings-surface) !important;
+		border-bottom-color: var(--settings-line) !important;
+
+		h3 {
+			font-size: 1.05rem;
+			letter-spacing: -0.02em;
+		}
+
+		p {
+			font-size: 0.8rem;
+		}
+	}
+
+	#notificator-api,
+	#notificator-mqtt {
+		border-top: 0;
+		border-left: 4px solid #3b82f6;
+	}
+
+	#notificator-mqtt {
+		border-left-color: #0891b2;
+	}
+
+	#notificator-api .card-body,
+	#notificator-mqtt .card-body,
+	.notificator-preferences .card-body {
+		padding: 1rem;
+	}
+
+	.notificator-remote-guide,
+	.notificator-mqtt-provider-guide {
+		border-radius: 0.75rem;
+		box-shadow: none;
+	}
+
+	.notificator-connection-panel,
+	.notificator-mqtt-fields {
+		padding: 1rem;
+		border-color: var(--settings-line);
+		background: var(--settings-subtle);
+	}
+
+	#notificator-api .notificator-connection-panel {
+		padding: 0;
+		border: 0;
+		background: transparent;
+
+		> label {
+			display: block;
+			margin: 0 0 0.65rem;
+		}
+	}
+
+	.notificator-api-key-row {
+		padding: 0.8rem 0.9rem;
+		border-color: var(--settings-line);
+		background: var(--settings-surface);
+	}
+
+	.notificator-preferences-grid {
+		gap: 1rem;
+	}
+
+	.notificator-preference-card {
+		gap: 1rem;
+		padding: 1.15rem;
+		border-color: var(--settings-line);
+		background: var(--settings-surface);
+		box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+	}
+
+	.notificator-preference-card__heading h4 {
+		font-size: 1rem;
+		letter-spacing: -0.015em;
+	}
+
+	.notificator-preference-card__heading p {
+		font-size: 0.8rem;
+	}
+
+	.notificator-dashboard-alert-group,
+	.notificator-dashboard-alert-toggle {
+		border-color: var(--settings-line);
+		background: var(--settings-subtle);
+	}
+
+	.notificator-preference-field input,
+	.notificator-preference-field select,
+	.notificator-mqtt-fields input {
+		border-color: #cbd5e1;
+		background: #ffffff;
+	}
+}
+
+.notificator-theme-dark .notificator-companion-wrap[data-notificator-current-workspace='settings'] {
+	--settings-surface: #111827;
+	--settings-subtle: #0f172a;
+	--settings-line: #334155;
+
+	.notificator-settings-intro {
+		background: linear-gradient(135deg, #111827 0%, #0f172a 100%);
+	}
+
+	.notificator-settings-tabs button {
+		background: var(--settings-surface);
+	}
+
+	.notificator-settings-tabs button.is-active {
+		background: rgba(37, 99, 235, 0.18);
+	}
+
+	.notificator-preference-field input,
+	.notificator-preference-field select,
+	.notificator-mqtt-fields input {
+		border-color: #475569;
+		background: #111827;
+	}
+}
+
+/* Shared form-control contract. Native selects need an explicit affordance: the
+   prior reset removed the browser arrow, which made preference selects resemble
+   static option cards instead of dropdown fields. */
+.notificator-companion-wrap
+	:is(
+		input[type='text'],
+		input[type='url'],
+		input[type='email'],
+		input[type='password'],
+		input[type='number'],
+		input[type='search'],
+		textarea,
+		select
+	) {
+	border-color: #cbd5e1;
+	border-radius: 0.65rem;
+	background-color: #ffffff;
+	color: #172033;
+	transition:
+		border-color 0.16s ease,
+		box-shadow 0.16s ease,
+		background-color 0.16s ease;
+}
+
+.notificator-companion-wrap select,
+.notificator-companion-wrap select.notificator-section-control,
+.notificator-companion-wrap select.notificator-section-control--select,
+.notificator-companion-wrap select.notificator-templates-filter-select {
+	padding-right: 2.5rem !important;
+	appearance: none !important;
+	-webkit-appearance: none !important;
+	-moz-appearance: none !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%2352637f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+	background-repeat: no-repeat !important;
+	background-position: right 0.8rem center !important;
+	background-size: 1rem !important;
+}
+
+.notificator-companion-wrap
+	:is(
+		input[type='text'],
+		input[type='url'],
+		input[type='email'],
+		input[type='password'],
+		input[type='number'],
+		input[type='search'],
+		textarea,
+		select
+	):focus {
+	outline: none;
+	border-color: #1f56db !important;
+	box-shadow: 0 0 0 3px rgba(31, 86, 219, 0.15) !important;
+}
+
+.notificator-theme-dark
+	.notificator-companion-wrap
+	:is(
+		input[type='text'],
+		input[type='url'],
+		input[type='email'],
+		input[type='password'],
+		input[type='number'],
+		input[type='search'],
+		textarea,
+		select
+	) {
+	border-color: #334155;
+	background-color: #11192e;
+	color: #f8fafc;
+}
+
+.notificator-theme-dark .notificator-companion-wrap select {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m4 6 4 4 4-4' stroke='%23aab7cf' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+}
+
+/* Overview onboarding is a pair of setup cards, not two stretched list rows. */
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-checklist {
+	grid-template-columns: 1fr;
+	gap: 0.75rem;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-checklist li {
+	grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+	grid-template-rows: auto;
+	align-items: center;
+	min-height: 5.75rem;
+	gap: 0.85rem;
+	padding: 0.95rem 1rem;
+	background: #f8fbff;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-checklist li > .dashicons {
+	grid-row: auto;
+	align-self: center;
+	margin-top: 0;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-checklist li > div {
+	align-self: center;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-checklist a,
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-checklist button {
+	grid-column: auto;
+	justify-self: end;
+	align-self: center;
+	width: 5.5rem;
+	min-width: 5.5rem;
+	padding-right: 0.7rem;
+	padding-left: 0.7rem;
+}
+
+.notificator-theme-dark
+	.notificator-companion-wrap
+	.notificator-overview-panel--getting-started
+	.notificator-checklist
+	li {
+	background: #11192e;
+}
+
+/* The shell owns the sidebar now; the legacy inner layout must not reserve a
+   second sidebar column inside the content form. */
+.notificator-companion-wrap .notificator-layout {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+.notificator-companion-wrap .notificator-main-content {
+	grid-column: 1;
+}
+
+/* The WordPress menu and plugin sidebar both reduce the available content
+   width. Size this header from its own column instead of the viewport. */
+.notificator-companion-wrap[data-notificator-current-workspace='settings'] .notificator-settings-intro {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 1rem;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.notificator-companion-wrap .notificator-settings-intro > div:first-child {
+	min-width: 0;
+	max-width: none;
+}
+
+.notificator-companion-wrap .notificator-settings-summary {
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+}
+
+.notificator-companion-wrap .notificator-settings-summary > span {
+	box-sizing: border-box;
+	min-width: 0;
+}
+
+.notificator-companion-wrap .notificator-settings-summary > span > * {
+	min-width: 0;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
+/* WordPress leaves less horizontal space than the browser viewport suggests.
+   Use a balanced two-column summary before the four-card row can overflow. */
+@media (max-width: 1500px) {
+	.notificator-companion-wrap .notificator-settings-summary {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+/* Shared workspace header rhythm. Every full-width panel starts with the
+   same height, vertical centering, and horizontal inset. */
+.notificator-companion-wrap .scenario-section > .notificator-scenario-head,
+.notificator-companion-wrap .notificator-preferences > .notificator-scenario-head {
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	min-height: 5rem;
+	margin: 0;
+	padding: 1rem 1.5rem !important;
+}
+
+.notificator-companion-wrap .scenario-section > .notificator-scenario-head .notificator-section-icon,
+.notificator-companion-wrap .notificator-preferences > .notificator-scenario-head .notificator-section-icon {
+	flex: 0 0 2.25rem;
+}
+
+.notificator-companion-wrap .scenario-section > .notificator-scenario-head h3,
+.notificator-companion-wrap .notificator-preferences > .notificator-scenario-head h3 {
+	margin: 0;
+	line-height: 1.2;
+}
+
+.notificator-companion-wrap .scenario-section > .notificator-scenario-head p,
+.notificator-companion-wrap .notificator-preferences > .notificator-scenario-head p {
+	margin: 0.25rem 0 0;
+	line-height: 1.4;
+}
+
+/* Keep template filters usable as a single, predictable toolbar. */
+@media (min-width: 901px) {
+	.notificator-companion-wrap #notificator-templates .notificator-templates-controls {
+		align-items: center;
+		flex-wrap: nowrap !important;
+		gap: 0.5rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-scan-controls {
+		flex: 0 0 auto;
+		flex-wrap: nowrap;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-scan-btn {
+		width: max-content;
+		min-width: 8.75rem;
+		white-space: nowrap;
+	}
+
+	.notificator-companion-wrap
+		#notificator-templates
+		.notificator-templates-controls
+		> div:not(.notificator-templates-search) {
+		flex: 0 1 9rem;
+		min-width: 8rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search {
+		flex: 1 1 13rem;
+		min-width: 12rem;
+		max-width: 17rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search-input {
+		box-sizing: border-box;
+		width: 100% !important;
+		min-width: 0 !important;
+		padding-left: 2.35rem !important;
+		white-space: nowrap;
+	}
+}
+
+/* Light-shell header actions */
+.notificator-companion-wrap > .notificator-page-hero .notificator-overview-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.65rem;
+	flex-wrap: wrap;
+}
+
+.notificator-companion-wrap > .notificator-page-hero .notificator-header-save {
+	display: none;
+}
+
+.notificator-companion-wrap[data-notificator-current-workspace='settings']
+	> .notificator-page-hero
+	.notificator-header-create {
+	display: none;
+}
+
+.notificator-companion-wrap[data-notificator-current-workspace='settings']
+	> .notificator-page-hero
+	.notificator-header-save {
+	display: inline-flex;
+}
+
+.notificator-companion-wrap > .notificator-page-hero .notificator-overview-actions .btn-primary,
+.notificator-companion-wrap > .notificator-page-hero .notificator-overview-actions .notificator-header-create,
+.notificator-companion-wrap > .notificator-page-hero .notificator-overview-actions .notificator-header-save {
+	min-height: 2.625rem;
+	height: 2.625rem;
+	padding: 0 1rem;
+	border: 1px solid #1f56db !important;
+	border-radius: 0.7rem !important;
+	background: #1f56db !important;
+	color: #fff !important;
+	box-shadow: 0 0.5rem 1.25rem rgba(31, 86, 219, 0.16);
+	cursor: pointer;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease,
+		box-shadow 160ms ease;
+
+	&:hover {
+		border-color: #1747bd !important;
+		background: #1747bd !important;
+		box-shadow: 0 0.625rem 1.5rem rgba(31, 86, 219, 0.22);
+		transform: none;
+	}
+
+	&:focus-visible {
+		outline: 3px solid rgba(63, 124, 255, 0.38);
+		outline-offset: 2px;
+	}
+}
+
+.notificator-companion-wrap > .notificator-page-hero .notificator-header-icon-button {
+	display: inline-grid;
+	place-items: center;
+	width: 2.625rem;
+	min-width: 2.625rem;
+	height: 2.625rem;
+	min-height: 2.625rem;
+	padding: 0;
+	border: 1px solid #dfe4ee !important;
+	border-radius: 0.7rem !important;
+	background: #fff !important;
+	color: #53617a !important;
+	box-shadow: 0 0.125rem 0.5rem rgba(24, 39, 75, 0.05);
+	cursor: pointer;
+
+	&:hover {
+		border-color: #b9caff !important;
+		background: #f5f7fb !important;
+		color: #1f56db !important;
+	}
+
+	&:focus-visible {
+		outline: 3px solid rgba(63, 124, 255, 0.38);
+		outline-offset: 2px;
+	}
+}
+
+.notificator-theme-dark .notificator-companion-wrap > .notificator-page-hero .notificator-header-icon-button {
+	border-color: #2a3653 !important;
+	background: #11192e !important;
+	color: #cbd5e1 !important;
+
+	&:hover {
+		border-color: #53678f !important;
+		background: #1a2642 !important;
+		color: #fff !important;
+	}
+}
+
+/* Keep the notifications list title, search, and action on one desktop row. */
+@media (min-width: 901px) {
+	.notificator-companion-wrap #notificator-builder > .notificator-scenario-head > .flex:first-child {
+		flex-wrap: nowrap !important;
+		align-items: center;
+	}
+
+	.notificator-companion-wrap #notificator-builder > .notificator-scenario-head > .flex:first-child > div:first-child {
+		min-width: 0;
+		flex: 1 1 auto;
+	}
+
+	.notificator-companion-wrap #notificator-builder > .notificator-scenario-head > .flex:first-child > div:last-child {
+		margin-left: auto;
+		flex: 0 1 auto;
+		flex-wrap: nowrap !important;
+		min-width: 0;
+	}
+
+	.notificator-companion-wrap #notificator-builder .notificator-notification-search {
+		flex: 1 1 16rem;
+		min-width: 16rem;
+		max-width: 24rem;
+	}
+
+	.notificator-companion-wrap #notificator-builder .notificator-notification-search input,
+	.notificator-companion-wrap #notificator-builder > .notificator-scenario-head button {
+		white-space: nowrap;
+	}
+}
+
+@media (min-width: 901px) {
+	.notificator-companion-wrap > .notificator-workspace-tabs {
+		gap: 0.15rem;
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+	}
+
+	.notificator-companion-wrap > .notificator-workspace-tabs > a,
+	.notificator-companion-wrap > .notificator-workspace-tabs .notificator-workspace-nav-group > a {
+		min-height: 2.4rem;
+		padding-top: 0.55rem;
+		padding-bottom: 0.55rem;
+	}
+}
+
+/* Keep the templates search field compact, aligned, and visually consistent with
+ * the filter controls beside it. */
+@media (min-width: 901px) {
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search {
+		flex: 0 1 15rem;
+		width: 15rem;
+		min-width: 12rem;
+		max-width: 15rem;
+		height: 2.75rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search-input {
+		display: block;
+		width: 100% !important;
+		height: 2.75rem !important;
+		min-height: 2.75rem !important;
+		margin: 0 !important;
+		box-sizing: border-box;
+		outline: none !important;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search-input:focus {
+		border-color: var(--nc-primary) !important;
+		box-shadow: 0 0 0 2px rgba(var(--nc-primary-rgb), 0.16) !important;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search .notificator-search-icon {
+		pointer-events: none;
+	}
+}
+
+/* Shared header controls: searches and filters use the same geometry and focus
+ * treatment everywhere in the redesigned workspace. */
+.notificator-companion-wrap
+	:is(.notificator-notification-search, .notificator-log-search-header, .notificator-templates-search)
+	:is(input[type='search'], input[type='text']) {
+	box-sizing: border-box;
+	height: 2.75rem !important;
+	min-height: 2.75rem !important;
+	margin: 0 !important;
+	border: 1px solid var(--nc-border) !important;
+	border-radius: 0.75rem !important;
+	outline: none !important;
+}
+
+.notificator-companion-wrap
+	:is(.notificator-notification-search, .notificator-log-search-header, .notificator-templates-search)
+	:is(input[type='search'], input[type='text']):focus,
+.notificator-companion-wrap .notificator-section-control:focus,
+.notificator-companion-wrap .notificator-templates-filter-select:focus {
+	border-color: var(--nc-primary) !important;
+	box-shadow: 0 0 0 2px rgba(var(--nc-primary-rgb), 0.16) !important;
+	outline: none !important;
+}
+
+.notificator-companion-wrap .notificator-scenario-head {
+	box-sizing: border-box;
+	min-height: 5rem;
+}
+
+.notificator-companion-wrap .scenario-section > .notificator-scenario-head > .flex,
+.notificator-companion-wrap .notificator-preferences > .notificator-scenario-head > .flex {
+	align-items: center;
+	box-sizing: border-box;
+	width: 100%;
+	min-width: 0;
+}
+
+.notificator-companion-wrap
+	.notificator-settings-form
+	:is(
+		input[type='text'],
+		input[type='url'],
+		input[type='email'],
+		input[type='password'],
+		input[type='number'],
+		input[type='search'],
+		select,
+		textarea
+	) {
+	border-color: #ccd6e6 !important;
+	border-radius: 0.75rem !important;
+	background-color: #ffffff;
+	color: var(--nc-text);
+}
+
+.notificator-companion-wrap
+	.notificator-settings-form
+	:is(
+		input[type='text'],
+		input[type='url'],
+		input[type='email'],
+		input[type='password'],
+		input[type='number'],
+		input[type='search'],
+		select,
+		textarea
+	):focus {
+	border-color: #3f7cff !important;
+	box-shadow: 0 0 0 2px rgba(63, 124, 255, 0.18) !important;
+	outline: none !important;
+}
+
+.notificator-theme-dark
+	.notificator-companion-wrap
+	.notificator-settings-form
+	:is(
+		input[type='text'],
+		input[type='url'],
+		input[type='email'],
+		input[type='password'],
+		input[type='number'],
+		input[type='search'],
+		select,
+		textarea
+	) {
+	border-color: #475569 !important;
+	background-color: #111827;
+	color: #f8fafc;
+}
+
+/* Connection cards start as a clear choice. Their setup surfaces are only
+ * shown when the matching delivery method is enabled. */
+.notificator-companion-wrap .notificator-connection-head-actions {
+	display: flex;
+	align-items: center;
+	flex: 0 0 auto;
+	flex-direction: row !important;
+	gap: 0.75rem;
+	margin-left: auto;
+	min-width: 0;
+}
+
+.notificator-companion-wrap .notificator-connection-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	width: auto;
+	height: auto;
+	flex: 0 0 auto;
+	color: #53617a;
+	font-size: 0.78rem;
+	white-space: nowrap;
+}
+
+.notificator-companion-wrap .notificator-connection-toggle strong {
+	color: inherit;
+	font-size: inherit;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.notificator-companion-wrap .notificator-connection-toggle span {
+	width: 2.15rem;
+	height: 1.2rem;
+}
+
+.notificator-companion-wrap .notificator-connection-toggle input:checked + span {
+	background: #1f56db;
+}
+
+.notificator-companion-wrap .notificator-connection-details[hidden] {
+	display: none !important;
+}
+
+.notificator-companion-wrap #notificator-api > .notificator-connection-details[hidden],
+.notificator-companion-wrap #notificator-mqtt > .notificator-connection-details[hidden] {
+	display: none !important;
+}
+
+.notificator-theme-dark .notificator-companion-wrap .notificator-connection-toggle {
+	color: #aebbd5;
+}
+
+/* Overview uses the same restrained cards and primary action treatment as the
+ * dashboard, with a useful first-run state instead of an empty 0% metric. */
+.notificator-companion-wrap .notificator-overview {
+	gap: 1rem;
+}
+
+.notificator-companion-wrap .notificator-health-grid,
+.notificator-companion-wrap .notificator-overview-grid {
+	gap: 1rem;
+}
+
+.notificator-companion-wrap .notificator-health-card,
+.notificator-companion-wrap .notificator-overview-panel {
+	border-color: #dfe4ee;
+	border-radius: 0.875rem;
+	box-shadow: 0 8px 20px rgba(24, 39, 75, 0.04);
+}
+
+.notificator-companion-wrap .notificator-health-card {
+	min-height: 5.25rem;
+	padding: 0.9rem;
+}
+
+.notificator-companion-wrap .notificator-health-icon {
+	color: #1f56db;
+	background: #eaf0ff;
+}
+
+.notificator-companion-wrap .notificator-panel-heading h3,
+.notificator-companion-wrap .notificator-delivery-snapshot > strong {
+	color: #0b1020;
+}
+
+.notificator-companion-wrap .notificator-panel-heading p,
+.notificator-companion-wrap .notificator-delivery-snapshot > span {
+	color: #667088;
+}
+
+.notificator-companion-wrap .notificator-delivery-snapshot.is-empty {
+	padding-bottom: 1rem;
+}
+
+.notificator-companion-wrap .notificator-delivery-snapshot.is-empty > strong {
+	font-size: 1.2rem;
+	line-height: 1.25;
+}
+
+.notificator-companion-wrap .notificator-delivery-snapshot.is-empty > div {
+	display: none;
+}
+
+.notificator-companion-wrap .notificator-quick-actions button,
+.notificator-companion-wrap .notificator-quick-actions a {
+	border-color: #dfe4ee;
+	border-radius: 0.7rem;
+	background: #ffffff;
+	color: #34435d;
+	transition:
+		border-color 160ms ease,
+		background 160ms ease,
+		color 160ms ease;
+}
+
+.notificator-companion-wrap .notificator-quick-actions button:hover,
+.notificator-companion-wrap .notificator-quick-actions a:hover {
+	border-color: #b9caff;
+	background: #f5f7fb;
+	color: #1f56db;
+}
+
+.notificator-companion-wrap .notificator-quick-actions button:first-child {
+	border-color: #1f56db;
+	background: #1f56db;
+	color: #ffffff;
+	box-shadow: 0 8px 18px rgba(31, 86, 219, 0.18);
+}
+
+.notificator-companion-wrap .notificator-quick-actions button:first-child:hover {
+	border-color: #1747bd;
+	background: #1747bd;
+	color: #ffffff;
+}
+
+.notificator-theme-dark .notificator-companion-wrap .notificator-health-card,
+.notificator-theme-dark .notificator-companion-wrap .notificator-overview-panel {
+	border-color: #273449;
+	box-shadow: none;
+}
+
+.notificator-theme-dark .notificator-companion-wrap .notificator-health-icon {
+	color: #93b4ff;
+	background: rgba(31, 86, 219, 0.24);
+}
+
+.notificator-theme-dark .notificator-companion-wrap .notificator-panel-heading h3,
+.notificator-theme-dark .notificator-companion-wrap .notificator-delivery-snapshot > strong {
+	color: #f8fafc;
+}
+
+.notificator-theme-dark .notificator-companion-wrap .notificator-quick-actions button,
+.notificator-theme-dark .notificator-companion-wrap .notificator-quick-actions a {
+	border-color: #2a3653;
+	background: #11192e;
+	color: #cbd5e1;
+}
+
+/* A first-run guide keeps the two real setup actions visible, but makes the
+   current step and overall progress immediately clear. */
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-heading {
+	align-items: center;
+	margin-bottom: 0.85rem;
+}
+
+.notificator-onboarding-progress {
+	flex: 0 0 auto;
+	padding: 0.3rem 0.55rem;
+	border: 1px solid #d7e1f3;
+	border-radius: 999px;
+	color: #52637f;
+	background: #f8fbff;
+	font-size: 0.72rem;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.notificator-overview-panel--getting-started.is-complete .notificator-onboarding-progress {
+	border-color: #b7ebca;
+	color: #087a3d;
+	background: #effcf4;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps {
+	gap: 0.75rem;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps li {
+	grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+	min-height: 5.5rem;
+	gap: 0.85rem;
+	padding: 0.95rem 1rem;
+	border: 1px solid #dfe4ee;
+	border-radius: 0.875rem;
+	background: #f8fbff;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps li.is-current {
+	border-color: #9db9ff;
+	background: #f5f8ff;
+	box-shadow: inset 3px 0 0 #1f56db;
+}
+
+.notificator-onboarding-step-indicator {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.25rem;
+	height: 2.25rem;
+	border: 1px solid #d7e1f3;
+	border-radius: 50%;
+	color: #667088;
+	background: #ffffff;
+}
+
+.notificator-onboarding-step-indicator .dashicons {
+	width: auto;
+	height: auto;
+	font-size: 1.15rem;
+	line-height: 1;
+}
+
+.notificator-onboarding-steps .is-current .notificator-onboarding-step-indicator {
+	border-color: #1f56db;
+	color: #1f56db;
+	background: #eaf0ff;
+}
+
+.notificator-onboarding-steps .is-complete .notificator-onboarding-step-indicator {
+	border-color: #b7ebca;
+	color: #0c9a4d;
+	background: #effcf4;
+}
+
+.notificator-onboarding-step-label {
+	display: block;
+	margin-bottom: 0.16rem;
+	color: #667088;
+	font-size: 0.68rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps strong {
+	color: #0b1020;
+	font-size: 0.95rem;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps small {
+	margin-top: 0.2rem;
+	color: #667088;
+	font-size: 0.78rem;
+	line-height: 1.4;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 5.5rem;
+	min-width: 5.5rem;
+	min-height: 2.25rem;
+	padding: 0.35rem 0.7rem;
+	border: 1px solid #b9caff;
+	border-radius: 0.65rem;
+	background: #ffffff;
+	color: #1f56db;
+	font-size: 0.78rem;
+	font-weight: 700;
+}
+
+.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps button:hover {
+	border-color: #1f56db;
+	background: #eaf0ff;
+}
+
+.notificator-theme-dark .notificator-onboarding-progress {
+	border-color: #2a3653;
+	color: #aab7cf;
+	background: #11192e;
+}
+
+.notificator-theme-dark .notificator-overview-panel--getting-started.is-complete .notificator-onboarding-progress {
+	border-color: #256c4b;
+	color: #7ce0a6;
+	background: #10251d;
+}
+
+.notificator-theme-dark
+	.notificator-companion-wrap
+	.notificator-overview-panel--getting-started
+	.notificator-onboarding-steps
+	li {
+	border-color: #273449;
+	background: #11192e;
+}
+
+.notificator-theme-dark
+	.notificator-companion-wrap
+	.notificator-overview-panel--getting-started
+	.notificator-onboarding-steps
+	li.is-current {
+	border-color: #426ec9;
+	background: #14234b;
+	box-shadow: inset 3px 0 0 #7ba3ff;
+}
+
+.notificator-theme-dark .notificator-onboarding-step-indicator {
+	border-color: #2a3653;
+	color: #aab7cf;
+	background: #17233c;
+}
+
+.notificator-theme-dark .notificator-onboarding-steps .is-current .notificator-onboarding-step-indicator {
+	border-color: #5e8fff;
+	color: #9db9ff;
+	background: #1c3265;
+}
+
+.notificator-theme-dark .notificator-onboarding-steps .is-complete .notificator-onboarding-step-indicator {
+	border-color: #256c4b;
+	color: #7ce0a6;
+	background: #10251d;
+}
+
+.notificator-theme-dark .notificator-onboarding-step-label,
+.notificator-theme-dark
+	.notificator-companion-wrap
+	.notificator-overview-panel--getting-started
+	.notificator-onboarding-steps
+	small {
+	color: #aab7cf;
+}
+
+.notificator-theme-dark
+	.notificator-companion-wrap
+	.notificator-overview-panel--getting-started
+	.notificator-onboarding-steps
+	strong {
+	color: #f8fafc;
+}
+
+.notificator-theme-dark
+	.notificator-companion-wrap
+	.notificator-overview-panel--getting-started
+	.notificator-onboarding-steps
+	button {
+	border-color: #2d4f9f;
+	background: #14234b;
+	color: #c9d8ff;
+}
+
+@media (max-width: 640px) {
+	.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-heading {
+		align-items: flex-start;
+	}
+
+	.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps li {
+		grid-template-columns: 2.25rem minmax(0, 1fr);
+	}
+
+	.notificator-companion-wrap .notificator-overview-panel--getting-started .notificator-onboarding-steps button {
+		grid-column: 2;
+		justify-self: start;
+	}
+}
+
+@media (max-width: 640px) {
+	.notificator-companion-wrap .notificator-connection-head-actions {
+		align-items: flex-end;
+		flex-direction: column;
+		gap: 0.45rem;
+	}
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+	.notificator-companion-wrap #notificator-builder .notificator-notification-search {
+		min-width: 12rem;
+	}
+
+	.notificator-companion-wrap #notificator-templates .notificator-templates-search {
+		width: clamp(12rem, 20vw, 15rem);
+		min-width: 12rem;
+	}
+}
+
+/* Settings: lead with the decision, then reveal optional configuration. */
+.notificator-companion-wrap[data-notificator-current-workspace='settings'] {
+	.notificator-settings-panel--connections {
+		gap: 0.85rem;
+		margin-bottom: 1.25rem;
+
+		> .scenario-section {
+			margin: 0;
+			border-color: var(--settings-line);
+			box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+		}
+	}
+
+	.notificator-settings-panel-heading {
+		align-items: center;
+		gap: 1rem;
+		padding: 0.2rem 0.2rem 0;
+
+		> div {
+			max-width: 44rem;
+		}
+
+		h3 {
+			letter-spacing: -0.025em;
+		}
+	}
+
+	.notificator-preferences {
+		margin-top: 0;
+		border-color: var(--settings-line);
+		box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+
+		> .notificator-scenario-head {
+			border-bottom: 1px solid var(--settings-line);
+		}
+
+		> .card-body {
+			padding: 1rem;
+			background: #f7f9fd;
+		}
+	}
+
+	.notificator-preferences-grid {
+		align-items: start;
+		gap: 1rem;
+
+		> .notificator-preference-card {
+			margin: 0;
+			border: 1px solid var(--settings-line);
+			border-radius: 0.875rem;
+			background: var(--settings-surface);
+			box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+		}
+	}
+
+	.notificator-preference-card {
+		gap: 0.9rem;
+		padding: 1.1rem;
+	}
+
+	.notificator-preference-card--wide {
+		grid-column: 1 / -1;
+	}
+
+	.notificator-preference-card--danger {
+		align-items: flex-start;
+		border-left: 3px solid #e04f4f;
+
+		.btn-secondary--danger {
+			margin-top: 0.15rem;
+		}
+	}
+
+	.notificator-dashboard-alert-groups {
+		gap: 0.9rem;
+	}
+
+	.notificator-dashboard-alert-group {
+		gap: 0.9rem;
+		padding: 1rem;
+	}
+
+	.notificator-dashboard-alert-group__heading {
+		padding-bottom: 0.8rem;
+	}
+
+	.notificator-preference-field {
+		min-height: 2.25rem;
+		padding: 0.1rem 0;
+
+		> span:first-child {
+			max-width: 14rem;
+			color: #34435d;
+		}
+	}
+
+	.notificator-preference-card--primary {
+		border-color: #bcd0ff !important;
+		background: var(--settings-surface) !important;
+		box-shadow:
+			inset 3px 0 0 #3f7cff,
+			0 2px 8px rgba(15, 23, 42, 0.025) !important;
+	}
+
+	.notificator-preference-disclosure {
+		width: 100%;
+		border-top: 1px solid var(--nc-border, #dfe4ee);
+		color: #53627c;
+		font-size: 0.8rem;
+
+		summary {
+			padding-top: 0.75rem;
+			cursor: pointer;
+			color: #34435d;
+			font-weight: 700;
+		}
+
+		> div {
+			display: grid;
+			gap: 0.45rem;
+			padding-top: 0.75rem;
+		}
+
+		small {
+			color: #667088;
+			font-size: 0.78rem;
+			line-height: 1.45;
+		}
+	}
+
+	.notificator-dashboard-alert-settings.is-disabled {
+		.notificator-dashboard-alert-groups,
+		.notificator-dashboard-alert-note {
+			display: none;
+		}
+	}
+
+	.notificator-dashboard-alert-settings.is-enabled .notificator-dashboard-alert-disabled-note,
+	.notificator-log-settings.is-enabled .notificator-log-disabled-note,
+	.notificator-log-settings.is-disabled .notificator-log-export {
+		display: none;
+	}
+
+	.notificator-dashboard-alert-disabled-note,
+	.notificator-log-disabled-note {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		margin: 0;
+		color: #667088;
+		font-size: 0.8rem;
+		line-height: 1.45;
+
+		.dashicons {
+			color: #1f56db;
+		}
+	}
+
+	.notificator-log-settings {
+		width: 100%;
+	}
+
+	.notificator-log-settings.is-disabled .notificator-preference-actions {
+		margin-top: 0.8rem;
+	}
+}
+
+.notificator-theme-dark .notificator-companion-wrap[data-notificator-current-workspace='settings'] {
+	.notificator-preferences > .notificator-scenario-head {
+		border-bottom-color: #334155;
+	}
+
+	.notificator-preferences > .card-body {
+		background: #0c1425;
+	}
+
+	.notificator-preference-field > span:first-child {
+		color: #cbd5e1;
+	}
+
+	.notificator-preference-card--primary {
+		border-color: #294981;
+		background: var(--settings-surface);
+		box-shadow:
+			inset 3px 0 0 #5e8fff,
+			0 2px 8px rgba(0, 0, 0, 0.12);
+	}
+
+	.notificator-preference-disclosure {
+		border-color: #334155;
+
+		summary,
+		small,
+		.notificator-preference-field {
+			color: #aab7cf;
+		}
 	}
 }
