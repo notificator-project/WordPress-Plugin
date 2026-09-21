@@ -147,7 +147,7 @@ Raw hook arguments, WordPress database contents, and user exports are not sent w
 
 = How the service uses the data =
 
-The service validates the API key and allowed domains. Notification content may be encrypted with the account's public key and stored in Supabase for the Notificator app. Depending on account settings, it can use Expo for push, the administrator's HiveMQ cluster for MQTT, and Resend for email. Push previews may be generic while full content remains encrypted. HiveMQ credentials are used for the current request and are not stored in the Notificator account database.
+The service validates the API key and allowed domains. Notification content may be encrypted with the account's public key and stored in Supabase for the Notificator app. Depending on account settings, it can use Expo for push, the account's saved or locally configured HiveMQ cluster for MQTT, and Resend for email. Push previews may be generic while full content remains encrypted. Account-managed HiveMQ credentials remain encrypted server-side and are never returned to WordPress.
 
 Use of the remote service is subject to the information published by [Notificator Project](https://notificator-project.com/), its [documentation](https://docs.notificator-project.com/), and its [privacy policy](https://notificator-project.com/privacy/).
 

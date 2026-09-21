@@ -2292,10 +2292,19 @@ type AnyFn = (...args: any[]) => any;
 		var summaryLabel = summary ? summary.querySelector('[data-notificator-mqtt-summary-label]') : null;
 		var summaryDetail = summary ? summary.querySelector('[data-notificator-mqtt-summary-detail]') : null;
 		var details = document.querySelector('[data-notificator-connection-details="mqtt"]') as HTMLElement | null;
+		var accountNote = document.getElementById('notificator-mqtt-account-note');
+		var accountMessage = accountNote ? accountNote.querySelector('[data-notificator-mqtt-account-message]') : null;
+		var useCustomButton = document.getElementById('notificator-use-custom-mqtt') as HTMLButtonElement | null;
+		var toggleContainer = toggle.closest('.notificator-connection-toggle') as HTMLElement | null;
+		var providerGuide = section.querySelector('.notificator-mqtt-provider-guide') as HTMLElement | null;
+		var modeHelp = document.getElementById('notificator-mqtt-mode-help') as HTMLElement | null;
+		var transport = section.querySelector('.notificator-mqtt-transport') as HTMLElement | null;
+		var securityNote = section.querySelector('.notificator-mqtt-security-note') as HTMLElement | null;
 		if (!section || !toggle || !fields) return;
 
 		var defaultTopicPrefix = 'notificator-project';
 		var serverReady = section.getAttribute('data-mqtt-ready') === '1';
+		var accountConnection = false;
 
 		function hasActiveApiKey(): boolean {
 			var counter = document.getElementById('notificator-active-key-count');
@@ -2308,9 +2317,21 @@ type AnyFn = (...args: any[]) => any;
 			result.className = 'notificator-mqtt-result' + (state ? ' is-' + state : '');
 		}
 
+		function setAccountLayout(active: boolean): void {
+			accountConnection = active;
+			section.classList.toggle('is-account-connected', active);
+			[providerGuide, modeHelp, fields, transport, securityNote].forEach(function (element) {
+				if (element) element.hidden = active;
+			});
+			if (toggleContainer) toggleContainer.hidden = active;
+			if (accountNote) accountNote.hidden = !active;
+			if (forgetButton) forgetButton.hidden = active || !(host && host.value);
+		}
+
 		function renderMode(): void {
 			var customEnabled = toggle.checked;
-			if (details) details.hidden = !customEnabled;
+			if (details) details.hidden = accountConnection ? false : !customEnabled;
+			setAccountLayout(accountConnection);
 			toggle.setAttribute('aria-expanded', customEnabled ? 'true' : 'false');
 			var toggleLabel = toggle.parentElement ? toggle.parentElement.querySelector('strong') : null;
 			if (toggleLabel) toggleLabel.textContent = customEnabled ? 'Enabled' : 'Enable';
@@ -2320,15 +2341,98 @@ type AnyFn = (...args: any[]) => any;
 				input.disabled = !customEnabled;
 			});
 			if (testButton) {
-				testButton.disabled = !customEnabled || !serverReady || !hasActiveApiKey();
+				// An enabled API key can test the account-managed connection even when
+				// the local custom broker fields are disabled or incomplete.
+				testButton.disabled = !hasActiveApiKey();
 			}
-			if (!customEnabled) {
+			if (!customEnabled && !accountConnection) {
 				setResult('');
 			}
 		}
 
+		function useAccountConnection(connection: AnyRecord): void {
+			setAccountLayout(true);
+			toggle.checked = false;
+			if (accountMessage) {
+				var label =
+					connection && connection.host
+						? 'Saved account connection found: ' + connection.host + '. We’ll use it automatically.'
+						: 'Saved account connection found. We’ll use it automatically.';
+				accountMessage.textContent = label;
+			}
+			if (status) {
+				status.textContent = 'Connected via account';
+				status.classList.add('is-active');
+				status.classList.remove('is-warning', 'is-neutral');
+			}
+			if (useCustomButton) useCustomButton.hidden = false;
+			renderMode();
+		}
+
+		function checkAccountConnection(): void {
+			if (!hasActiveApiKey() || serverReady) return;
+			var data = window.notificatorCompanionData;
+			var ajaxUrl = data && data.ajaxUrl ? data.ajaxUrl : '';
+			var action = data && data.actions ? data.actions.checkMqttAccount : '';
+			var nonce = data && data.nonces ? data.nonces.checkMqttAccount : '';
+			if (!ajaxUrl || !action || !nonce) return;
+			var body = new URLSearchParams();
+			body.set('action', action);
+			body.set('nonce', nonce);
+			fetch(ajaxUrl, {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+				body: body.toString()
+			})
+				.then(function (response) {
+					return response.json().catch(function () {
+						return null;
+					});
+				})
+				.then(function (response) {
+					if (response && response.success && response.data && response.data.saved) {
+						useAccountConnection(response.data.connection || {});
+						return;
+					}
+					if (!response || !response.success) {
+						var errorMessage =
+							response && response.data && response.data.message
+								? response.data.message
+								: 'The account connection could not be checked.';
+						if (accountMessage) accountMessage.textContent = errorMessage;
+						if (useCustomButton) useCustomButton.hidden = true;
+						toggle.checked = true;
+						renderMode();
+						return;
+					}
+					var reason = response.data && response.data.reason ? response.data.reason : 'not_saved';
+					var accountStatusMessage =
+						reason === 'decrypt_failed'
+							? 'The saved MQTT connection could not be decrypted. Confirm the dashboard and API use the same encryption key, then save it again.'
+							: reason === 'encryption_unavailable'
+								? 'The API MQTT encryption key is not configured.'
+								: reason === 'storage_unavailable'
+									? 'The account MQTT storage is unavailable in the API.'
+									: reason === 'invalid_saved_connection'
+										? 'The saved MQTT connection is invalid. Save the broker details again in the dashboard.'
+										: 'No saved account connection was found. Configure a broker below.';
+					if (accountMessage) accountMessage.textContent = accountStatusMessage;
+					if (useCustomButton) useCustomButton.hidden = true;
+					toggle.checked = true;
+					renderMode();
+				})
+				.catch(function () {
+					if (accountMessage)
+						accountMessage.textContent = 'Account connection could not be checked. You can configure a broker below.';
+					toggle.checked = true;
+					renderMode();
+				});
+		}
+
 		function applySavedState(mqtt: AnyRecord): void {
 			if (!mqtt) return;
+			setAccountLayout(false);
 			serverReady = !!mqtt.ready;
 			section.setAttribute('data-mqtt-ready', serverReady ? '1' : '0');
 			toggle.checked = !!mqtt.enabled;
@@ -2367,6 +2471,15 @@ type AnyFn = (...args: any[]) => any;
 		}
 
 		toggle.addEventListener('change', renderMode);
+		if (useCustomButton) {
+			useCustomButton.addEventListener('click', function () {
+				setAccountLayout(false);
+				useCustomButton.hidden = true;
+				toggle.checked = true;
+				renderMode();
+				if (host) host.focus();
+			});
+		}
 
 		if (forgetButton) {
 			forgetButton.addEventListener('click', function () {
@@ -2441,6 +2554,7 @@ type AnyFn = (...args: any[]) => any;
 		});
 		document.addEventListener('notificator:api-keys:updated', renderMode);
 		renderMode();
+		checkAccountConnection();
 	}
 
 	function initTopBarScenarioButton(): void {

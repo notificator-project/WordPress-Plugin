@@ -108,6 +108,7 @@ class Notificator_Companion_Admin_Page {
 					'health'            => wp_create_nonce( 'notificator_companion_get_health' ),
 					'test'              => wp_create_nonce( 'notificator_companion_test' ),
 					'testMqtt'          => wp_create_nonce( 'notificator_companion_test_mqtt' ),
+					'checkMqttAccount'  => wp_create_nonce( 'notificator_companion_check_mqtt_account' ),
 					'saveSettings'      => wp_create_nonce( 'notificator_companion_save_settings' ),
 					'exportHooks'       => wp_create_nonce( 'notificator_companion_export_hooks' ),
 					'importHooks'       => wp_create_nonce( 'notificator_companion_import_hooks' ),
@@ -125,6 +126,7 @@ class Notificator_Companion_Admin_Page {
 					'health'            => 'notificator_companion_get_health',
 					'test'              => 'notificator_companion_test',
 					'testMqtt'          => 'notificator_companion_test_mqtt',
+					'checkMqttAccount'  => 'notificator_companion_check_mqtt_account',
 					'saveSettings'      => 'notificator_companion_save_settings',
 					'exportHooks'       => 'notificator_companion_export_hooks',
 					'importHooks'       => 'notificator_companion_import_hooks',
@@ -748,8 +750,11 @@ class Notificator_Companion_Admin_Page {
 										<strong><?php esc_html_e( 'Enable', 'notificator-project' ); ?></strong>
 									</label>
 								</div>
-							</div>
-							<div id="notificator-mqtt-settings" class="card-body notificator-connection-details" data-notificator-connection-details="mqtt" <?php echo ! empty( $mqtt_state['enabled'] ) ? '' : 'hidden'; ?>>
+								</div>
+								<?php if ( 0 < $active_api_key_count && empty( $mqtt_state['ready'] ) ) : ?>
+									<p id="notificator-mqtt-account-note" class="notificator-mqtt-account-note"><span class="dashicons dashicons-cloud" aria-hidden="true"></span><span data-notificator-mqtt-account-message><?php esc_html_e( 'Checking for a saved MQTT connection in your Notificator account…', 'notificator-project' ); ?></span> <button type="button" id="notificator-use-custom-mqtt" class="link-button" hidden><?php esc_html_e( 'Use a different broker', 'notificator-project' ); ?></button></p>
+								<?php endif; ?>
+								<div id="notificator-mqtt-settings" class="card-body notificator-connection-details" data-notificator-connection-details="mqtt" <?php echo ! empty( $mqtt_state['enabled'] ) ? '' : 'hidden'; ?>>
 								<div class="notificator-mqtt-provider-guide">
 									<span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
 									<div>
@@ -764,7 +769,6 @@ class Notificator_Companion_Admin_Page {
 									<a href="https://console.hivemq.cloud/" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Open HiveMQ Cloud', 'notificator-project' ); ?><span class="dashicons dashicons-external" aria-hidden="true"></span></a>
 								</div>
 								<p id="notificator-mqtt-mode-help" class="notificator-mqtt-help"><?php esc_html_e( 'Your device must use the same cluster and topic prefix. Use a separate publisher credential here when possible.', 'notificator-project' ); ?></p>
-
 								<div class="notificator-mqtt-fields" data-notificator-mqtt-fields>
 									<label>
 										<span><?php esc_html_e( 'Cluster hostname', 'notificator-project' ); ?></span>
@@ -795,7 +799,7 @@ class Notificator_Companion_Admin_Page {
 
 								<input type="hidden" id="notificator-mqtt-forget" name="<?php echo esc_attr( $this->option_name ); ?>[mqtt_forget]" value="0">
 								<div class="notificator-mqtt-actions">
-								<button type="button" id="notificator-test-mqtt" class="btn-secondary" <?php disabled( empty( $mqtt_state['ready'] ) || 0 === $active_api_key_count ); ?>><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Test broker', 'notificator-project' ); ?></button>
+								<button type="button" id="notificator-test-mqtt" class="btn-secondary"><span class="dashicons dashicons-yes-alt"></span><?php esc_html_e( 'Test broker', 'notificator-project' ); ?></button>
 								<button type="button" id="notificator-forget-mqtt" class="btn-secondary btn-secondary--danger" <?php echo empty( $mqtt_state['configured'] ) && empty( $mqtt_state['host'] ) ? 'hidden' : ''; ?>><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Forget broker connection', 'notificator-project' ); ?></button>
 									<p class="notificator-mqtt-result" id="notificator-mqtt-result" role="status" aria-live="polite"></p>
 								</div>
