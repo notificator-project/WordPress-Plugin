@@ -290,6 +290,7 @@ class Notificator_Companion {
 		// AJAX handlers.
 		add_action( 'wp_ajax_notificator_companion_test', array( $this, 'handle_test_notification' ) );
 		add_action( 'wp_ajax_notificator_companion_test_mqtt', array( $this, 'handle_test_mqtt_connection' ) );
+		add_action( 'wp_ajax_notificator_companion_check_mqtt_account', array( $this, 'handle_check_mqtt_account' ) );
 		add_action( 'wp_ajax_notificator_companion_refresh_hooks', array( $this, 'handle_refresh_hooks' ) );
 		add_action( 'wp_ajax_notificator_companion_get_health', array( $this, 'handle_get_health' ) );
 		add_action( 'wp_ajax_notificator_companion_get_discovery_inbox', array( $this->admin_page, 'handle_get_discovery_inbox' ) );
@@ -2768,11 +2769,21 @@ class Notificator_Companion {
 
 		$mqtt_config = Notificator_Companion_Mqtt_Config::get_request_config( $options );
 		if ( empty( $mqtt_config ) ) {
-			$payload['sendMqtt']       = false;
-			$payload['mqttConnection'] = array(
-				'mode'   => 'custom',
-				'status' => 'incomplete',
-			);
+			$api_keys = $this->get_api_keys_from_options( $options );
+			if ( ! empty( $api_keys ) ) {
+				// The hosted API resolves the account-owned MQTT secret server-side.
+				// Never persist or request the credential in WordPress.
+				$payload['mqttConnection'] = array(
+					'mode'   => 'account',
+					'status' => 'pending',
+				);
+			} else {
+				$payload['sendMqtt']       = false;
+				$payload['mqttConnection'] = array(
+					'mode'   => 'custom',
+					'status' => 'incomplete',
+				);
+			}
 		} else {
 			$payload['mqttConnection'] = array(
 				'mode'   => 'custom',
@@ -2908,11 +2919,12 @@ class Notificator_Companion {
 			);
 		}
 
-		$site_url   = home_url();
-		$site_name  = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
-		$wp_ver     = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : '';
-		$mqtt_state = Notificator_Companion_Mqtt_Config::get_admin_state( is_array( $options ) ? $options : array() );
-		$mqtt_ready = ! empty( $mqtt_state['ready'] );
+		$site_url               = home_url();
+		$site_name              = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'name' ) : '';
+		$wp_ver                 = function_exists( 'get_bloginfo' ) ? (string) get_bloginfo( 'version' ) : '';
+		$mqtt_state             = Notificator_Companion_Mqtt_Config::get_admin_state( is_array( $options ) ? $options : array() );
+		$mqtt_ready             = ! empty( $mqtt_state['ready'] );
+		$account_mqtt_candidate = ! $mqtt_ready && ! empty( $api_keys );
 
 		$payload = array(
 			'type'        => 'generic_notification',
@@ -2921,7 +2933,7 @@ class Notificator_Companion {
 			'severity'    => 'info',
 			'source'      => 'wp_plugin',
 			'sendPush'    => true,
-			'sendMqtt'    => $mqtt_ready,
+			'sendMqtt'    => $mqtt_ready || $account_mqtt_candidate,
 			'pushPreview' => 'custom',
 			'pushTitle'   => 'WordPress Test',
 			'pushBody'    => $site_name ? $site_name : (string) $site_url,
@@ -2933,9 +2945,9 @@ class Notificator_Companion {
 				'timestamp'      => gmdate( 'c' ),
 			),
 		);
-		if ( $mqtt_ready ) {
+		if ( $mqtt_ready || $account_mqtt_candidate ) {
 			$payload['mqttConnection'] = array(
-				'mode'   => 'custom',
+				'mode'   => $mqtt_ready ? 'custom' : 'account',
 				'status' => 'pending',
 			);
 		}
@@ -3036,12 +3048,10 @@ class Notificator_Companion {
 		$options    = is_array( $options ) ? $options : array();
 		$mqtt_state = Notificator_Companion_Mqtt_Config::get_admin_state( $options );
 		$api_keys   = $this->get_api_keys_from_options( $options );
-		if ( empty( $mqtt_state['ready'] ) ) {
-			wp_send_json_error( array( 'message' => __( 'Save a complete HiveMQ connection before testing it.', 'notificator-project' ) ), 400 );
-		}
 		if ( empty( $api_keys ) ) {
 			wp_send_json_error( array( 'message' => __( 'An enabled Notificator API key is required for the broker test.', 'notificator-project' ) ), 400 );
 		}
+		$mqtt_ready = ! empty( $mqtt_state['ready'] );
 
 		$payload = array(
 			'type'               => 'generic_notification',
@@ -3054,7 +3064,7 @@ class Notificator_Companion {
 			'sendMqtt'           => true,
 			'mqttConnectionTest' => true,
 			'mqttConnection'     => array(
-				'mode'   => 'custom',
+				'mode'   => $mqtt_ready ? 'custom' : 'account',
 				'status' => 'pending',
 			),
 			'data'               => array(
@@ -3085,12 +3095,16 @@ class Notificator_Companion {
 		$result      = json_decode( wp_remote_retrieve_body( $response ), true );
 		$confirmed   = is_array( $result ) && (
 			! empty( $result['mqttConfigAccepted'] ) ||
-			( isset( $result['mqttConnectionMode'] ) && 'custom' === $result['mqttConnectionMode'] )
+			( isset( $result['mqttConnectionMode'] ) && in_array( $result['mqttConnectionMode'], array( 'custom', 'account' ), true ) )
 		);
 		if ( $status_code >= 200 && $status_code < 300 && $confirmed ) {
+			$connection_mode = is_array( $result ) && isset( $result['mqttConnectionMode'] ) ? (string) $result['mqttConnectionMode'] : 'custom';
 			wp_send_json_success(
 				array(
-					'message' => __( 'HiveMQ connection verified. Check your device for the test notification.', 'notificator-project' ),
+					'message' => 'account' === $connection_mode
+						? __( 'Saved account MQTT connection verified. Check your device for the test notification.', 'notificator-project' )
+						: __( 'Custom HiveMQ connection verified. Check your device for the test notification.', 'notificator-project' ),
+					'mode'    => $connection_mode,
 					'mqtt'    => $mqtt_state,
 				)
 			);
@@ -3099,6 +3113,58 @@ class Notificator_Companion {
 		/* translators: %d: HTTP response status. */
 		$message = sprintf( __( 'The custom MQTT connection was not confirmed by the API (HTTP %d).', 'notificator-project' ), $status_code );
 		wp_send_json_error( array( 'message' => $message ), 502 );
+	}
+
+	/**
+	 * Check whether the authenticated Notificator account has a saved MQTT connection.
+	 *
+	 * Only redacted connection metadata is returned; the broker password remains
+	 * inside the hosted API.
+	 *
+	 * @return void
+	 */
+	public function handle_check_mqtt_account() {
+		check_ajax_referer( 'notificator_companion_check_mqtt_account', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized', 'notificator-project' ) ), 403 );
+		}
+
+		$options  = get_option( $this->option_name, array() );
+		$options  = is_array( $options ) ? $options : array();
+		$api_keys = $this->get_api_keys_from_options( $options );
+		if ( empty( $api_keys ) ) {
+			wp_send_json_error( array( 'message' => __( 'An enabled Notificator API key is required.', 'notificator-project' ) ), 400 );
+		}
+
+		$payload  = wp_json_encode( array( 'type' => 'mqtt_account_status' ) );
+		$body     = is_string( $payload ) ? $payload : '';
+		$response = wp_remote_post(
+			notificator_companion_get_api_endpoint(),
+			array(
+				'timeout'     => 15,
+				'data_format' => 'body',
+				'headers'     => $this->build_api_request_headers( $api_keys[0], $body ),
+				'body'        => $body,
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error( array( 'message' => __( 'The account MQTT check could not reach the Notificator API.', 'notificator-project' ) ), 502 );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		$result      = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( $status_code >= 200 && $status_code < 300 && is_array( $result ) ) {
+			wp_send_json_success(
+				array(
+					'saved'      => ! empty( $result['saved'] ),
+					'reason'     => isset( $result['reason'] ) ? sanitize_key( (string) $result['reason'] ) : '',
+					'connection' => isset( $result['connection'] ) && is_array( $result['connection'] ) ? $result['connection'] : null,
+				)
+			);
+		}
+
+		$message = is_array( $result ) && isset( $result['error'] ) ? sanitize_text_field( (string) $result['error'] ) : __( 'The account MQTT check failed.', 'notificator-project' );
+		wp_send_json_error( array( 'message' => $message ), $status_code > 399 ? $status_code : 502 );
 	}
 
 	/**
