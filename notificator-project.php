@@ -3,7 +3,7 @@
  * Plugin Name: Notificator – Alerts & Notifications
  * Plugin URI: https://github.com/notificator-project/WordPress-Plugin
  * Description: Turn WordPress events into dashboard alerts, with optional mobile push and MQTT delivery.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Author: Notificator Project
  * Author URI: https://notificator-project.com/
  * License: GPL-3.0-or-later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'NOTIFICATOR_COMPANION_VERSION', '1.3.0' );
+define( 'NOTIFICATOR_COMPANION_VERSION', '1.4.0' );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'NOTIFICATOR_COMPANION_PLUGIN_FILE', __FILE__ );
@@ -1170,6 +1170,9 @@ class Notificator_Companion {
 				if ( isset( $hook['send_dashboard'] ) ) {
 					$sanitized_hook['send_dashboard'] = (bool) $hook['send_dashboard'];
 				}
+				if ( isset( $hook['send_account'] ) ) {
+					$sanitized_hook['send_account'] = (bool) $hook['send_account'];
+				}
 
 				if ( isset( $hook['send_push'] ) ) {
 					$sanitized_hook['send_push'] = (bool) $hook['send_push'];
@@ -1945,15 +1948,17 @@ class Notificator_Companion {
 		$has_remote_delivery = ! empty( $api_keys );
 		$mqtt_state          = Notificator_Companion_Mqtt_Config::get_admin_state( is_array( $options ) ? $options : array() );
 
-		$scenario_name  = is_array( $hook_config ) && isset( $hook_config['scenario_name'] ) ? (string) $hook_config['scenario_name'] : '';
-		$scenario_notes = is_array( $hook_config ) && isset( $hook_config['scenario_notes'] ) ? (string) $hook_config['scenario_notes'] : '';
-		$severity       = is_array( $hook_config ) && isset( $hook_config['severity'] ) ? (string) $hook_config['severity'] : 'info';
-		$hook_meta      = is_array( $hook_config ) && isset( $hook_config['hook_meta'] ) && is_array( $hook_config['hook_meta'] ) ? $hook_config['hook_meta'] : array();
-		$send_dashboard = ! ( is_array( $hook_config ) && array_key_exists( 'send_dashboard', $hook_config ) ) || (bool) $hook_config['send_dashboard'];
-		$push_requested = ! ( is_array( $hook_config ) && array_key_exists( 'send_push', $hook_config ) ) || (bool) $hook_config['send_push'];
-		$mqtt_requested = ! ( is_array( $hook_config ) && array_key_exists( 'send_mqtt', $hook_config ) ) || (bool) $hook_config['send_mqtt'];
-		$send_push      = $has_remote_delivery && $push_requested;
-		$send_mqtt      = $has_remote_delivery && $mqtt_requested && ! empty( $mqtt_state['ready'] );
+		$scenario_name     = is_array( $hook_config ) && isset( $hook_config['scenario_name'] ) ? (string) $hook_config['scenario_name'] : '';
+		$scenario_notes    = is_array( $hook_config ) && isset( $hook_config['scenario_notes'] ) ? (string) $hook_config['scenario_notes'] : '';
+		$severity          = is_array( $hook_config ) && isset( $hook_config['severity'] ) ? (string) $hook_config['severity'] : 'info';
+		$hook_meta         = is_array( $hook_config ) && isset( $hook_config['hook_meta'] ) && is_array( $hook_config['hook_meta'] ) ? $hook_config['hook_meta'] : array();
+		$send_dashboard    = ! ( is_array( $hook_config ) && array_key_exists( 'send_dashboard', $hook_config ) ) || (bool) $hook_config['send_dashboard'];
+		$account_requested = ! ( is_array( $hook_config ) && array_key_exists( 'send_account', $hook_config ) ) || (bool) $hook_config['send_account'];
+		$send_account      = $has_remote_delivery && $account_requested;
+		$push_requested    = ! ( is_array( $hook_config ) && array_key_exists( 'send_push', $hook_config ) ) || (bool) $hook_config['send_push'];
+		$mqtt_requested    = ! ( is_array( $hook_config ) && array_key_exists( 'send_mqtt', $hook_config ) ) || (bool) $hook_config['send_mqtt'];
+		$send_push         = $has_remote_delivery && $push_requested;
+		$send_mqtt         = $has_remote_delivery && $mqtt_requested && ! empty( $mqtt_state['ready'] );
 
 		$title = $scenario_name ? $scenario_name : ( $description ? $description : $hook_name );
 
@@ -2048,10 +2053,10 @@ class Notificator_Companion {
 			);
 		}
 
-		if ( ! $send_push && ! $send_mqtt ) {
+		if ( ! $send_account && ! $send_push && ! $send_mqtt ) {
 			if ( $dashboard_delivered ) {
 				$local_status = 'dashboard_only';
-			} elseif ( ! $has_remote_delivery && ( $push_requested || $mqtt_requested ) ) {
+			} elseif ( ! $has_remote_delivery && ( $account_requested || $push_requested || $mqtt_requested ) ) {
 				$local_status = 'connection_required';
 			} else {
 				$local_status = 'delivery_disabled';

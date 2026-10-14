@@ -1331,6 +1331,7 @@ class Notificator_Companion_Admin_Page {
 						<input type="hidden" :name="'<?php echo esc_attr( $this->option_name ); ?>[hooks][' + index + '][plugin_name]'" :value="hook.plugin_name || ''">
 						<input type="hidden" :name="'<?php echo esc_attr( $this->option_name ); ?>[hooks][' + index + '][severity]'" :value="hook.severity || 'info'">
 						<input type="hidden" :name="'<?php echo esc_attr( $this->option_name ); ?>[hooks][' + index + '][send_dashboard]'" :value="hook.send_dashboard ? '1' : '0'">
+						<input type="hidden" :name="'<?php echo esc_attr( $this->option_name ); ?>[hooks][' + index + '][send_account]'" :value="hook.send_account ? '1' : '0'">
 						<input type="hidden" :name="'<?php echo esc_attr( $this->option_name ); ?>[hooks][' + index + '][send_push]'" :value="hook.send_push ? '1' : '0'">
 						<input type="hidden" :name="'<?php echo esc_attr( $this->option_name ); ?>[hooks][' + index + '][send_mqtt]'" :value="hook.send_mqtt ? '1' : '0'">
 						<!-- Hook metadata (for conditions support) -->
@@ -1555,7 +1556,8 @@ class Notificator_Companion_Admin_Page {
 											<span class="badge text-xs" :class="(hook.severity || 'info') === 'critical' ? 'badge-danger' : ((hook.severity || 'info') === 'warning' ? 'badge-warning' : 'badge-info')">
 												<span x-text="(hook.severity || 'info').charAt(0).toUpperCase() + (hook.severity || 'info').slice(1)"></span>
 											</span>
-											<span class="badge badge-info text-xs" x-show="hook.send_dashboard"><?php esc_html_e( 'Dashboard', 'notificator-project' ); ?></span>
+										<span class="badge badge-info text-xs" x-show="hook.send_dashboard"><?php esc_html_e( 'WordPress alerts', 'notificator-project' ); ?></span>
+										<span class="badge badge-info text-xs" x-show="hook.send_account"><?php esc_html_e( 'Notificator dashboard & app', 'notificator-project' ); ?></span>
 											<span class="badge badge-info text-xs" x-show="hook.send_push"><?php esc_html_e( 'Push', 'notificator-project' ); ?></span>
 											<span class="badge badge-info text-xs" x-show="hook.send_mqtt"><?php esc_html_e( 'MQTT', 'notificator-project' ); ?></span>
 													<template x-if="getScenarioPluginStatus(hook) === 'inactive'">
@@ -2022,6 +2024,7 @@ class Notificator_Companion_Admin_Page {
 								<option value="<?php echo esc_attr( $count ); ?>" <?php selected( $log_per_page, $count ); ?>><?php echo esc_html( $per_page_label ); ?></option>
 							<?php endforeach; ?>
 						</select></label>
+						<label class="notificator-live-activity-toggle"><input type="checkbox" id="notificator-live-activity"><span class="dashicons dashicons-update" aria-hidden="true"></span><span><?php esc_html_e( 'Live activity', 'notificator-project' ); ?></span></label>
 						<button type="button" id="notificator-log-reset" class="btn-secondary btn-secondary--compact"><span class="dashicons dashicons-image-rotate"></span><?php esc_html_e( 'Reset', 'notificator-project' ); ?></button>
 						<button type="button" id="notificator-clear-log" class="btn-secondary btn-secondary--danger btn-secondary--compact"><span class="dashicons dashicons-trash"></span><?php esc_html_e( 'Clear', 'notificator-project' ); ?></button>
 					</div>
@@ -2414,11 +2417,15 @@ else :
 
 							<div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
 								<label class="block text-sm font-semibold text-gray-700 mb-1"><?php esc_html_e( 'Where should it be sent?', 'notificator-project' ); ?></label>
-								<p class="text-xs text-gray-500 mb-3"><?php esc_html_e( 'Choose at least one channel. Dashboard alerts work without an API key.', 'notificator-project' ); ?></p>
+								<p class="text-xs text-gray-500 mb-3"><?php esc_html_e( 'Choose where this event should appear. WordPress alerts are local; the Notificator dashboard, mobile push, and MQTT require an enabled API key.', 'notificator-project' ); ?></p>
 								<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
 									<label class="flex items-center gap-2 text-sm text-gray-700">
 										<input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" x-model="scenarioForm.send_dashboard">
-										<span><strong><?php esc_html_e( 'Dashboard', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'WordPress admin alerts', 'notificator-project' ); ?></small></span>
+										<span><strong><?php esc_html_e( 'WordPress alerts', 'notificator-project' ); ?></strong><small><?php esc_html_e( 'Show inside the WordPress admin', 'notificator-project' ); ?></small></span>
+									</label>
+									<label class="flex items-center gap-2 text-sm text-gray-700">
+										<input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" x-model="scenarioForm.send_account" :disabled="!hasRemoteDelivery">
+										<span><strong><?php esc_html_e( 'Notificator dashboard & app', 'notificator-project' ); ?></strong><small x-text="hasRemoteDelivery ? <?php echo esc_attr( wp_json_encode( __( 'Keep in your account inbox', 'notificator-project' ) ) ); ?> : <?php echo esc_attr( wp_json_encode( __( 'API key required', 'notificator-project' ) ) ); ?>"></small></span>
 									</label>
 									<label class="flex items-center gap-2 text-sm text-gray-700">
 										<input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" x-model="scenarioForm.send_push" :disabled="!hasRemoteDelivery">
@@ -2564,7 +2571,8 @@ else :
 								<strong x-text="scenarioForm.scenario_name || <?php echo esc_attr( wp_json_encode( __( 'Untitled notification', 'notificator-project' ) ) ); ?>"></strong>
 								<p><span x-text="scenarioForm.description || scenarioForm.hook_name"></span> · <span x-text="(scenarioForm.severity || 'info').charAt(0).toUpperCase() + (scenarioForm.severity || 'info').slice(1)"></span></p>
 								<div class="notificator-review-tags">
-									<span x-show="scenarioForm.send_dashboard"><?php esc_html_e( 'Dashboard', 'notificator-project' ); ?></span>
+					<span x-show="scenarioForm.send_dashboard"><?php esc_html_e( 'WordPress alerts', 'notificator-project' ); ?></span>
+					<span x-show="scenarioForm.send_account"><?php esc_html_e( 'Notificator dashboard & app', 'notificator-project' ); ?></span>
 									<span x-show="scenarioForm.send_push"><?php esc_html_e( 'Push', 'notificator-project' ); ?></span>
 									<span x-show="scenarioForm.send_mqtt"><?php esc_html_e( 'MQTT', 'notificator-project' ); ?></span>
 									<span x-show="scenarioForm.conditions && scenarioForm.conditions.length" x-text="scenarioForm.conditions.length + ' condition' + (scenarioForm.conditions.length === 1 ? '' : 's')"></span>

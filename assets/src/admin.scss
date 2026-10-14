@@ -4547,11 +4547,32 @@ body.notificator-modal-open {
 
 /* Activity table and filters */
 .notificator-activity-toolbar {
-	grid-template-columns: minmax(260px, 1fr) repeat(5, auto);
+	grid-template-columns: minmax(260px, 1fr) repeat(6, auto);
 	padding: 0.75rem;
 	border: 1px solid #e2e8f0;
 	border-radius: 0.8rem;
 	background: #f8fafc;
+}
+
+.notificator-live-activity-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	white-space: nowrap;
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: #334155;
+}
+
+.notificator-live-activity-toggle input {
+	margin: 0;
+	accent-color: #2563eb;
+}
+
+.notificator-live-activity-toggle .dashicons {
+	font-size: 1rem;
+	width: 1rem;
+	height: 1rem;
 }
 
 .notificator-log-table {

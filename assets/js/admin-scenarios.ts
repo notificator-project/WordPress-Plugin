@@ -47,13 +47,15 @@ type AnyFn = (...args: any[]) => any;
 			const hasSendDashboard = hook && typeof hook.send_dashboard !== 'undefined';
 			const hasSendPush = hook && typeof hook.send_push !== 'undefined';
 			const hasSendMqtt = hook && typeof hook.send_mqtt !== 'undefined';
+			const hasSendAccount = hook && typeof hook.send_account !== 'undefined';
 			return {
 				...hook,
 				enabled: normalizeEnabled(hook && hook.enabled),
 				severity: normalizeSeverity(hook && hook.severity),
 				send_dashboard: hasSendDashboard ? normalizeEnabled(hook && hook.send_dashboard) : true,
 				send_push: hasRemoteDelivery && (hasSendPush ? normalizeEnabled(hook && hook.send_push) : true),
-				send_mqtt: hasRemoteDelivery && (hasSendMqtt ? normalizeEnabled(hook && hook.send_mqtt) : true)
+				send_mqtt: hasRemoteDelivery && (hasSendMqtt ? normalizeEnabled(hook && hook.send_mqtt) : true),
+				send_account: hasSendAccount ? normalizeEnabled(hook && hook.send_account) : true
 			};
 		});
 
@@ -232,6 +234,16 @@ type AnyFn = (...args: any[]) => any;
 				this.templateCategoryFilter = '__all__';
 				this.templateReadinessFilter = '__all__';
 				this.onTemplatesPerPageChange();
+				document.addEventListener('notificator:api-keys:updated', () => {
+					const counter = document.getElementById('notificator-active-key-count');
+					this.hasRemoteDelivery = !!counter && parseInt(counter.textContent || '0', 10) > 0;
+					if (!this.hasRemoteDelivery) {
+						this.hooks.forEach((hook) => {
+							hook.send_push = false;
+							hook.send_mqtt = false;
+						});
+					}
+				});
 			},
 			selectedPlugin: '',
 			hasRemoteDelivery: !!hasRemoteDelivery,
@@ -266,6 +278,7 @@ type AnyFn = (...args: any[]) => any;
 				send_dashboard: true,
 				send_push: false,
 				send_mqtt: false,
+				send_account: true,
 				plugin_key: '',
 				plugin_name: '',
 				hook_meta: null,
@@ -1009,6 +1022,7 @@ type AnyFn = (...args: any[]) => any;
 					severity: typeof template.severity === 'string' ? template.severity : 'info',
 					enabled: true,
 					send_dashboard: true,
+					send_account: true,
 					send_push: this.hasRemoteDelivery,
 					send_mqtt: false,
 					plugin_key: templatePluginKey,
@@ -1164,6 +1178,7 @@ type AnyFn = (...args: any[]) => any;
 					severity: 'info',
 					enabled: true,
 					send_dashboard: true,
+					send_account: true,
 					send_push: this.hasRemoteDelivery,
 					send_mqtt: false,
 					plugin_key: '',
@@ -1200,6 +1215,7 @@ type AnyFn = (...args: any[]) => any;
 					send_mqtt:
 						this.hasRemoteDelivery &&
 						(hook && typeof hook.send_mqtt !== 'undefined' ? normalizeEnabled(hook.send_mqtt) : true),
+					send_account: hook && typeof hook.send_account !== 'undefined' ? normalizeEnabled(hook.send_account) : true,
 					conditions: Array.isArray(hook && hook.conditions)
 						? JSON.parse(JSON.stringify(hook.conditions)).filter(
 								(condition) => condition && String(condition.value ?? '').trim() !== ''
@@ -1273,6 +1289,7 @@ type AnyFn = (...args: any[]) => any;
 
 				if (
 					!normalizeEnabled(this.scenarioForm.send_dashboard) &&
+					!normalizeEnabled(this.scenarioForm.send_account) &&
 					!normalizeEnabled(this.scenarioForm.send_push) &&
 					!normalizeEnabled(this.scenarioForm.send_mqtt)
 				) {
@@ -1309,6 +1326,7 @@ type AnyFn = (...args: any[]) => any;
 					send_dashboard: normalizeEnabled(this.scenarioForm && this.scenarioForm.send_dashboard),
 					send_push: this.hasRemoteDelivery && normalizeEnabled(this.scenarioForm && this.scenarioForm.send_push),
 					send_mqtt: this.hasRemoteDelivery && normalizeEnabled(this.scenarioForm && this.scenarioForm.send_mqtt),
+					send_account: normalizeEnabled(this.scenarioForm && this.scenarioForm.send_account),
 					conditions: sanitizedConditions,
 					plugin_key:
 						this.scenarioForm && this.scenarioForm.plugin_key

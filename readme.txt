@@ -5,7 +5,7 @@ Tags: notifications, alerts, hooks, monitoring, mqtt
 Requires at least: 5.0
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -180,6 +180,14 @@ The minified files in `assets/dist` are generated from `assets/js` and `assets/s
 4. Guided notification editor for choosing a source, event, message, and delivery channels.
 
 == Changelog ==
+
+= 1.4.0 =
+
+* Separates WordPress admin alerts from Notificator dashboard and mobile app delivery.
+* Keeps account inbox delivery enabled by default when an API key is available, even when mobile push is disabled.
+* Updates delivery controls immediately after an API key is added or enabled without requiring a page reload.
+* Adds an opt-in Live activity view that refreshes activity results in place while preserving filters and scroll position.
+* Clarifies delivery labels and channel guidance throughout the notification editor.
 
 = 1.3.0 =
 

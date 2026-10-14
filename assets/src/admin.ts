@@ -287,6 +287,72 @@ function initLogSearch(): void {
 	applyFilter();
 }
 
+/** Add an opt-in live activity view that refreshes the server-rendered log. */
+function initLiveActivity(): void {
+	const toggle = document.getElementById('notificator-live-activity') as HTMLInputElement | null;
+	if (!toggle || !document.querySelector('.notificator-log-table')) return;
+	let timer: number | null = null;
+	let request: AbortController | null = null;
+	const storageKey = 'notificatorLiveActivity';
+	try {
+		toggle.checked = window.localStorage.getItem(storageKey) === '1';
+	} catch {
+		// Storage can be unavailable in locked-down admin browsers.
+	}
+	const stop = (): void => {
+		if (timer !== null) window.clearInterval(timer);
+		timer = null;
+		request?.abort();
+		request = null;
+		toggle.removeAttribute('aria-busy');
+	};
+	const start = (): void => {
+		stop();
+		timer = window.setInterval(() => {
+			if (document.hidden) return;
+			toggle.setAttribute('aria-busy', 'true');
+			request?.abort();
+			request = typeof AbortController !== 'undefined' ? new AbortController() : null;
+			fetch(window.location.href, {
+				credentials: 'same-origin',
+				headers: { Accept: 'text/html', 'X-Requested-With': 'XMLHttpRequest' },
+				signal: request?.signal
+			})
+				.then((response) => {
+					if (!response.ok) throw new Error('Activity refresh failed');
+					return response.text();
+				})
+				.then((html) => {
+					const documentParser = new DOMParser();
+					const nextDocument = documentParser.parseFromString(html, 'text/html');
+					const nextBody = nextDocument.querySelector('.notificator-log-table tbody');
+					const currentBody = document.querySelector('.notificator-log-table tbody');
+					if (nextBody && currentBody) currentBody.innerHTML = nextBody.innerHTML;
+					const nextCount = nextDocument.getElementById('notificator-log-count');
+					const currentCount = document.getElementById('notificator-log-count');
+					if (nextCount && currentCount) currentCount.textContent = nextCount.textContent;
+				})
+				.catch((error) => {
+					if (error?.name !== 'AbortError') console.warn('Unable to refresh activity.', error);
+				})
+				.finally(() => {
+					toggle.removeAttribute('aria-busy');
+					request = null;
+				});
+		}, 15000);
+	};
+	toggle.addEventListener('change', () => {
+		try {
+			window.localStorage.setItem(storageKey, toggle.checked ? '1' : '0');
+		} catch {
+			// Ignore storage errors.
+		}
+		if (toggle.checked) start();
+		else stop();
+	});
+	if (toggle.checked) start();
+}
+
 /** Persist binary preferences without reloading the settings workspace. */
 function initPreferenceToggles(): void {
 	type PreferenceDefinition = {
@@ -794,8 +860,10 @@ window.addEventListener('notificator:scan:complete', () => {
 
 if (document.readyState === 'loading') {
 	document.addEventListener('DOMContentLoaded', initLogSearch);
+	document.addEventListener('DOMContentLoaded', initLiveActivity);
 } else {
 	initLogSearch();
+	initLiveActivity();
 }
 
 if (document.readyState === 'loading') {
